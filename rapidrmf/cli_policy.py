@@ -20,8 +20,11 @@ def policy_validate(
     out_engineer: Optional[Path] = typer.Option(None, help="Write engineer-focused HTML report"),
     out_auditor: Optional[Path] = typer.Option(None, help="Write auditor-focused HTML report (with evidence)"),
     control_ids: Optional[str] = typer.Option(None, help="Comma-separated control IDs (default: all families)"),
+    config: Optional[Path] = typer.Option(None, help="Config file (to persist validation results to DB)"),
+    env: Optional[str] = typer.Option(None, help="Environment name (required for DB persistence)"),
 ):
     import json as _json
+    from .cli_common import persist_validation_if_db
 
     # Generate all control IDs from family patterns if not specified
     if control_ids:
@@ -62,6 +65,15 @@ def policy_validate(
 
     print(f"[cyan]Validation: {summary['passed']} passed, {summary['failed']} failed, {summary['insufficient']} insufficient")
 
+    # Persist to database if config provided
+    if config and env:
+        from .config import AppConfig
+        app_config = AppConfig.from_yaml(config)
+        envcfg = app_config.get_environment(env)
+        persist_validation_if_db(envcfg, env, results)
+    elif config and not env:
+        print("[yellow]Config provided but no --env specified; skipping DB persistence")
+    
     if out_json:
         out_json.write_text(_json.dumps(summary, indent=2))
         print(f"[green]Wrote validation results to {out_json}")

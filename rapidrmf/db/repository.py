@@ -122,3 +122,36 @@ class Repository:
         stmt = select(ControlRequirement).where(ControlRequirement.control_id.in_(control_ids))
         res = await self.session.execute(stmt)
         return list(res.scalars().all())
+    
+    # Validation result queries
+    async def get_latest_validation_results(self, system: System, limit: int = 100) -> list[ValidationResult]:
+        """Get most recent validation results for a system."""
+        stmt = select(ValidationResult).where(
+            ValidationResult.system_id == system.id
+        ).order_by(
+            ValidationResult.validated_at.desc()
+        ).limit(limit)
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
+    
+    async def get_validation_results_by_status(self, system: System, status) -> list[ValidationResult]:
+        """Get validation results filtered by status (pass, fail, insufficient_evidence, etc.)."""
+        stmt = select(ValidationResult).where(
+            ValidationResult.system_id == system.id,
+            ValidationResult.status == status
+        ).order_by(
+            ValidationResult.validated_at.desc()
+        )
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
+    
+    async def get_validation_history_for_control(self, system: System, control: Control, limit: int = 10) -> list[ValidationResult]:
+        """Get validation history for a specific control."""
+        stmt = select(ValidationResult).where(
+            ValidationResult.system_id == system.id,
+            ValidationResult.control_id == control.id
+        ).order_by(
+            ValidationResult.validated_at.desc()
+        ).limit(limit)
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
