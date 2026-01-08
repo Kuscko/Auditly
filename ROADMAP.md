@@ -7,8 +7,8 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 1: Evidence Collection Expansion (Critical)
 
 ### Multi-Cloud Collectors
-- [ ] **AWS Collector**: EC2, RDS, S3, IAM, CloudTrail, Config, Secrets Manager, VPC Flow Logs (v0.2)
-- [ ] **Google Cloud Collector**: Compute, Cloud SQL, Cloud Storage, IAM, Cloud Audit Logs, VPC Flow Logs (v0.2)
+- [ ] **AWS Collector**: EC2, RDS, S3, IAM, CloudTrail, Config, Secrets Manager, VPC Flow Logs
+- [ ] **Google Cloud Collector**: Compute, Cloud SQL, Cloud Storage, IAM, Cloud Audit Logs, VPC Flow Logs
 - [ ] **AWS GovCloud Specific**: Region detection, compliance-tagged resources, FedRAMP baseline alignment
 - [ ] **Azure GovCloud Specific**: Fairfax region support, DoD IL5/IL6 resource isolation
 
@@ -42,10 +42,10 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 2: Evidence Management & Persistence (High Priority)
 
 ### Database Backend
- - [ ] **PostgreSQL Support**: Replace file-based storage with relational database (v0.2)
+ - [ ] **PostgreSQL Support**: Replace file-based storage with relational database
 - [ ] **Azure Cosmos DB**: Multi-region, hierarchical partition keys for tenant/enclave isolation
 - [ ] **DynamoDB Support**: For AWS-native deployments
- - [ ] **Migration Tools**: File-based → database, Alembic migrations, backward compatibility (v0.2)
+ - [ ] **Migration Tools**: File-based → database, Alembic migrations, backward compatibility
 
 ### Evidence Lifecycle
 - [ ] **Versioning**: Track historical changes to evidence (who, what, when, why)
@@ -72,7 +72,7 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 
 ### Validation Modes
 - [ ] **Continuous Compliance**: Real-time validation as evidence arrives
- - [ ] **Scheduled Validation**: Nightly/weekly batch validation runs (v0.2)
+ - [ ] **Scheduled Validation**: Nightly/weekly batch validation runs
 - [ ] **On-Demand Validation**: User-triggered validation for specific controls/systems
 - [ ] **Predictive Validation**: ML-based model to predict compliance drift before it occurs
 
@@ -106,8 +106,8 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 - [ ] **ISO 27001**: Control mapping and evidence collection for international standards
 - [ ] **DoD CMMC**: Cybersecurity Maturity Model Certification levels 1-5
 - [ ] **NIST Cybersecurity Framework**: CSF v2.0 alignment and assessment
-- [ ] **Zero Trust Architecture**: Validators for zero trust control implementation (v0.2)
-- [ ] **DoD STIG Baselines**: Windows, Linux, network devices (v0.2)
+- [ ] **Zero Trust Architecture**: Validators for zero trust control implementation
+- [ ] **DoD STIG Baselines**: Windows, Linux, network devices
 
 ### Custom Catalog Support
 - [ ] **Catalog Builder UI**: Web interface to create/modify custom compliance catalogs
@@ -152,13 +152,13 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 6: Multi-Tenancy & Governance (Medium Priority)
 
 ### Multi-Team Support
-- [ ] **Organizations/Departments**: Separate compliance namespaces per team (v0.2)
+- [ ] **Organizations/Departments**: Separate compliance namespaces per team
 - [ ] **System Registration**: Self-service system enrollment with auto-discovery
 - [ ] **Team Collaboration**: Comments, notifications, shared workspaces
 - [ ] **Audit Trail**: Complete audit log of all changes, approvals, access
 
 ### Access Control & Permissions
-- [ ] **Role-Based Access Control (RBAC)**: Compliance Officer, Auditor, System Owner, Viewer roles (v0.2)
+- [ ] **Role-Based Access Control (RBAC)**: Compliance Officer, Auditor, System Owner, Viewer roles
 - [ ] **Fine-Grained Permissions**: Control-level access restrictions
 - [ ] **Attribute-Based Access Control (ABAC)**: Permission rules based on system properties (e.g., "all IL5 systems")
 - [ ] **Single Sign-On (SSO)**: Azure AD, Okta, OIDC integration
@@ -175,9 +175,9 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 7: API & Integration (Medium Priority)
 
 ### REST API
- - [ ] **Evidence API (collect)**: POST/GET/DELETE evidence, query by system/control/type (v0.2)
- - [ ] **Validation API**: Trigger validation, query results, get control status (v0.2)
- - [ ] **Report API**: Generate and download readiness reports (HTML/JSON) (v0.2)
+ - [ ] **Evidence API (collect)**: POST/GET/DELETE evidence, query by system/control/type
+ - [ ] **Validation API**: Trigger validation, query results, get control status
+ - [ ] **Report API**: Generate and download readiness reports (HTML/JSON)
 - [ ] **Findings API**: Create/update/query findings, link to POA&Ms
 - [ ] **Package API**: Generate ATO packages, download reports, sign packages
 - [ ] **System API**: Register systems, update metadata, manage collectors
@@ -229,10 +229,10 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 9: Performance & Scalability (Low Priority, Post-MVP)
 
 ### Optimization
- - [ ] **Evidence Caching**: In-memory cache for frequently-accessed evidence (v0.2)
- - [ ] **Redis Sessions & Validator Cache**: Redis-backed session store and validator result caching (v0.2)
- - [ ] **Query Optimization**: Index evidence by control/system/type for fast searches (v0.2)
- - [ ] **Parallel Validation**: Concurrent validation of independent controls (v0.2)
+ - [ ] **Evidence Caching**: In-memory cache for frequently-accessed evidence
+ - [ ] **Redis Sessions & Validator Cache**: Redis-backed session store and validator result caching
+ - [ ] **Query Optimization**: Index evidence by control/system/type for fast searches
+ - [ ] **Parallel Validation**: Concurrent validation of independent controls
 - [ ] **Incremental Validation**: Only re-validate controls affected by recent evidence changes
 - [ ] **Compression**: Compress evidence at rest and in transit
 
