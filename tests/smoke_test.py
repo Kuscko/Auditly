@@ -54,16 +54,16 @@ def test_catalog_loading():
     
     catalog_path = Path("catalogs/nist-800-53r5.json")
     if not catalog_path.exists():
-        print(f"⚠️  Catalog not found: {catalog_path}")
+        print(f"[WARN] Catalog not found: {catalog_path}")
         return False
     
     catalog = load_oscal(catalog_path)
     if not isinstance(catalog, OscalCatalog):
-        print("❌ Failed to load catalog")
+        print("[FAIL] Failed to load catalog")
         return False
     
     control_ids = catalog.control_ids()
-    print(f"✅ Loaded NIST 800-53 Rev5: {len(control_ids)} controls")
+    print(f"[PASS] Loaded NIST 800-53 Rev5: {len(control_ids)} controls")
     
     # Test profile loading
     profile_path = Path("catalogs/fedramp-rev5-moderate.json")
@@ -71,9 +71,9 @@ def test_catalog_loading():
         profile = load_oscal(profile_path)
         if isinstance(profile, OscalProfile):
             imported = profile.imported_control_ids()
-            print(f"✅ Loaded FedRAMP Moderate: {len(imported)} controls")
+            print(f"[PASS] Loaded FedRAMP Moderate: {len(imported)} controls")
         else:
-            print("❌ Failed to load profile")
+            print("[FAIL] Failed to load profile")
             return False
     
     return True
@@ -94,10 +94,10 @@ def test_validator_coverage():
         if req:
             families_tested += 1
             families_passed += 1
-            print(f"✅ {family_code}: Pattern available")
+            print(f"[PASS] {family_code}: Pattern available")
         else:
             families_tested += 1
-            print(f"❌ {family_code}: No pattern found")
+            print(f"[FAIL] {family_code}: No pattern found")
     
     print(f"\nFamily coverage: {families_passed}/{families_tested}")
     return families_passed == families_tested
@@ -113,7 +113,7 @@ def test_evidence_validation():
     # Load a baseline
     profile_path = Path("catalogs/fedramp-rev5-moderate.json")
     if not profile_path.exists():
-        print("⚠️  Profile not found, using sample controls")
+        print("[WARN] Profile not found, using sample controls")
         control_ids = ["AC-2", "CM-2", "SC-13", "AU-2", "RA-5", "PL-2"]
     else:
         profile = load_oscal(profile_path)
@@ -149,8 +149,8 @@ def test_evidence_validation():
     insufficient = sum(1 for r in results.values() if r.status.value == "insufficient_evidence")
     unknown = sum(1 for r in results.values() if r.status.value == "unknown")
     
-    print(f"\n  ✅ Passed: {passed}")
-    print(f"  ⚠️  Insufficient: {insufficient}")
+    print(f"\n  [PASS] Passed: {passed}")
+    print(f"  [WARN] Insufficient: {insufficient}")
     print(f"  ❌ Failed: {failed}")
     print(f"  ❓ Unknown: {unknown}")
     
