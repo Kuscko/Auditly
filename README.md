@@ -40,6 +40,31 @@ Open report.html to review coverage and findings.
 - Generate readiness report: `python -m rapidrmf report readiness --config config.yaml --env <env> --out report.html`
 - Create signed bundle: `python -m rapidrmf bundle create --config config.yaml --env edge --out-path evidence-bundle.tar.gz`
 
+## What's included (v0.1)
+
+| Feature | Status |
+|---------|--------|
+| **Evidence Collection** | ✓ Azure, Terraform, GitHub Actions, GitLab CI, Argo |
+| **Compliance Validation** | ✓ 69 validators across 20 families (NIST/FedRAMP/STIG) |
+| **Security Scanning** | ✓ IAM, encryption, backup posture |
+| **Waiver Tracking** | ✓ Auto-expiry, compensating controls |
+| **Reporting** | ✓ Dual-view (engineer + auditor), HTML/JSON export |
+| **Storage** | ✓ MinIO (edge), S3 (GovCloud) |
+| **Air-Gap Transfer** | ✓ Ed25519-signed bundles, SHA256 manifests |
+| **Multi-Enclave** | ✓ Edge/IL2/IL4/IL5/IL6 isolation |
+| **Offline Operation** | ✓ Policy engines (Conftest + OPA WASM) |
+
+## Coming next (roadmap)
+
+- [ ] AWS, GCP multi-cloud collectors
+- [ ] PostgreSQL/Cosmos DB persistent storage
+- [ ] Continuous compliance monitoring
+- [ ] POA&M and ATO package generation
+- [ ] HIPAA, PCI DSS, ISO 27001 frameworks
+- [ ] REST API and CI/CD webhooks
+- [ ] Kubernetes deployment and Helm charts
+- See the full [roadmap](ROADMAP.md) for 100+ planned features
+
 ## Learn more
 - Architecture and modules: [rapidrmf/README.md](rapidrmf/README.md)
 - Collectors (Terraform, CI/CD, Azure): [rapidrmf/collectors/README.md](rapidrmf/collectors/README.md)
@@ -47,3 +72,4 @@ Open report.html to review coverage and findings.
 - Policy engines: [rapidrmf/policy/README.md](rapidrmf/policy/README.md)
 - Reporting: [rapidrmf/reporting/README.md](rapidrmf/reporting/README.md)
 - Tests and validation suites: [tests/README.md](tests/README.md)
+- Development roadmap: [ROADMAP.md](ROADMAP.md)
