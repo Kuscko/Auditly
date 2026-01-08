@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import yaml
 
-from ..evidence import EvidenceManifest
+from .evidence import EvidenceManifest
 
 
 @dataclass
