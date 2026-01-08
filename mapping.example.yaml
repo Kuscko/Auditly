@@ -1,0 +1,74 @@
+# Example control-to-evidence mapping rules
+# This YAML file defines how evidence artifacts map to compliance controls.
+
+mappings:
+  # Terraform IaC evidence
+  - evidence_kind: terraform-plan
+    control_ids:
+      - CM-2  # Baseline Configuration
+      - CM-3  # Configuration Change Control
+      - CM-6  # Configuration Settings
+    description: Terraform plan demonstrates infrastructure-as-code baseline and change control
+
+  - evidence_kind: terraform-apply
+    control_ids:
+      - CM-2  # Baseline Configuration
+      - CM-3  # Configuration Change Control
+      - AU-2  # Audit Events (deployment logs)
+    description: Terraform apply log shows actual deployment and audit trail
+
+  # CI/CD pipeline logs
+  - evidence_kind: github-run-logs
+    control_ids:
+      - SA-11  # Developer Testing and Evaluation
+      - SI-7   # Software, Firmware, and Information Integrity
+    description: GitHub Actions logs show automated testing and build integrity
+
+  - evidence_kind: gitlab-job-log
+    control_ids:
+      - SA-11  # Developer Testing and Evaluation
+      - SI-7   # Software, Firmware, and Information Integrity
+    description: GitLab job logs show automated testing and build integrity
+
+  - evidence_kind: argo-workflow-log
+    control_ids:
+      - SA-11  # Developer Testing and Evaluation
+      - SI-7   # Software, Firmware, and Information Integrity
+    description: Argo workflow logs show automated testing and orchestration
+
+  # Artifacts from pipelines
+  - evidence_kind: github-run-artifact
+    control_ids:
+      - SA-15  # Development Process, Standards, and Tools
+      - SI-7   # Software, Firmware, and Information Integrity
+    description: Build artifacts from GitHub Actions with provenance
+
+  - evidence_kind: gitlab-job-artifacts
+    control_ids:
+      - SA-15  # Development Process, Standards, and Tools
+      - SI-7   # Software, Firmware, and Information Integrity
+    description: Build artifacts from GitLab with provenance
+
+  - evidence_kind: argo-workflow-artifact
+    control_ids:
+      - SA-15  # Development Process, Standards, and Tools
+      - SI-7   # Software, Firmware, and Information Integrity
+    description: Build artifacts from Argo Workflows with provenance
+
+  # Policy evaluation results (future: when policy results are collected)
+  - evidence_kind: conftest-result
+    control_ids:
+      - CM-6   # Configuration Settings
+      - SC-13  # Cryptographic Protection (if encryption checks)
+      - AC-3   # Access Enforcement (if IAM checks)
+    description: Conftest/OPA policy evaluation results showing compliance checks
+    required_metadata:
+      passed: "true"
+
+  # SBOM evidence (placeholder for future)
+  - evidence_kind: sbom
+    control_ids:
+      - SA-4   # Acquisition Process
+      - SR-3   # Supply Chain Controls
+      - SR-4   # Provenance
+    description: Software Bill of Materials for supply chain transparency

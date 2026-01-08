@@ -1,0 +1,57 @@
+# Example RapidRMF config (annotated)
+# Define enclaves/environments and their evidence storage backends.
+
+version: "0.1"
+organization: ExampleOrg
+
+catalogs:
+  # Local paths to OSCAL JSON catalogs/profiles
+  nist_800_53_rev5: ./catalogs/nist-800-53r5.json
+  nist_800_53b_low: ./catalogs/nist-sp800-53b-low.json
+  nist_800_53b_moderate: ./catalogs/nist-sp800-53b-moderate.json
+  nist_800_53b_high: ./catalogs/nist-sp800-53b-high.json
+  fedramp_low: ./catalogs/fedramp-rev5-low.json
+  fedramp_moderate: ./catalogs/fedramp-rev5-moderate.json
+  fedramp_high: ./catalogs/fedramp-rev5-high.json
+  fedramp_li_saas: ./catalogs/fedramp-rev5-li-saas.json
+  # nist_800_207_zero_trust: ./catalogs/nist-800-207-zero-trust.json
+  # stig_baseline: ./catalogs/stig-baseline.json
+
+environments:
+  edge:
+    description: On-prem/edge development
+    storage:
+      type: minio
+      endpoint: localhost:9000
+      bucket: rapidrmf-evidence
+      access_key: MINIO_ACCESS_KEY
+      secret_key: MINIO_SECRET_KEY
+      secure: false
+  govcloud-il5:
+    description: AWS GovCloud IL5
+    storage:
+      type: s3
+      region: us-gov-west-1
+      bucket: rapidrmf-evidence
+      # Credentials resolved by environment/instance profile or AWS config
+  govcloud-il6:
+    description: AWS GovCloud IL6 (separate enclave)
+    storage:
+      type: s3
+      region: us-gov-west-1
+      bucket: rapidrmf-evidence-il6
+
+ci:
+  preferred: github
+  fallback: gitlab
+  optional: argo
+
+policy:
+  # Rego bundles or compiled WASM (future). For now, paths are placeholders.
+  rego_bundles:
+    - ./policy/iac
+  wasm_bundles:
+    - ./policy/compiled/iac.wasm
+
+# Where to stage local files before upload (optional)
+staging_dir: ./.rapidrmf_staging
