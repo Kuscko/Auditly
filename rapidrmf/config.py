@@ -30,6 +30,7 @@ StorageConfig = MinioStorageConfig | S3StorageConfig
 class EnvironmentConfig(BaseModel):
     description: Optional[str] = None
     storage: StorageConfig
+    database_url: Optional[str] = None  # e.g., postgresql+asyncpg://user:pass@host:5432/dbname
 
 
 class PolicyConfig(BaseModel):
