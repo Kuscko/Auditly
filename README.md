@@ -54,6 +54,16 @@ Open report.html to review coverage and findings.
 | **Multi-Enclave** | ✓ Edge/IL2/IL4/IL5/IL6 isolation |
 | **Offline Operation** | ✓ Policy engines (Conftest + OPA WASM) |
 
+## Coming Next (v0.2)
+
+- Minimal REST API: `collect`, `validate`, `report`
+- PostgreSQL persistence with Alembic migrations
+- Scheduled validation runs (nightly/cron)
+- Redis caching and parallel validators for scale
+- RBAC multi-tenancy (tenant isolation, JWT auth, audit)
+- New collectors: AWS and GCP
+- STIG baselines and Zero Trust checks
+
 ## Coming next (roadmap)
 
 - [ ] AWS, GCP multi-cloud collectors
