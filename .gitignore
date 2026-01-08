@@ -8,3 +8,30 @@ dist/
 build/
 *.tar.gz
 .pytest_cache/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+venv/
+
+# Build artifacts
+*.egg-info/
+*.whl
+.tox/
