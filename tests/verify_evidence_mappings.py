@@ -56,9 +56,9 @@ def verify_family_mappings():
             print(f"    required_any: {pattern.required_any}")
             found_any = [e for e in pattern.required_any if e in available_evidence]
             if found_any:
-                print(f"      ✅ Test data provides: {found_any}")
+                print(f"      [PASS] Test data provides: {found_any}")
             else:
-                print(f"      ❌ NO MATCH in test data!")
+                print(f"      [FAIL] NO MATCH in test data!")
                 all_valid = False
         
         # Check required_all
@@ -67,9 +67,9 @@ def verify_family_mappings():
             found_all = [e for e in pattern.required_all if e in available_evidence]
             missing = [e for e in pattern.required_all if e not in available_evidence]
             if not missing:
-                print(f"      ✅ Test data provides: {found_all}")
+                print(f"      [PASS] Test data provides: {found_all}")
             else:
-                print(f"      ❌ MISSING in test data: {missing}")
+                print(f"      [FAIL] MISSING in test data: {missing}")
                 all_valid = False
         
         print(f"  Total test evidence types for {family_code}: {len(available_evidence)}")
@@ -92,9 +92,9 @@ def verify_family_mappings():
         if requirement.required_any:
             found_any = [e for e in requirement.required_any if e in available_evidence]
             if found_any:
-                print(f"  ✅ required_any matched: {found_any}")
+                print(f"  [PASS] required_any matched: {found_any}")
             else:
-                print(f"  ⚠️  required_any needs: {requirement.required_any}")
+                print(f"  [WARN] required_any needs: {requirement.required_any}")
                 print(f"      (Control will use family evidence: {list(available_evidence)[:3]}...)")
                 # Not marking as invalid because family evidence will be used
         
@@ -102,9 +102,9 @@ def verify_family_mappings():
         if requirement.required_all:
             missing = [e for e in requirement.required_all if e not in available_evidence]
             if not missing:
-                print(f"  ✅ required_all satisfied: {requirement.required_all}")
+                print(f"  [PASS] required_all satisfied: {requirement.required_all}")
             else:
-                print(f"  ⚠️  required_all needs: {missing}")
+                print(f"  [WARN] required_all needs: {missing}")
                 print(f"      (Control will use family evidence: {list(available_evidence)[:3]}...)")
                 # Not marking as invalid because family evidence will be used
         
@@ -113,11 +113,11 @@ def verify_family_mappings():
     # Summary
     print("=" * 80)
     if all_valid:
-        print("✅ All evidence mappings are VALID")
+        print("[PASS] All evidence mappings are VALID")
         print("   Test evidence correctly satisfies validator requirements")
         print("   No false positives detected")
     else:
-        print("❌ Some evidence mappings are INVALID")
+        print("[FAIL] Some evidence mappings are INVALID")
         print("   Test data does not match validator requirements")
         print("   Results may include false positives or false negatives")
     print("=" * 80)

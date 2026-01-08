@@ -152,7 +152,7 @@ def main():
     output_json = json.dumps(system_config, indent=indent)
     args.output.write_text(output_json)
     
-    print(f"✓ Generated {args.output}")
+    print(f"Generated {args.output}")
     print(f"\nNext steps:")
     print(f"  1. Review and customize {args.output} (update IAM policies, MFA status, etc.)")
     print(f"  2. Run scan: python -m rapidrmf scan system --config-file {args.output} --out-json scan-results.json")
