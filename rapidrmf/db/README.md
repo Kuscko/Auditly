@@ -64,11 +64,32 @@ Utility to migrate file-based manifests to the database.
 
 ### Configuration
 
-Add `database_url` to your environment config:
+Add `database_url` to your environment config. The URL can be configured in three ways (priority order):
 
+1. **Config file** (`config.yaml`):
 ```yaml
-database_url: postgresql+asyncpg://user:pass@localhost:5432/rapidrmf
+environments:
+  production:
+    database_url: postgresql+asyncpg://user:pass@localhost:5432/rapidrmf
 ```
+
+2. **Environment variable**:
+```bash
+export RAPIDRMF_DATABASE_URL="postgresql+asyncpg://user:pass@localhost:5432/rapidrmf"
+```
+
+3. **Programmatic override**:
+```python
+from rapidrmf.db import init_db_async
+await init_db_async("postgresql+asyncpg://user:pass@localhost:5432/rapidrmf")
+```
+
+**Database URL Formats**:
+
+- PostgreSQL (async): `postgresql+asyncpg://user:pass@host:5432/dbname`
+- PostgreSQL (sync): `postgresql+psycopg2://user:pass@host:5432/dbname`
+- SQLite (async): `sqlite+aiosqlite:///./rapidrmf.db`
+- SQLite (sync): `sqlite:///./rapidrmf.db`
 
 For local development with SQLite:
 ```yaml
