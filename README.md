@@ -34,13 +34,74 @@ python -m rapidrmf report readiness --config config.yaml --env edge --out report
 Open report.html to review coverage and findings.
 
 ## Core commands
-- Collect evidence: `python -m rapidrmf collect <terraform|github|gitlab|argo|azure> --config config.yaml --env <env>`
-- Validate controls: `python -m rapidrmf policy validate --evidence ./evidence`
-- Run scanners: `python -m rapidrmf scan system --config-file system-config.json --out-json scan-results.json`
-- Generate readiness report: `python -m rapidrmf report readiness --config config.yaml --env <env> --out report.html`
-- Create signed bundle: `python -m rapidrmf bundle create --config config.yaml --env edge --out-path evidence-bundle.tar.gz`
 
-## What's included (v0.1)
+### Evidence Collection
+```bash
+# Collect evidence with database persistence
+rapidrmf collect <terraform|github|gitlab|argo|azure> \
+  --config config.yaml \
+  --env <env>
+
+# Example: Azure with database
+rapidrmf collect azure \
+  --config config.yaml \
+  --env edge \
+  --output-dir ./evidence
+```
+
+### Validation & Database
+```bash
+# Validate controls and persist results to database
+rapidrmf policy validate \
+  --evidence-file evidence.json \
+  --config config.yaml \
+  --env production
+
+# Run database migrations
+rapidrmf db upgrade
+rapidrmf db downgrade
+rapidrmf db current
+```
+
+### Scanning & Reporting
+```bash
+# Run security scanners
+rapidrmf scan system \
+  --config-file system-config.json \
+  --out-json scan-results.json
+
+# Generate readiness report
+rapidrmf report readiness \
+  --config config.yaml \
+  --env <env> \
+  --out report.html
+```
+
+### Air-Gap Transfer
+```bash
+# Create signed bundle
+rapidrmf bundle create \
+  --config config.yaml \
+  --env edge \
+  --out-path evidence-bundle.tar.gz
+```
+
+## What's included
+
+### v0.2 (Current - Database Persistence)
+
+| Feature | Status |
+|---------|--------|
+| **PostgreSQL Database** | ✓ SQLAlchemy 2.x with async/sync support |
+| **Alembic Migrations** | ✓ Schema versioning and production config |
+| **Evidence Persistence** | ✓ Systems, evidence, manifests stored in DB |
+| **Validation Persistence** | ✓ Control validation results with history |
+| **Catalog Management** | ✓ NIST 800-53, CIS controls in database |
+| **Query Operations** | ✓ Latest results, filter by status, control history |
+| **CLI Integration** | ✓ Optional DB persistence via --config --env flags |
+| **Integration Tests** | ✓ End-to-end PostgreSQL validation suite |
+
+### v0.1 (Released)
 
 | Feature | Status |
 |---------|--------|
@@ -57,8 +118,7 @@ Open report.html to review coverage and findings.
 ## Coming next (roadmap)
 
 - [ ] AWS, GCP multi-cloud collectors
-- [ ] PostgreSQL/Cosmos DB persistent storage
-- [ ] Continuous compliance monitoring
+- [ ] Continuous compliance monitoring dashboard
 - [ ] POA&M and ATO package generation
 - [ ] HIPAA, PCI DSS, ISO 27001 frameworks
 - [ ] REST API and CI/CD webhooks
@@ -67,9 +127,10 @@ Open report.html to review coverage and findings.
 
 ## Learn more
 - Architecture and modules: [rapidrmf/README.md](rapidrmf/README.md)
+- **Database layer**: [rapidrmf/db/README.md](rapidrmf/db/README.md) - PostgreSQL persistence, migrations, repository pattern
 - Collectors (Terraform, CI/CD, Azure): [rapidrmf/collectors/README.md](rapidrmf/collectors/README.md)
 - Storage backends: [rapidrmf/storage/README.md](rapidrmf/storage/README.md)
 - Policy engines: [rapidrmf/policy/README.md](rapidrmf/policy/README.md)
 - Reporting: [rapidrmf/reporting/README.md](rapidrmf/reporting/README.md)
-- Tests and validation suites: [tests/README.md](tests/README.md)
+- **Tests and validation**: [tests/README.md](tests/README.md) - Integration tests with PostgreSQL
 - Development roadmap: [ROADMAP.md](ROADMAP.md)
