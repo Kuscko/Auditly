@@ -37,3 +37,4 @@ venv/
 *.whl
 .tox/
 PLANNING_NOTES_v0.2.md
+V0.2_REQUIREMENTS.md

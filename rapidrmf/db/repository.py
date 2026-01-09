@@ -71,11 +71,21 @@ class Repository:
         await self.session.flush()
         return control
 
+    async def list_controls(self) -> list[Control]:
+        stmt = select(Control)
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
+
     # Systems
     async def get_system_by_name(self, name: str) -> Optional[System]:
         stmt = select(System).where(System.name == name)
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
+
+    async def list_systems_by_environment(self, environment: str) -> list[System]:
+        stmt = select(System).where(System.environment == environment)
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
 
     async def upsert_system(self, name: str, environment: str, description: str | None = None, attributes: dict | None = None) -> System:
         system = await self.get_system_by_name(name)
@@ -105,6 +115,11 @@ class Repository:
         self.session.add(ev)
         await self.session.flush()
         return ev
+
+    async def list_evidence_for_system(self, system: System) -> list[Evidence]:
+        stmt = select(Evidence).where(Evidence.system_id == system.id)
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
 
     # Manifests
     async def create_manifest(self, system: Optional[System], environment: str, overall_hash: str, notes: str | None = None, attributes: dict | None = None) -> EvidenceManifest:

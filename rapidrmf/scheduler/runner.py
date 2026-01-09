@@ -1,22 +1,26 @@
 """Scheduled validation runner scaffolding.
 
 This module sets up a scheduler to run validations on a cron-like schedule.
-Future work will persist job state and wire validation to existing repository.
+Runs validations on a cron-like schedule, persists job state, and reuses existing validation + DB persistence flows.
 """
 
 from __future__ import annotations
 
-from typing import Optional
-
+import asyncio
 import logging
+from pathlib import Path
+
+from rapidrmf.config import AppConfig
+from rapidrmf.db import init_db_async, get_async_session
+from rapidrmf.db.repository import Repository
+from rapidrmf.validators import validate_controls
 
 logger = logging.getLogger(__name__)
 
-# Placeholder: APScheduler will be integrated in the next step
 try:
     from apscheduler.schedulers.background import BackgroundScheduler
     from apscheduler.triggers.cron import CronTrigger
-except Exception:
+except Exception:  # pragma: no cover - APScheduler may be optional in some envs
     BackgroundScheduler = None  # type: ignore
     CronTrigger = None  # type: ignore
 
@@ -49,19 +53,83 @@ def start_scheduler(config_path: str, env_name: str, cron: str = "0 2 * * *") ->
 
 
 def run_scheduled_validation(config_path: str, env_name: str) -> None:
-    """Placeholder for scheduled validation job.
+    """Run scheduled validation for a given environment (sync wrapper)."""
 
-    This function will:
-    - Load config + target environment
-    - Retrieve systems/catalogs to validate
-    - Run validation using existing validators
-    - Persist validation results using repository helpers
-    - Record job state (start/end, status, metrics) in DB
-    """
-    logger.info("Running scheduled validation (env=%s, config=%s)", env_name, config_path)
-    # TODO: Wire to existing validation flow and persistence
-    # from rapidrmf.cli_common import persist_validation_if_db
-    # from rapidrmf.validators import validate_controls
-    # Implement end-to-end execution and persistence here
+    async def _run():
+        cfg = AppConfig.load(Path(config_path))
+        envcfg = cfg.environments.get(env_name)
+        if not envcfg:
+            logger.warning("Environment '%s' not found in config", env_name)
+            return
+        if not envcfg.database_url:
+            logger.warning("Environment '%s' has no database_url; skipping scheduled validation", env_name)
+            return
 
-    logger.info("Scheduled validation job completed (env=%s)", env_name)
+        init_db_async(envcfg.database_url)
+
+        session_gen = get_async_session()
+        session = await session_gen.__anext__()
+        repo = Repository(session)
+        job = await repo.start_job_run(
+            job_type="validation",
+            environment=env_name,
+            attributes={"config_path": str(config_path)},
+        )
+
+        metrics = {"systems": 0, "controls": 0, "results": 0, "errors": 0}
+
+        try:
+            systems = await repo.list_systems_by_environment(env_name)
+            controls = await repo.list_controls()
+            control_map = {c.control_id.upper(): c for c in controls}
+            control_ids = list(control_map.keys())
+            metrics["systems"] = len(systems)
+            metrics["controls"] = len(control_ids)
+
+            if not systems or not controls:
+                logger.warning(
+                    "No systems (%d) or controls (%d) found for env=%s; skipping",
+                    len(systems), len(controls), env_name,
+                )
+            else:
+                for sys in systems:
+                    evidence_rows = await repo.list_evidence_for_system(sys)
+                    evidence_dict = {}
+                    for ev in evidence_rows:
+                        payload = {
+                            "key": ev.key,
+                            "sha256": ev.sha256,
+                            "path": ev.vault_path,
+                            "size": ev.size,
+                            "filename": ev.filename,
+                        }
+                        evidence_dict.setdefault(ev.evidence_type, []).append(payload)
+
+                    results = validate_controls(control_ids, evidence_dict, system_state=None)
+                    for cid, res in results.items():
+                        control = control_map.get(cid.upper())
+                        if not control:
+                            continue
+                        await repo.add_validation_result(
+                            system=sys,
+                            control=control,
+                            status=res.status,
+                            message=res.message,
+                            evidence_keys=res.evidence_keys,
+                            remediation=res.remediation,
+                            metadata=res.metadata,
+                        )
+                        metrics["results"] += 1
+
+            await repo.finish_job_run(job, status="success", metrics=metrics)
+            await session.commit()
+            logger.info("Scheduled validation succeeded (env=%s)", env_name)
+        except Exception as exc:  # pragma: no cover - runtime exception path
+            metrics["errors"] = metrics.get("errors", 0) + 1
+            await repo.finish_job_run(job, status="failed", error=str(exc), metrics=metrics)
+            await session.rollback()
+            logger.exception("Scheduled validation failed (env=%s): %s", env_name, exc)
+        finally:
+            await session.close()
+
+    asyncio.run(_run())
