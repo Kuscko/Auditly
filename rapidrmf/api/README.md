@@ -14,6 +14,38 @@ This API provides three core endpoints that wrap existing CLI functionality:
 - No duplication between API and CLI implementations
 - API is a thin HTTP wrapper around core functionality
 
+## Architecture
+
+The API module follows a **modular router pattern** for clean separation of concerns:
+
+### Structure
+```
+rapidrmf/api/
+├── app.py              # Main FastAPI app (registers routers)
+├── operations.py       # Business logic shared across endpoints
+├── models.py           # Pydantic request/response models
+└── routers/
+    ├── __init__.py     # Router exports
+    ├── collect.py      # Collection endpoints
+    ├── validate.py     # Validation endpoints
+    └── report.py       # Reporting endpoints
+```
+
+### Benefits
+- **Focused files**: Each router handles a single domain (collect/validate/report)
+- **Testability**: Routers can be tested independently
+- **Maintainability**: Easy to locate and modify specific endpoint logic
+- **Scalability**: Add new routers without modifying existing code
+
+### Usage
+```python
+# Import the configured FastAPI app
+from rapidrmf.api import app
+
+# Or import individual routers for custom configuration
+from rapidrmf.api.routers import collect_router, validate_router, report_router
+```
+
 ## Quick Start
 
 ### Install Dependencies
