@@ -13,6 +13,58 @@ This module provides database persistence using SQLAlchemy 2.x with both async a
 - **Validation Results**: Control validation outcomes
 - **Findings**: Compliance findings and audit trails
 
+## Architecture
+
+The database layer uses a **domain-specific repository pattern** for clean separation of concerns:
+
+### Structure
+```
+rapidrmf/db/
+├── __init__.py           # Database initialization and session management
+├── models.py             # SQLAlchemy ORM models
+├── repository.py         # Unified repository (backward compatible)
+├── migrate.py            # Alembic migration control
+├── file_migration.py     # File-to-DB migration utilities
+└── repositories/
+    ├── __init__.py       # Repository exports
+    ├── catalog.py        # Catalog operations
+    ├── control.py        # Control operations
+    ├── system.py         # System operations
+    ├── evidence.py       # Evidence/manifest operations
+    ├── validation.py     # Validation results and findings
+    └── jobrun.py         # Job run tracking
+```
+
+### Benefits
+- **Single Responsibility**: Each repository manages one domain entity
+- **Testability**: Repositories can be tested in isolation
+- **Composability**: Mix and match repositories as needed
+- **Backward Compatible**: Original `Repository` class delegates to domain repos
+
+### Usage
+
+**Option 1: Unified Repository (backward compatible)**
+```python
+from rapidrmf.db.repository import Repository
+
+async with get_async_session() as session:
+    repo = Repository(session)
+    catalog = await repo.upsert_catalog("nist-800-53", "NIST SP 800-53", "NIST")
+    control = await repo.upsert_control(catalog, "AC-2", "Account Management", "AC")
+```
+
+**Option 2: Domain-Specific Repositories (recommended for new code)**
+```python
+from rapidrmf.db.repositories import CatalogRepository, ControlRepository
+
+async with get_async_session() as session:
+    catalog_repo = CatalogRepository(session)
+    control_repo = ControlRepository(session)
+    
+    catalog = await catalog_repo.upsert_catalog("nist-800-53", "NIST SP 800-53", "NIST")
+    control = await control_repo.upsert_control(catalog, "AC-2", "Account Management", "AC")
+```
+
 ## Files
 
 ### `__init__.py`
@@ -37,30 +89,45 @@ SQLAlchemy ORM models defining the schema.
 - `findings` - Compliance findings with severity/status
 
 ### `repository.py`
-Async repository layer for database operations.
+Unified async repository (backward compatible - delegates to domain repositories).
 
-**Key Methods**:
+**Migration Note**: This file now acts as a compatibility wrapper. New code should use domain-specific repositories from `rapidrmf.db.repositories` for better modularity.
 
-*System & Evidence:*
+### `repositories/` (NEW)
+Domain-specific repository classes:
+
+**`catalog.py`** - Catalog operations
+- `get_catalog_by_name()` - Retrieve catalog by name
+- `upsert_catalog()` - Create/update control catalogs
+
+**`control.py`** - Control operations
+- `get_control_by_id()` - Retrieve control by ID
+- `upsert_control()` - Create/update control definitions
+- `list_controls()` - List all controls
+- `get_control_requirements()` - Get control requirements
+
+**`system.py`** - System operations
+- `get_system_by_name()` - Retrieve system by name
+- `list_systems_by_environment()` - List systems per environment
 - `upsert_system()` - Create/update system records
+
+**`evidence.py`** - Evidence and manifest operations
 - `add_evidence()` - Store evidence metadata
+- `list_evidence_for_system()` - Query evidence for system
 - `create_manifest()` - Create evidence collection manifest
 - `add_manifest_entries()` - Link evidence to manifests
 
-*Catalogs & Controls (NEW in v0.2):*
-- `upsert_catalog()` - Create/update control catalogs (NIST 800-53, CIS, etc.)
-- `get_catalog_by_name()` - Retrieve catalog by name
-- `upsert_control()` - Create/update control definitions
-- `get_control_by_id()` - Retrieve control by ID
+**`validation.py`** - Validation results and findings
+- `add_validation_result()` - Store control validation outcomes
+- `add_finding()` - Record compliance findings
+- `get_latest_validation_results()` - Query recent results
+- `get_validation_results_by_status()` - Filter by status
+- `get_validation_history_for_control()` - Get control history
 
-*Validation Results (NEW in v0.2):*
-- `add_validation_result()` - Store control validation outcomes with evidence
-- `get_latest_validation_results()` - Query recent validation results
-- `get_validation_results_by_status()` - Filter by status (pass, fail, insufficient_evidence)
-- `get_validation_history_for_control()` - Get validation history for specific control
-
-*Findings:*
-- `add_finding()` - Record compliance findings with severity/status
+**`jobrun.py`** - Job run tracking
+- `start_job_run()` - Start a scheduled job
+- `finish_job_run()` - Complete job with status/metrics
+- `get_recent_job_runs()` - Query recent job runs
 
 ### `migrate.py`
 Programmatic Alembic migration control.
