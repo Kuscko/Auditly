@@ -12,7 +12,7 @@ from alembic import context
 from rapidrmf.db import Base
 from rapidrmf.db.models import (
     System, Evidence, Catalog, Control, ControlRequirement,
-    ValidationResult, Finding, EvidenceManifest, EvidenceManifestEntry
+    ValidationResult, Finding, EvidenceManifest, EvidenceManifestEntry, JobRun
 )
 
 # this is the Alembic Config object, which provides
