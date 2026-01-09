@@ -11,6 +11,50 @@ This module provides automated scheduled validation runs. It executes validation
 - Job run tracking with metrics and error handling
 - CLI to inspect recent job runs with filtering and JSON output
 
+## Architecture
+
+The scheduler module uses a **separation of concerns pattern** to isolate business logic from scheduling infrastructure:
+
+### Structure
+```
+rapidrmf/scheduler/
+├── core.py      # Pure validation job logic (no APScheduler dependency)
+├── runner.py    # APScheduler integration wrapper (backward compatible)
+└── README.md
+```
+
+### Benefits
+- **Testability**: Core logic can be tested without APScheduler
+- **Flexibility**: Easy to swap schedulers or run jobs directly
+- **Separation**: Business logic isolated from infrastructure concerns
+- **Backward Compatible**: Existing scheduler code works unchanged
+
+### Usage
+
+**Option 1: Use APScheduler Integration (backward compatible)**
+```python
+from rapidrmf.scheduler.runner import start_scheduler, run_scheduled_validation
+
+# Start background scheduler
+start_scheduler(config_path="config.yaml", env_name="production", cron="0 2 * * *")
+
+# Run single job through scheduler
+run_scheduled_validation(config_path="config.yaml", env_name="production")
+```
+
+**Option 2: Use Core Logic Directly (recommended for custom scheduling)**
+```python
+from rapidrmf.scheduler.core import run_validation_job, run_validation_job_sync
+
+# Async execution
+result = await run_validation_job(config_path="config.yaml", env_name="production")
+
+# Sync execution
+result = run_validation_job_sync(config_path="config.yaml", env_name="production")
+
+# Result contains: {"status": "success", "job_id": 123, "metrics": {...}}
+```
+
 ## Features
 - **Scheduled Validation**: Nightly validation window per environment (configurable via cron)
 - **Job Tracking**: All runs tracked in `job_runs` table with status, timestamps, metrics
