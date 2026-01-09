@@ -209,3 +209,21 @@ class EvidenceManifestEntry(Base):
 
     def __repr__(self):
         return f"<EvidenceManifestEntry(manifest={self.manifest_id}, key={self.key})>"
+
+
+class JobRun(Base):
+    """Scheduler job run state for persistence and metrics."""
+    __tablename__ = "job_runs"
+
+    id = Column(Integer, primary_key=True)
+    job_type = Column(String(100), nullable=False, index=True)  # validation, collection, report
+    environment = Column(String(50), nullable=False, index=True)
+    status = Column(String(20), nullable=False, index=True, default="pending")  # pending, running, success, failed
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    finished_at = Column(DateTime, nullable=True, index=True)
+    error = Column(Text, nullable=True)
+    metrics = Column(JSON, default=dict, nullable=False)
+    attributes = Column(JSON, default=dict, nullable=False)
+
+    def __repr__(self):
+        return f"<JobRun(id={self.id}, type={self.job_type}, env={self.environment}, status={self.status})>"

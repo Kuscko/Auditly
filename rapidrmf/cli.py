@@ -19,6 +19,7 @@ from .cli_policy import policy_app
 from .cli_scan import scan_app
 from .cli_bundle import bundle_app
 from .cli_db import db_app
+from .cli_scheduler import scheduler_app
 
 
 app = typer.Typer(help="RapidRMF utility CLI")
@@ -30,6 +31,7 @@ app.add_typer(policy_app, name="policy")
 app.add_typer(scan_app, name="scan")
 app.add_typer(bundle_app, name="bundle")
 app.add_typer(db_app, name="db")
+app.add_typer(scheduler_app, name="scheduler")
 
 
 @app.command()
