@@ -1,0 +1,17 @@
+environments:
+  postgres-test:
+    description: "Local Postgres test environment"
+    database_url: "postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test"
+    storage:
+      type: "minio"
+      endpoint: "localhost:9000"
+      bucket: "rapidrmf-test"
+      access_key: "minioadmin"
+      secret_key: "minioadmin"
+      secure: false
+
+catalogs:
+  nist-800-53-rev5:
+    path: "catalogs/NIST_SP-800-53_rev5_catalog.json"
+  fedramp-moderate:
+    path: "catalogs/FedRAMP_rev5_MODERATE-baseline-resolved-profile_catalog.json"
