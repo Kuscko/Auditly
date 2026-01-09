@@ -7,6 +7,7 @@ from typing import Iterable, Optional
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from .models import (
     System,
@@ -17,6 +18,7 @@ from .models import (
     Finding,
     ControlRequirement,
     Control,
+    Catalog,
 )
 
 
@@ -25,6 +27,48 @@ class Repository:
 
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    # Catalogs
+    async def get_catalog_by_name(self, name: str) -> Optional[Catalog]:
+        stmt = select(Catalog).where(Catalog.name == name)
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def upsert_catalog(self, name: str, title: str, framework: str, version: str | None = None, baseline: str | None = None, oscal_path: str | None = None, attributes: dict | None = None) -> Catalog:
+        catalog = await self.get_catalog_by_name(name)
+        if catalog:
+            catalog.title = title
+            catalog.framework = framework
+            catalog.version = version
+            catalog.baseline = baseline
+            catalog.oscal_path = oscal_path
+            catalog.attributes = attributes or catalog.attributes
+        else:
+            catalog = Catalog(name=name, title=title, framework=framework, version=version, baseline=baseline, oscal_path=oscal_path, attributes=attributes or {})
+            self.session.add(catalog)
+        await self.session.flush()
+        return catalog
+    
+    # Controls
+    async def get_control_by_id(self, catalog: Catalog, control_id: str) -> Optional[Control]:
+        stmt = select(Control).where(Control.catalog_id == catalog.id, Control.control_id == control_id.upper())
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+    
+    async def upsert_control(self, catalog: Catalog, control_id: str, title: str, family: str, description: str | None = None, remediation: str | None = None, baseline_required: bool = False, attributes: dict | None = None) -> Control:
+        control = await self.get_control_by_id(catalog, control_id)
+        if control:
+            control.title = title
+            control.family = family
+            control.description = description
+            control.remediation = remediation
+            control.baseline_required = baseline_required
+            control.attributes = attributes or control.attributes
+        else:
+            control = Control(catalog=catalog, control_id=control_id.upper(), title=title, family=family, description=description, remediation=remediation, baseline_required=baseline_required, attributes=attributes or {})
+            self.session.add(control)
+        await self.session.flush()
+        return control
 
     # Systems
     async def get_system_by_name(self, name: str) -> Optional[System]:
@@ -64,7 +108,7 @@ class Repository:
     # Manifests
     async def create_manifest(self, system: Optional[System], environment: str, overall_hash: str, notes: str | None = None, attributes: dict | None = None) -> EvidenceManifest:
         manifest = EvidenceManifest(
-            system=system,
+            system_id=system.id if system else None,
             environment=environment,
             overall_hash=overall_hash,
             notes=notes,
@@ -89,10 +133,18 @@ class Repository:
 
     # Validation
     async def add_validation_result(self, system: System, control: Control, status, message: str | None, evidence_keys: list[str], remediation: str | None, metadata: dict | None = None) -> ValidationResult:
+        # Convert status to DB enum if needed
+        from rapidrmf.validators import ValidationStatus as ValidatorStatus
+        if isinstance(status, ValidatorStatus):
+            # Map validator enum to DB enum
+            db_status = ValidationResult.status.type.python_type[status.name]
+        else:
+            db_status = status
+        
         result = ValidationResult(
             system=system,
             control=control,
-            status=status,
+            status=db_status,
             message=message,
             evidence_keys=evidence_keys,
             remediation=remediation,
@@ -128,6 +180,8 @@ class Repository:
         """Get most recent validation results for a system."""
         stmt = select(ValidationResult).where(
             ValidationResult.system_id == system.id
+        ).options(
+            selectinload(ValidationResult.control)
         ).order_by(
             ValidationResult.validated_at.desc()
         ).limit(limit)
@@ -139,6 +193,8 @@ class Repository:
         stmt = select(ValidationResult).where(
             ValidationResult.system_id == system.id,
             ValidationResult.status == status
+        ).options(
+            selectinload(ValidationResult.control)
         ).order_by(
             ValidationResult.validated_at.desc()
         )
@@ -150,6 +206,8 @@ class Repository:
         stmt = select(ValidationResult).where(
             ValidationResult.system_id == system.id,
             ValidationResult.control_id == control.id
+        ).options(
+            selectinload(ValidationResult.control)
         ).order_by(
             ValidationResult.validated_at.desc()
         ).limit(limit)
