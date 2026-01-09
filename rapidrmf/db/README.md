@@ -40,12 +40,27 @@ SQLAlchemy ORM models defining the schema.
 Async repository layer for database operations.
 
 **Key Methods**:
+
+*System & Evidence:*
 - `upsert_system()` - Create/update system records
 - `add_evidence()` - Store evidence metadata
 - `create_manifest()` - Create evidence collection manifest
 - `add_manifest_entries()` - Link evidence to manifests
-- `add_validation_result()` - Store validation outcomes
-- `add_finding()` - Record compliance findings
+
+*Catalogs & Controls (NEW in v0.2):*
+- `upsert_catalog()` - Create/update control catalogs (NIST 800-53, CIS, etc.)
+- `get_catalog_by_name()` - Retrieve catalog by name
+- `upsert_control()` - Create/update control definitions
+- `get_control_by_id()` - Retrieve control by ID
+
+*Validation Results (NEW in v0.2):*
+- `add_validation_result()` - Store control validation outcomes with evidence
+- `get_latest_validation_results()` - Query recent validation results
+- `get_validation_results_by_status()` - Filter by status (pass, fail, insufficient_evidence)
+- `get_validation_history_for_control()` - Get validation history for specific control
+
+*Findings:*
+- `add_finding()` - Record compliance findings with severity/status
 
 ### `migrate.py`
 Programmatic Alembic migration control.
@@ -113,25 +128,55 @@ async with get_async_session() as session:
 ### Using the Repository
 
 ```python
-from rapidrmf.db.repository import upsert_system, add_evidence
+from rapidrmf.db.repository import Repository
+from rapidrmf.db import get_async_session
 
 async with get_async_session() as session:
+    repo = Repository(session)
+    
     # Create/update a system
-    system = await upsert_system(
-        session=session,
+    system = await repo.upsert_system(
         system_id="prod-app-01",
         name="Production Application",
         system_type="web-application"
     )
     
     # Add evidence
-    evidence = await add_evidence(
-        session=session,
-        system_id="prod-app-01",
+    evidence = await repo.add_evidence(
+        system=system,
         evidence_type="terraform",
+        key="terraform-plan",
         source="terraform-state",
         vault_path="s3://evidence/prod-app-01/terraform/state.json"
     )
+    
+    # NEW v0.2: Store validation results
+    catalog = await repo.upsert_catalog(
+        name="nist-800-53-rev5",
+        title="NIST SP 800-53 Rev 5",
+        version="5.1.1"
+    )
+    
+    control = await repo.upsert_control(
+        catalog=catalog,
+        control_id="AC-2",
+        title="Account Management"
+    )
+    
+    result = await repo.add_validation_result(
+        system=system,
+        control=control,
+        status=ValidationStatus.PASS,
+        message="Control requirements met",
+        evidence_keys=["terraform-plan", "audit-log"],
+        remediation=None
+    )
+    
+    # Query validation results
+    latest = await repo.get_latest_validation_results(system, limit=10)
+    passed = await repo.get_validation_results_by_status(system, ValidationStatus.PASS)
+    
+    await session.commit()
 ```
 
 ### Running Migrations
@@ -164,4 +209,43 @@ upgrade()
 - Use SQLite for local development/testing
 - Always use repository methods instead of direct ORM queries
 - Persist evidence metadata to DB; store artifacts in S3/MinIO vault
-- Use `persist_if_db()` helper in CLI commands for optional DB persistence
+- Use `persist_validation_if_db()` helper in CLI commands for optional DB persistence
+
+### CLI Integration (NEW in v0.2)
+
+Commands now support optional database persistence via `--config` and `--env` flags:
+
+```bash
+# Validate controls and persist results to database
+rapidrmf policy validate \
+  --evidence-file evidence.json \
+  --config config.yaml \
+  --env production
+
+# Evidence collection automatically persists when DB configured
+rapidrmf collect terraform \
+  --plan-file plan.json \
+  --config config.yaml \
+  --env production
+```
+
+When `--config` and `--env` are provided:
+- System records are created/updated automatically
+- Evidence metadata is stored in database
+- Validation results are persisted with evidence mappings
+- Controls and catalogs are created on-demand
+
+### Testing
+
+See [tests/integration/README.md](../../tests/integration/README.md) for database integration tests:
+
+```bash
+# Start PostgreSQL test container
+cd tests/integration
+docker-compose -f docker-compose.test.yml up -d
+
+# Run end-to-end test
+python test_postgres_e2e.py
+```
+
+Tests validate all database operations including catalog management, validation persistence, and query methods.
