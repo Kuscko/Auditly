@@ -1,4 +1,5 @@
 import asyncio
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -17,6 +18,19 @@ from rapidrmf.db.models import (
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Override database URL from environment variable or command-line if provided
+# Priority: 1. CLI (-x dbUrl=...), 2. Environment variable, 3. alembic.ini
+db_url = config.get_main_option("sqlalchemy.url")
+if context.get_x_argument(as_dictionary=True).get("dbUrl"):
+    # Command-line override: alembic -x dbUrl=postgresql://... upgrade head
+    db_url = context.get_x_argument(as_dictionary=True)["dbUrl"]
+elif os.getenv("RAPIDRMF_DATABASE_URL"):
+    # Environment variable override
+    db_url = os.getenv("RAPIDRMF_DATABASE_URL")
+
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

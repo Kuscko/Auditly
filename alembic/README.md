@@ -37,22 +37,69 @@ Contains timestamped migration scripts. Each file represents a specific schema c
 
 ## Configuration
 
-Alembic configuration is in `alembic.ini` at the project root:
+Alembic configuration is in `alembic.ini` at the project root. The database URL can be configured in three ways (priority order):
+
+### 1. Command-Line Override (Highest Priority)
+
+```bash
+alembic -x dbUrl=postgresql+psycopg2://user:pass@localhost:5432/rapidrmf upgrade head
+```
+
+Use this for one-off migrations or when you need to target a specific database.
+
+### 2. Environment Variable
+
+```bash
+# Set environment variable
+export RAPIDRMF_DATABASE_URL="postgresql+asyncpg://user:pass@localhost:5432/rapidrmf"
+
+# Then run migrations
+alembic upgrade head
+```
+
+Recommended for production deployments and CI/CD pipelines.
+
+### 3. alembic.ini File (Default)
 
 ```ini
 [alembic]
 script_location = alembic
-sqlalchemy.url = sqlite+aiosqlite:///./dev.db  # Default for autogeneration
+sqlalchemy.url = sqlite+aiosqlite:///./dev.db  # Default for local development
 ```
 
-**Production Usage**: Override the URL at runtime or use environment variable:
+Used when no override is provided. Default is SQLite for local development and migration autogeneration.
+
+### Production Database URLs
+
+**PostgreSQL** (recommended for production):
+```bash
+# Async driver (for async operations)
+postgresql+asyncpg://user:password@localhost:5432/rapidrmf
+
+# Sync driver (for Alembic migrations)
+postgresql+psycopg2://user:password@localhost:5432/rapidrmf
+```
+
+**SQLite** (local development only):
+```bash
+# Async
+sqlite+aiosqlite:///./rapidrmf.db
+
+# Sync
+sqlite:///./rapidrmf.db
+```
+
+### Example: Production Migration
 
 ```bash
-# PostgreSQL
-alembic -x dbUrl=postgresql+psycopg2://user:pass@localhost:5432/rapidrmf upgrade head
+# Set database URL
+export RAPIDRMF_DATABASE_URL="postgresql+psycopg2://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod"
 
-# SQLite
+# Run migrations
 alembic upgrade head
+
+# Or use CLI override
+alembic -x dbUrl="postgresql+psycopg2://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod" upgrade head
 ```
 
 ## Common Operations
