@@ -3,7 +3,18 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, String, Integer, DateTime, Text, JSON, ForeignKey, Boolean, Enum as SQLEnum
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    DateTime,
+    Text,
+    JSON,
+    ForeignKey,
+    Boolean,
+    Enum as SQLEnum,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from enum import Enum
 
@@ -58,6 +69,8 @@ class Evidence(Base):
     # Relationships
     system = relationship("System", back_populates="evidence")
     manifest_entries = relationship("EvidenceManifestEntry", back_populates="evidence", cascade="all, delete-orphan")
+    versions = relationship("EvidenceVersion", back_populates="evidence", cascade="all, delete-orphan")
+    access_logs = relationship("EvidenceAccessLog", back_populates="evidence", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Evidence(id={self.id}, type={self.evidence_type}, system_id={self.system_id})>"
@@ -176,7 +189,7 @@ class EvidenceManifest(Base):
     id = Column(Integer, primary_key=True)
     system_id = Column(Integer, ForeignKey("systems.id"), nullable=True, index=True)
     environment = Column(String(50), nullable=False)  # edge, IL2, IL4, IL5, IL6
-    version = Column(String(10), default="0.1", nullable=False)
+    version = Column(String(10), default="1.0", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     overall_hash = Column(String(64), nullable=False)  # Merkle-tree or overall SHA256
     signed_by = Column(String(255), nullable=True)  # Ed25519 key ID
@@ -209,6 +222,47 @@ class EvidenceManifestEntry(Base):
 
     def __repr__(self):
         return f"<EvidenceManifestEntry(manifest={self.manifest_id}, key={self.key})>"
+
+
+class EvidenceVersion(Base):
+    """Historical versions of evidence for chain-of-custody and drift analysis."""
+
+    __tablename__ = "evidence_versions"
+
+    id = Column(Integer, primary_key=True)
+    evidence_id = Column(Integer, ForeignKey("evidence.id"), nullable=False, index=True)
+    version = Column(Integer, nullable=False)
+    data = Column(JSON, nullable=False)
+    collected_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    collector_version = Column(String(50), nullable=True)
+    signature = Column(Text, nullable=True)
+    attributes = Column(JSON, default=dict, nullable=False)
+
+    __table_args__ = (UniqueConstraint("evidence_id", "version", name="uq_evidence_version"),)
+
+    evidence = relationship("Evidence", back_populates="versions")
+
+    def __repr__(self):
+        return f"<EvidenceVersion(evidence_id={self.evidence_id}, version={self.version})>"
+
+
+class EvidenceAccessLog(Base):
+    """Audit trail for evidence access."""
+
+    __tablename__ = "evidence_access_log"
+
+    id = Column(Integer, primary_key=True)
+    evidence_id = Column(Integer, ForeignKey("evidence.id"), nullable=False, index=True)
+    user_id = Column(String(255), nullable=False)
+    action = Column(String(50), nullable=False)  # read, write, delete
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    ip_address = Column(String(64), nullable=True)
+    attributes = Column(JSON, default=dict, nullable=False)
+
+    evidence = relationship("Evidence", back_populates="access_logs")
+
+    def __repr__(self):
+        return f"<EvidenceAccessLog(evidence_id={self.evidence_id}, action={self.action})>"
 
 
 class JobRun(Base):

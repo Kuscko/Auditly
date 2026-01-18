@@ -3,13 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Iterable
 
+from sqlalchemy import func
+
 from rich import print
 
 from .config import MinioStorageConfig, S3StorageConfig
 from .storage.minio_backend import MinioEvidenceVault
 from .storage.s3_backend import S3EvidenceVault
 from .db import init_db_sync, get_sync_session
-from .db.models import System, Evidence, EvidenceManifest as DBManifest, EvidenceManifestEntry
+from .db.models import System, Evidence, EvidenceManifest as DBManifest, EvidenceManifestEntry, EvidenceVersion
 
 
 def vault_from_envcfg(envcfg):
@@ -44,6 +46,8 @@ def get_db_session(envcfg):
 def persist_manifest_and_artifacts(session, env: str, env_description: str | None, manifest, artifacts: Iterable):
     from datetime import datetime
 
+    collected_dt = datetime.utcfromtimestamp(manifest.created_at)
+
     system = session.query(System).filter_by(name=env).one_or_none()
     if not system:
         system = System(name=env, environment=env, description=env_description, attributes={})
@@ -52,26 +56,52 @@ def persist_manifest_and_artifacts(session, env: str, env_description: str | Non
 
     evidence_rows = []
     for a in artifacts:
+        metadata = a.metadata if isinstance(a.metadata, dict) else {}
+        cleaned_metadata = {k: v for k, v in metadata.items() if k != "_local_path"}
         ev = Evidence(
             system=system,
-            evidence_type=a.metadata.get("kind", "unknown") if isinstance(a.metadata, dict) else "unknown",
+            evidence_type=metadata.get("kind", "unknown") if isinstance(metadata, dict) else "unknown",
             key=a.key,
             vault_path=None,
             filename=a.filename,
             sha256=a.sha256,
             size=a.size,
-            attributes=a.metadata if isinstance(a.metadata, dict) else {},
+            attributes=cleaned_metadata,
         )
         session.add(ev)
-        evidence_rows.append(ev)
-    session.flush()
+        session.flush()
 
-    created_dt = datetime.utcfromtimestamp(manifest.created_at)
+        next_version = (
+            session.query(func.coalesce(func.max(EvidenceVersion.version), 0))
+            .filter(EvidenceVersion.evidence_id == ev.id)
+            .scalar()
+            or 0
+        ) + 1
+
+        version_payload = {
+            "key": a.key,
+            "filename": a.filename,
+            "sha256": a.sha256,
+            "size": a.size,
+            "metadata": cleaned_metadata,
+        }
+
+        version = EvidenceVersion(
+            evidence=ev,
+            version=next_version,
+            data=version_payload,
+            collected_at=collected_dt,
+            collector_version=getattr(manifest, "version", None),
+            attributes={"source": "cli_collect", "environment": env},
+        )
+        session.add(version)
+        evidence_rows.append(ev)
+
     db_manifest = DBManifest(
         system=system,
         environment=manifest.environment,
         version=manifest.version,
-        created_at=created_dt,
+        created_at=collected_dt,
         overall_hash=manifest.overall_hash or manifest.compute_overall_hash(),
         attributes={},
     )
