@@ -30,6 +30,22 @@ try:
 except ImportError:
     AWS_AVAILABLE = False
 
+# Import GCP collectors
+try:
+    from .collectors.gcp import (
+        GCPClient,
+        IAMCollector as GCPIAMCollector,
+        ComputeCollector,
+        StorageCollector,
+        CloudSQLCollector,
+        VPCCollector as GCPVPCCollector,
+        KMSCollector as GCPKMSCollector,
+        LoggingCollector,
+    )
+    GCP_AVAILABLE = True
+except ImportError:
+    GCP_AVAILABLE = False
+
 collect_app = typer.Typer(help="Collect CI/IaC evidence into vault")
 
 
@@ -358,6 +374,160 @@ def collect_aws_cmd(
     persist_if_db(envcfg, env, manifest, artifacts)
     
     typer.echo(f"\n✓ Collected {len(artifacts)} artifact(s) from AWS")
+    typer.echo(f"✓ Manifest: {manifest_key}")
+    if output_dir:
+        typer.echo(f"✓ Evidence files: {output_dir}")
+
+
+@collect_app.command("gcp", help="Collect GCP evidence (IAM, Compute, Storage, etc.)")
+def collect_gcp_cmd(
+    config: Path = typer.Option(..., exists=True, help="Path to config.yaml"),
+    env: str = typer.Option(..., help="Environment key (e.g., production)"),
+    project_id: Optional[str] = typer.Option(None, help="GCP project ID (auto-detect if not provided)"),
+    credentials_path: Optional[Path] = typer.Option(None, exists=True, help="Path to service account JSON"),
+    services: str = typer.Option("iam,compute,storage,sql,vpc,kms,logging", help="Comma-separated services"),
+    output_dir: Optional[Path] = typer.Option(None, help="Output directory for evidence files"),
+):
+    """Collect evidence from GCP services.
+    
+    Supported services: iam, compute, storage, sql, vpc, kms, logging
+    """
+    if not GCP_AVAILABLE:
+        typer.echo("Error: google-cloud libraries not installed. Install with: "
+                   "pip install google-cloud-compute google-cloud-storage google-cloud-iam "
+                   "google-cloud-logging google-cloud-sql google-cloud-kms", err=True)
+        raise typer.Exit(code=1)
+    
+    import json
+    import tempfile
+    from datetime import datetime
+    from .evidence import ArtifactRecord, EvidenceManifest
+    
+    cfg = AppConfig.load(config)
+    if env not in cfg.environments:
+        raise typer.BadParameter(f"Unknown environment: {env}")
+    envcfg = cfg.environments[env]
+    vault = vault_from_envcfg(envcfg)
+    
+    # Parse services
+    service_list = [s.strip().lower() for s in services.split(",")]
+    valid_services = ["iam", "compute", "storage", "sql", "vpc", "kms", "logging"]
+    invalid_services = [s for s in service_list if s not in valid_services]
+    if invalid_services:
+        typer.echo(f"Error: Invalid services {invalid_services}. Valid: {', '.join(valid_services)}", err=True)
+        raise typer.Exit(code=1)
+    
+    # Initialize GCP client
+    try:
+        client = GCPClient(
+            project_id=project_id,
+            credentials_path=str(credentials_path) if credentials_path else None,
+        )
+        project_id = client.project_id
+        typer.echo(f"Connected to GCP project: {project_id}")
+    except Exception as e:
+        typer.echo(f"Error connecting to GCP: {e}", err=True)
+        raise typer.Exit(code=1)
+    
+    # Collect evidence
+    artifacts: list[ArtifactRecord] = []
+    collected_at = datetime.utcnow().isoformat()
+    
+    for service in service_list:
+        typer.echo(f"Collecting evidence from GCP {service}...")
+        
+        try:
+            if service == "iam":
+                collector = GCPIAMCollector(client)
+                evidence = collector.collect_all()
+                summary = f"service_accounts={len(evidence.get('service_accounts', []))}, roles={len(evidence.get('custom_roles', []))}"
+                
+            elif service == "compute":
+                collector = ComputeCollector(client)
+                evidence = collector.collect_all()
+                summary = f"instances={len(evidence.get('instances', []))}, disks={len(evidence.get('disks', []))}, firewalls={len(evidence.get('firewalls', []))}"
+                
+            elif service == "storage":
+                collector = StorageCollector(client)
+                evidence = collector.collect_all()
+                summary = f"buckets={len(evidence.get('buckets', []))}"
+                
+            elif service == "sql":
+                collector = CloudSQLCollector(client)
+                evidence = collector.collect_all()
+                summary = f"instances={len(evidence.get('instances', []))}"
+                
+            elif service == "vpc":
+                collector = GCPVPCCollector(client)
+                evidence = collector.collect_all()
+                summary = f"networks={len(evidence.get('networks', []))}, subnets={len(evidence.get('subnetworks', []))}"
+                
+            elif service == "kms":
+                collector = GCPKMSCollector(client)
+                evidence = collector.collect_all()
+                summary = f"key_rings={len(evidence.get('key_rings', []))}, keys={len(evidence.get('crypto_keys', []))}"
+                
+            elif service == "logging":
+                collector = LoggingCollector(client)
+                evidence = collector.collect_all()
+                summary = f"sinks={len(evidence.get('sinks', []))}, metrics={len(evidence.get('metrics', []))}"
+            
+            # Save evidence to temp file or output dir
+            if output_dir:
+                output_dir.mkdir(parents=True, exist_ok=True)
+                evidence_file = output_dir / f"gcp-{service}-{collected_at}.json"
+                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+            else:
+                evidence_file = Path(tempfile.mktemp(suffix=".json"))
+                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+            
+            # Create artifact record
+            artifact = ArtifactRecord(
+                key=f"evidence/{env}/gcp-{service}-{project_id}.json",
+                filename=f"gcp-{service}-{project_id}.json",
+                sha256=evidence["metadata"]["sha256"],
+                size=evidence_file.stat().st_size,
+                metadata={
+                    "kind": f"gcp-{service}",
+                    "service": service,
+                    "project_id": project_id,
+                    "collected_at": collected_at,
+                    "_local_path": str(evidence_file),
+                }
+            )
+            artifacts.append(artifact)
+            
+            # Upload to vault
+            vault.put_json(artifact.key, evidence, metadata=artifact.metadata)
+            typer.echo(f"  ✓ {summary}")
+            
+        except Exception as e:
+            typer.echo(f"  ✗ Error collecting {service}: {e}", err=True)
+            continue
+    
+    if not artifacts:
+        typer.echo("No evidence collected.", err=True)
+        raise typer.Exit(code=1)
+    
+    # Create manifest
+    manifest = EvidenceManifest(
+        version="1.0",
+        environment=env,
+        created_at=datetime.utcnow().timestamp(),
+        artifacts=artifacts,
+        notes=f"GCP evidence collection: {', '.join(service_list)}",
+    )
+    
+    manifest.compute_overall_hash()
+    
+    # Upload manifest
+    manifest_key = f"manifests/{env}/gcp-{'-'.join(service_list)}-manifest.json"
+    vault.put_json(manifest_key, manifest.to_json(), metadata={"kind": "evidence-manifest"})
+    
+    # Persist to database if configured
+    persist_if_db(envcfg, env, manifest, artifacts)
+    
+    typer.echo(f"\n✓ Collected {len(artifacts)} artifact(s) from GCP")
     typer.echo(f"✓ Manifest: {manifest_key}")
     if output_dir:
         typer.echo(f"✓ Evidence files: {output_dir}")
