@@ -115,15 +115,25 @@ rapidrmf bundle create \
 | **Multi-Enclave** | ✓ Edge/IL2/IL4/IL5/IL6 isolation |
 | **Offline Operation** | ✓ Policy engines (Conftest + OPA WASM) |
 
-## Coming next (roadmap)
+## v0.3 Core Engine Focus
 
-- [ ] AWS, GCP multi-cloud collectors
-- [ ] Continuous compliance monitoring dashboard
-- [ ] POA&M and ATO package generation
-- [ ] HIPAA, PCI DSS, ISO 27001 frameworks
-- [ ] REST API and CI/CD webhooks
-- [ ] Kubernetes deployment and Helm charts
-- See the full [roadmap](ROADMAP.md) for 100+ planned features
+**Philosophy**: Build rock-solid core functionality before user interfaces
+
+**Current Focus**:
+- [ ] AWS evidence collector (IAM, EC2, S3, CloudTrail, VPC, RDS, KMS)
+- [ ] GCP evidence collector (Compute, Storage, IAM, Cloud SQL, Logging)
+- [ ] Evidence lifecycle (versioning, staleness detection, correlation)
+- [ ] Advanced validation (control dependencies, custom validators, findings management)
+- [ ] Performance optimization (caching, parallel collection, incremental validation)
+
+**Deferred to v0.4+** (after core is stable):
+- REST API endpoints (code exists but not prioritized)
+- Web dashboard and UI
+- CI/CD webhook integrations
+- Interactive reports
+
+See [V0.3_CORE_ROADMAP.md](V0.3_CORE_ROADMAP.md) for detailed implementation plan
+Full feature list: [ROADMAP.md](ROADMAP.md)
 
 ## Learn more
 - Architecture and modules: [rapidrmf/README.md](rapidrmf/README.md)
