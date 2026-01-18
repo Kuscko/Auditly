@@ -12,5 +12,20 @@ This package provides collectors for AWS services including:
 
 from .client import AWSClient
 from .iam import IAMCollector
+from .ec2 import EC2Collector
+from .s3 import S3Collector
+from .cloudtrail import CloudTrailCollector
+from .vpc import VPCCollector
+from .rds import RDSCollector
+from .kms import KMSCollector
 
-__all__ = ["AWSClient", "IAMCollector"]
+__all__ = [
+    "AWSClient",
+    "IAMCollector",
+    "EC2Collector",
+    "S3Collector",
+    "CloudTrailCollector",
+    "VPCCollector",
+    "RDSCollector",
+    "KMSCollector",
+]
