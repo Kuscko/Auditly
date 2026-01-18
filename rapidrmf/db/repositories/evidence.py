@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 from typing import Iterable, Optional
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Evidence, EvidenceManifest, EvidenceManifestEntry, System
+from ..models import (
+    Evidence,
+    EvidenceManifest,
+    EvidenceManifestEntry,
+    EvidenceVersion,
+    EvidenceAccessLog,
+    System,
+)
 
 
 class EvidenceRepository:
@@ -85,3 +93,52 @@ class EvidenceRepository:
             )
             self.session.add(entry)
         await self.session.flush()
+
+        async def add_evidence_version(
+            self,
+            evidence: Evidence,
+            data: dict,
+            collector_version: str | None = None,
+            signature: str | None = None,
+            collected_at: Optional[datetime] = None,
+            attributes: dict | None = None,
+        ) -> EvidenceVersion:
+            """Create a new version record for an evidence row."""
+            stmt = select(func.coalesce(func.max(EvidenceVersion.version), 0)).where(
+                EvidenceVersion.evidence_id == evidence.id
+            )
+            res = await self.session.execute(stmt)
+            next_version = (res.scalar_one() or 0) + 1
+
+            version = EvidenceVersion(
+                evidence=evidence,
+                version=next_version,
+                data=data,
+                collected_at=collected_at or datetime.utcnow(),
+                collector_version=collector_version,
+                signature=signature,
+                attributes=attributes or {},
+            )
+            self.session.add(version)
+            await self.session.flush()
+            return version
+
+        async def log_access(
+            self,
+            evidence: Evidence,
+            user_id: str,
+            action: str,
+            ip_address: str | None = None,
+            attributes: dict | None = None,
+        ) -> EvidenceAccessLog:
+            """Log access to evidence for auditability."""
+            entry = EvidenceAccessLog(
+                evidence=evidence,
+                user_id=user_id,
+                action=action,
+                ip_address=ip_address,
+                attributes=attributes or {},
+            )
+            self.session.add(entry)
+            await self.session.flush()
+            return entry

@@ -54,7 +54,7 @@ class EvidenceManifest:
     @staticmethod
     def create(environment: str, artifacts: List[ArtifactRecord], notes: Optional[str] = None) -> "EvidenceManifest":
         m = EvidenceManifest(
-            version="0.1",
+            version="1.0",
             environment=environment,
             created_at=time.time(),
             artifacts=artifacts,
