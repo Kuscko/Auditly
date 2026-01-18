@@ -14,6 +14,13 @@ from .collectors.azure import collect_azure
 from .evidence import ArtifactRecord
 from .cli_common import vault_from_envcfg, persist_if_db
 
+# Import AWS collectors
+try:
+    from .collectors.aws import AWSClient, IAMCollector
+    AWS_AVAILABLE = True
+except ImportError:
+    AWS_AVAILABLE = False
+
 collect_app = typer.Typer(help="Collect CI/IaC evidence into vault")
 
 
@@ -193,3 +200,112 @@ def collect_azure_cmd(
     typer.echo(f"Manifest: {manifest_key}")
     if output_dir:
         typer.echo(f"Evidence files: {output_dir}")
+
+
+@collect_app.command("aws", help="Collect AWS evidence (IAM, EC2, S3, etc.)")
+def collect_aws_cmd(
+    config: Path = typer.Option(..., exists=True, help="Path to config.yaml"),
+    env: str = typer.Option(..., help="Environment key (e.g., production)"),
+    region: str = typer.Option("us-east-1", help="AWS region"),
+    profile: Optional[str] = typer.Option(None, help="AWS CLI profile name"),
+    services: str = typer.Option("iam", help="Comma-separated services to collect (iam, ec2, s3, etc.)"),
+    output_dir: Optional[Path] = typer.Option(None, help="Output directory for evidence files"),
+):
+    """Collect evidence from AWS services."""
+    if not AWS_AVAILABLE:
+        typer.echo("Error: boto3 not installed. Install with: pip install boto3", err=True)
+        raise typer.Exit(code=1)
+    
+    import json
+    import tempfile
+    from datetime import datetime
+    from .evidence import ArtifactRecord, EvidenceManifest
+    
+    cfg = AppConfig.load(config)
+    if env not in cfg.environments:
+        raise typer.BadParameter(f"Unknown environment: {env}")
+    envcfg = cfg.environments[env]
+    vault = vault_from_envcfg(envcfg)
+    
+    # Parse services
+    service_list = [s.strip().lower() for s in services.split(",")]
+    
+    # Initialize AWS client
+    try:
+        client = AWSClient(region=region, profile_name=profile)
+        account_id = client.get_account_id()
+        typer.echo(f"Connected to AWS account: {account_id} (region: {region})")
+    except Exception as e:
+        typer.echo(f"Error connecting to AWS: {e}", err=True)
+        raise typer.Exit(code=1)
+    
+    # Collect evidence
+    artifacts: list[ArtifactRecord] = []
+    collected_at = datetime.utcnow().isoformat()
+    
+    for service in service_list:
+        typer.echo(f"Collecting evidence from AWS {service}...")
+        
+        if service == "iam":
+            iam_collector = IAMCollector(client)
+            evidence = iam_collector.collect_all()
+            
+            # Save evidence to temp file or output dir
+            if output_dir:
+                output_dir.mkdir(parents=True, exist_ok=True)
+                evidence_file = output_dir / f"aws-iam-{collected_at}.json"
+                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+            else:
+                evidence_file = Path(tempfile.mktemp(suffix=".json"))
+                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+            
+            # Create artifact record
+            artifact = ArtifactRecord(
+                key=f"evidence/{env}/aws-iam-{account_id}.json",
+                sha256=evidence["metadata"]["sha256"],
+                size=evidence_file.stat().st_size,
+                metadata={
+                    "kind": "aws-iam",
+                    "service": "iam",
+                    "account_id": account_id,
+                    "region": region,
+                    "collected_at": collected_at,
+                    "users_count": len(evidence["users"]),
+                    "roles_count": len(evidence["roles"]),
+                    "policies_count": len(evidence["policies"]),
+                    "_local_path": str(evidence_file),
+                }
+            )
+            artifacts.append(artifact)
+            
+            # Upload to vault
+            vault.put_json(artifact.key, evidence, metadata=artifact.metadata)
+            typer.echo(f"  ✓ Collected {len(evidence['users'])} users, {len(evidence['roles'])} roles, {len(evidence['policies'])} policies")
+        else:
+            typer.echo(f"  ⚠ Service '{service}' not yet implemented", err=True)
+    
+    # Create manifest
+    manifest = EvidenceManifest(
+        environment=env,
+        artifacts=artifacts,
+        overall_hash=EvidenceManifest.compute_overall_hash([a.sha256 for a in artifacts]),
+        notes=f"AWS evidence collection: {', '.join(service_list)}",
+        attributes={
+            "account_id": account_id,
+            "region": region,
+            "services": service_list,
+            "collected_at": collected_at,
+        }
+    )
+    
+    # Upload manifest
+    manifest_key = f"manifests/{env}/aws-{'-'.join(service_list)}-manifest.json"
+    vault.put_json(manifest_key, manifest.to_json(), metadata={"kind": "evidence-manifest"})
+    
+    # Persist to database if configured
+    persist_if_db(envcfg, env, manifest, artifacts)
+    
+    typer.echo(f"\n✓ Collected {len(artifacts)} artifact(s) from AWS")
+    typer.echo(f"✓ Manifest: {manifest_key}")
+    if output_dir:
+        typer.echo(f"✓ Evidence files: {output_dir}")
