@@ -16,7 +16,16 @@ from .cli_common import vault_from_envcfg, persist_if_db
 
 # Import AWS collectors
 try:
-    from .collectors.aws import AWSClient, IAMCollector
+    from .collectors.aws import (
+        AWSClient,
+        IAMCollector,
+        EC2Collector,
+        S3Collector,
+        CloudTrailCollector,
+        VPCCollector,
+        RDSCollector,
+        KMSCollector,
+    )
     AWS_AVAILABLE = True
 except ImportError:
     AWS_AVAILABLE = False
@@ -208,10 +217,13 @@ def collect_aws_cmd(
     env: str = typer.Option(..., help="Environment key (e.g., production)"),
     region: str = typer.Option("us-east-1", help="AWS region"),
     profile: Optional[str] = typer.Option(None, help="AWS CLI profile name"),
-    services: str = typer.Option("iam", help="Comma-separated services to collect (iam, ec2, s3, etc.)"),
+    services: str = typer.Option("iam,ec2,s3,cloudtrail,vpc,rds,kms", help="Comma-separated services to collect"),
     output_dir: Optional[Path] = typer.Option(None, help="Output directory for evidence files"),
 ):
-    """Collect evidence from AWS services."""
+    """Collect evidence from AWS services.
+    
+    Supported services: iam, ec2, s3, cloudtrail, vpc, rds, kms
+    """
     if not AWS_AVAILABLE:
         typer.echo("Error: boto3 not installed. Install with: pip install boto3", err=True)
         raise typer.Exit(code=1)
@@ -229,6 +241,11 @@ def collect_aws_cmd(
     
     # Parse services
     service_list = [s.strip().lower() for s in services.split(",")]
+    valid_services = ["iam", "ec2", "s3", "cloudtrail", "vpc", "rds", "kms"]
+    invalid_services = [s for s in service_list if s not in valid_services]
+    if invalid_services:
+        typer.echo(f"Error: Invalid services {invalid_services}. Valid: {', '.join(valid_services)}", err=True)
+        raise typer.Exit(code=1)
     
     # Initialize AWS client
     try:
@@ -246,14 +263,46 @@ def collect_aws_cmd(
     for service in service_list:
         typer.echo(f"Collecting evidence from AWS {service}...")
         
-        if service == "iam":
-            iam_collector = IAMCollector(client)
-            evidence = iam_collector.collect_all()
+        try:
+            if service == "iam":
+                collector = IAMCollector(client)
+                evidence = collector.collect_all()
+                summary = f"users={len(evidence.get('users', []))}, roles={len(evidence.get('roles', []))}, policies={len(evidence.get('policies', []))}"
+                
+            elif service == "ec2":
+                collector = EC2Collector(client)
+                evidence = collector.collect_all()
+                summary = f"instances={len(evidence.get('instances', []))}, sg={len(evidence.get('security_groups', []))}, volumes={len(evidence.get('volumes', []))}"
+                
+            elif service == "s3":
+                collector = S3Collector(client)
+                evidence = collector.collect_all()
+                summary = f"buckets={len(evidence.get('buckets', []))}, policies={len(evidence.get('policies', []))}"
+                
+            elif service == "cloudtrail":
+                collector = CloudTrailCollector(client)
+                evidence = collector.collect_all()
+                summary = f"trails={len(evidence.get('trails', []))}, events={len(evidence.get('events', []))}"
+                
+            elif service == "vpc":
+                collector = VPCCollector(client)
+                evidence = collector.collect_all()
+                summary = f"flow_logs={len(evidence.get('flow_logs', []))}, nacls={len(evidence.get('nacls', []))}"
+                
+            elif service == "rds":
+                collector = RDSCollector(client)
+                evidence = collector.collect_all()
+                summary = f"instances={len(evidence.get('instances', []))}, clusters={len(evidence.get('clusters', []))}"
+                
+            elif service == "kms":
+                collector = KMSCollector(client)
+                evidence = collector.collect_all()
+                summary = f"keys={len(evidence.get('keys', []))}, policies={len(evidence.get('policies', []))}"
             
             # Save evidence to temp file or output dir
             if output_dir:
                 output_dir.mkdir(parents=True, exist_ok=True)
-                evidence_file = output_dir / f"aws-iam-{collected_at}.json"
+                evidence_file = output_dir / f"aws-{service}-{collected_at}.json"
                 evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
             else:
                 evidence_file = Path(tempfile.mktemp(suffix=".json"))
@@ -261,18 +310,15 @@ def collect_aws_cmd(
             
             # Create artifact record
             artifact = ArtifactRecord(
-                key=f"evidence/{env}/aws-iam-{account_id}.json",
+                key=f"evidence/{env}/aws-{service}-{account_id}.json",
                 sha256=evidence["metadata"]["sha256"],
                 size=evidence_file.stat().st_size,
                 metadata={
-                    "kind": "aws-iam",
-                    "service": "iam",
+                    "kind": f"aws-{service}",
+                    "service": service,
                     "account_id": account_id,
                     "region": region,
                     "collected_at": collected_at,
-                    "users_count": len(evidence["users"]),
-                    "roles_count": len(evidence["roles"]),
-                    "policies_count": len(evidence["policies"]),
                     "_local_path": str(evidence_file),
                 }
             )
@@ -280,9 +326,15 @@ def collect_aws_cmd(
             
             # Upload to vault
             vault.put_json(artifact.key, evidence, metadata=artifact.metadata)
-            typer.echo(f"  ✓ Collected {len(evidence['users'])} users, {len(evidence['roles'])} roles, {len(evidence['policies'])} policies")
-        else:
-            typer.echo(f"  ⚠ Service '{service}' not yet implemented", err=True)
+            typer.echo(f"  ✓ {summary}")
+            
+        except Exception as e:
+            typer.echo(f"  ✗ Error collecting {service}: {e}", err=True)
+            continue
+    
+    if not artifacts:
+        typer.echo("No evidence collected.", err=True)
+        raise typer.Exit(code=1)
     
     # Create manifest
     manifest = EvidenceManifest(
