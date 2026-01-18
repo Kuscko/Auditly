@@ -1,6 +1,10 @@
 # RapidRMF REST API
 
-Minimal REST API for RapidRMF compliance automation.
+⚠️ **Experimental/Optional Module** - This API is deferred to v0.4+
+
+The current development focus is on core functionality (collectors, validators, evidence management). The REST API exists but is not actively maintained until the core engine is stabilized.
+
+**If you need API access**, the code works but may change significantly as core functionality evolves.
 
 ## Overview
 
