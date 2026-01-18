@@ -25,3 +25,13 @@ class EvidenceVault(ABC):
     @abstractmethod
     def fetch(self, key: str, out_path: Path | str) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def get_json(self, key: str) -> Dict[str, Any]:
+        """Fetch JSON evidence and return as dict."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_metadata(self, key: str) -> Dict[str, Any]:
+        """Get metadata for an evidence artifact."""
+        raise NotImplementedError

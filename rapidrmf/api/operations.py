@@ -274,8 +274,14 @@ def validate_evidence(
                     if kind not in evidence_dict:
                         evidence_dict[kind] = True
     
-    # Run validation
-    validation_results = validate_controls(control_ids, evidence_dict)
+    # Run validation with database_url for access logging
+    database_url = getattr(envcfg, "database_url", None)
+    validation_results = validate_controls(
+        control_ids,
+        evidence_dict,
+        database_url=database_url,
+        user_id="api-validator",
+    )
     
     # Compute summary
     summary = {
