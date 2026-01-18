@@ -60,3 +60,22 @@ class S3EvidenceVault(EvidenceVault):
         p = Path(out_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         self.s3.download_file(self.bucket, key, str(p))
+
+    def get_json(self, key: str) -> Dict[str, Any]:
+        import json
+        response = self.s3.get_object(Bucket=self.bucket, Key=key)
+        data = response["Body"].read()
+        return json.loads(data.decode())
+
+    def get_metadata(self, key: str) -> Dict[str, Any]:
+        try:
+            response = self.s3.head_object(Bucket=self.bucket, Key=key)
+            return {
+                "size": response.get("ContentLength"),
+                "last_modified": response.get("LastModified"),
+                "etag": response.get("ETag"),
+                "content_type": response.get("ContentType"),
+                "metadata": response.get("Metadata", {}),
+            }
+        except Exception:
+            return {}

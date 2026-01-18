@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
+from .db import get_sync_session, init_db_sync
+from .db.models import Evidence as DBEvidence
+from .evidence_lifecycle import EvidenceLifecycleManager
+
 
 class ValidationStatus(Enum):
     PASS = "pass"
@@ -444,6 +448,8 @@ def validate_controls(
     control_ids: List[str],
     evidence: Dict[str, Any],
     system_state: Optional[Dict[str, Any]] = None,
+    database_url: Optional[str] = None,
+    user_id: str = "validator",
 ) -> Dict[str, ValidationResult]:
     """
     Validate multiple controls against available evidence.
@@ -452,12 +458,46 @@ def validate_controls(
         control_ids: List of control IDs to validate
         evidence: Evidence dict (keys are evidence types)
         system_state: Optional live system state (unused in simple validator)
+        database_url: Optional database URL for access logging
+        user_id: User/system identifier for access logs
     
     Returns:
         Dict of control_id -> ValidationResult
     """
     evidence_keys = set(evidence.keys())
     results = {}
+    
+    # Log evidence access if database available
+    if database_url:
+        try:
+            init_db_sync(database_url)
+            session = get_sync_session()
+            lifecycle_mgr = EvidenceLifecycleManager(session)
+            
+            # Log access for each evidence artifact used in validation
+            for evidence_type, evidence_data in evidence.items():
+                if isinstance(evidence_data, dict) and "sha256" in evidence_data:
+                    # Find evidence by hash
+                    evidence_records = session.query(DBEvidence).filter_by(
+                        sha256=evidence_data["sha256"]
+                    ).all()
+                    
+                    for ev in evidence_records:
+                        lifecycle_mgr.log_evidence_access(
+                            evidence_id=ev.id,
+                            user_id=user_id,
+                            action="validate",
+                            attributes={
+                                "control_ids": control_ids,
+                                "evidence_type": evidence_type,
+                            }
+                        )
+            
+            session.commit()
+            session.close()
+        except Exception:
+            # Silently continue if access logging fails
+            pass
     
     for cid in control_ids:
         cid_upper = cid.upper()

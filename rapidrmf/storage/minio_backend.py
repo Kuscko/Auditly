@@ -58,3 +58,24 @@ class MinioEvidenceVault(EvidenceVault):
         p = Path(out_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         self.client.fget_object(self.bucket, key, str(p))
+
+    def get_json(self, key: str) -> Dict[str, Any]:
+        import json
+        response = self.client.get_object(self.bucket, key)
+        data = response.read()
+        response.close()
+        response.release_conn()
+        return json.loads(data.decode())
+
+    def get_metadata(self, key: str) -> Dict[str, Any]:
+        try:
+            stat = self.client.stat_object(self.bucket, key)
+            return {
+                "size": stat.size,
+                "last_modified": stat.last_modified,
+                "etag": stat.etag,
+                "content_type": stat.content_type,
+                "metadata": stat.metadata or {},
+            }
+        except S3Error:
+            return {}
