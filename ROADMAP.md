@@ -7,8 +7,8 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 1: Evidence Collection Expansion (Critical)
 
 ### Multi-Cloud Collectors
-- [ ] **AWS Collector**: EC2, RDS, S3, IAM, CloudTrail, Config, Secrets Manager, VPC Flow Logs
-- [ ] **Google Cloud Collector**: Compute, Cloud SQL, Cloud Storage, IAM, Cloud Audit Logs, VPC Flow Logs
+- [x] **AWS Collector**: EC2, RDS, S3, IAM, CloudTrail, Config, Secrets Manager, VPC Flow Logs
+- [x] **Google Cloud Collector**: Compute, Cloud SQL, Cloud Storage, IAM, Cloud Audit Logs, VPC Flow Logs
 - [ ] **AWS GovCloud Specific**: Region detection, compliance-tagged resources, FedRAMP baseline alignment
 - [ ] **Azure GovCloud Specific**: Fairfax region support, DoD IL5/IL6 resource isolation
 
@@ -42,20 +42,20 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 2: Evidence Management & Persistence (High Priority)
 
 ### Database Backend
- - [ ] **PostgreSQL Support**: Replace file-based storage with relational database
+ - [x] **PostgreSQL Support**: Replace file-based storage with relational database
 - [ ] **Azure Cosmos DB**: Multi-region, hierarchical partition keys for tenant/enclave isolation
 - [ ] **DynamoDB Support**: For AWS-native deployments
- - [ ] **Migration Tools**: File-based → database, Alembic migrations, backward compatibility
+ - [x] **Migration Tools**: File-based → database, Alembic migrations, backward compatibility
 
 ### Evidence Lifecycle
-- [ ] **Versioning**: Track historical changes to evidence (who, what, when, why)
+- [x] **Versioning**: Track historical changes to evidence (who, what, when, why)
 - [ ] **Lineage Tracking**: Show evidence provenance (source system → collector → vault → validation)
-- [ ] **Staleness Detection**: Auto-flag evidence older than compliance threshold (e.g., 30 days for IAM)
+- [x] **Staleness Detection**: Auto-flag evidence older than compliance threshold (e.g., 30 days for IAM)
 - [ ] **Expiry Management**: Automatic purge policies by evidence type and sensitivity
-- [ ] **Chain of Custody**: Digital signatures, timestamps, audit trail of access/modification
+- [x] **Chain of Custody**: Digital signatures, timestamps, audit trail of access/modification
 
 ### Evidence Correlation
-- [ ] **Deduplication**: Detect and merge equivalent evidence from multiple sources
+- [x] **Deduplication**: Detect and merge equivalent evidence from multiple sources
 - [ ] **Cross-System Correlation**: Link related evidence (e.g., user access in AD + AWS + Azure)
 - [ ] **Evidence Quality Scoring**: Confidence levels for evidence freshness, redundancy, completeness
 - [ ] **Gap Detection**: Identify missing evidence types for specific controls
@@ -71,8 +71,8 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 ## Phase 3: Control Validation Engine (High Priority)
 
 ### Validation Modes
-- [ ] **Continuous Compliance**: Real-time validation as evidence arrives
- - [ ] **Scheduled Validation**: Nightly/weekly batch validation runs
+- [x] **Continuous Compliance**: Real-time validation as evidence arrives
+ - [x] **Scheduled Validation**: Nightly/weekly batch validation runs
 - [ ] **On-Demand Validation**: User-triggered validation for specific controls/systems
 - [ ] **Predictive Validation**: ML-based model to predict compliance drift before it occurs
 
