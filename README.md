@@ -120,9 +120,9 @@ rapidrmf bundle create \
 **Philosophy**: Build rock-solid core functionality before user interfaces
 
 **Current Focus**:
-- [ ] AWS evidence collector (IAM, EC2, S3, CloudTrail, VPC, RDS, KMS)
-- [ ] GCP evidence collector (Compute, Storage, IAM, Cloud SQL, Logging)
-- [ ] Evidence lifecycle (versioning, staleness detection, correlation)
+- [x] AWS evidence collector (IAM, EC2, S3, CloudTrail, VPC, RDS, KMS)
+- [x] GCP evidence collector (Compute, Storage, IAM, Cloud SQL, Logging)
+- [x] Evidence lifecycle (versioning, staleness detection, correlation)
 - [ ] Advanced validation (control dependencies, custom validators, findings management)
 - [ ] Performance optimization (caching, parallel collection, incremental validation)
 
