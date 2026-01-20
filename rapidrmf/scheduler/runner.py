@@ -56,7 +56,7 @@ def run_scheduled_validation(config_path: str, env_name: str) -> None:
     """
     try:
         result = run_validation_job_sync(config_path, env_name)
-        
+
         if result["status"] == "success":
             logger.info("Scheduled validation succeeded (env=%s)", env_name)
         else:
@@ -67,4 +67,3 @@ def run_scheduled_validation(config_path: str, env_name: str) -> None:
             )
     except Exception as exc:
         logger.exception("Unexpected error in scheduled validation (env=%s): %s", env_name, exc)
-

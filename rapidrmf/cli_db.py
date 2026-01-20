@@ -21,7 +21,9 @@ def db_upgrade(
 
 @db_app.command("migrate-from-files", help="Migrate file-based manifests into database")
 def db_migrate_from_files(
-    manifest_dir: Path = typer.Option(Path(".rapidrmf_manifests"), help="Directory containing manifest JSON files"),
+    manifest_dir: Path = typer.Option(
+        Path(".rapidrmf_manifests"), help="Directory containing manifest JSON files"
+    ),
     database_url: str = typer.Option(..., help="Database URL for connection"),
 ):
     """Import existing file-based manifests and artifacts into the database."""

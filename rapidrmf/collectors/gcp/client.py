@@ -8,10 +8,11 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    from google.cloud import compute_v1, storage, iam_credentials_v1, resourcemanager_v3
-    from google.oauth2 import service_account
     from google.auth import default as google_auth_default
     from google.auth.exceptions import DefaultCredentialsError
+    from google.cloud import compute_v1, iam_credentials_v1, resourcemanager_v3, storage
+    from google.oauth2 import service_account
+
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
@@ -20,7 +21,7 @@ except ImportError:
 
 class GCPClient:
     """GCP client wrapper for managing Google Cloud API clients.
-    
+
     Handles:
     - Credential management (service account, application default credentials)
     - Project and organization context
@@ -58,14 +59,14 @@ class GCPClient:
             self.credentials = service_account.Credentials.from_service_account_file(
                 credentials_path
             )
-            if not project_id and hasattr(self.credentials, 'project_id'):
+            if not project_id and hasattr(self.credentials, "project_id"):
                 self.project_id = self.credentials.project_id
         else:
             try:
                 self.credentials, detected_project = google_auth_default()
                 if not project_id:
                     self.project_id = detected_project
-            except DefaultCredentialsError as e:
+            except DefaultCredentialsError:
                 logger.error(
                     "No GCP credentials found. Set GOOGLE_APPLICATION_CREDENTIALS "
                     "or provide credentials_path."
@@ -85,9 +86,7 @@ class GCPClient:
             Compute Engine client
         """
         if "compute" not in self._clients:
-            self._clients["compute"] = compute_v1.InstancesClient(
-                credentials=self.credentials
-            )
+            self._clients["compute"] = compute_v1.InstancesClient(credentials=self.credentials)
             logger.debug("Created Compute Engine client")
         return self._clients["compute"]
 
@@ -160,11 +159,13 @@ class GCPClient:
             client = self.get_resource_manager_client()
             projects = []
             for project in client.search_projects():
-                projects.append({
-                    "project_id": project.project_id,
-                    "name": project.display_name,
-                    "state": project.state.name,
-                })
+                projects.append(
+                    {
+                        "project_id": project.project_id,
+                        "name": project.display_name,
+                        "state": project.state.name,
+                    }
+                )
             logger.debug("Found %d GCP projects", len(projects))
             return projects
         except Exception as e:

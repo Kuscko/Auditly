@@ -10,12 +10,10 @@ Collects EC2 evidence including:
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
+from ..common import finalize_evidence
 from .client import AWSClient
 
 logger = logging.getLogger(__name__)
@@ -46,7 +44,7 @@ class EC2Collector:
         """
         logger.info("Starting AWS EC2 evidence collection")
 
-        evidence = {
+        data = {
             "instances": self.collect_instances(),
             "security_groups": self.collect_security_groups(),
             "volumes": self.collect_volumes(),
@@ -55,17 +53,13 @@ class EC2Collector:
             "vpcs": self.collect_vpcs(),
             "subnets": self.collect_subnets(),
             "network_acls": self.collect_network_acls(),
-            "metadata": {
-                "collected_at": datetime.utcnow().isoformat(),
-                "account_id": self.client.get_account_id(),
-                "region": self.client.region,
-                "collector": "aws-ec2",
-                "version": "1.0.0",
-            },
         }
-
-        evidence_json = json.dumps(evidence, sort_keys=True, default=str)
-        evidence["metadata"]["sha256"] = hashlib.sha256(evidence_json.encode()).hexdigest()
+        evidence = finalize_evidence(
+            data,
+            collector="aws-ec2",
+            account_id=self.client.get_account_id(),
+            region=self.client.region,
+        )
 
         logger.info(
             "EC2 collection complete: %d instances, %d security groups, %d volumes",
@@ -85,34 +79,42 @@ class EC2Collector:
             for page in paginator.paginate():
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
-                        instances.append({
-                            "instance_id": instance["InstanceId"],
-                            "instance_type": instance["InstanceType"],
-                            "state": instance["State"]["Name"],
-                            "key_name": instance.get("KeyName"),
-                            "security_groups": [sg["GroupId"] for sg in instance.get("SecurityGroups", [])],
-                            "public_ip": instance.get("PublicIpAddress"),
-                            "private_ip": instance.get("PrivateIpAddress"),
-                            "vpc_id": instance.get("VpcId"),
-                            "subnet_id": instance.get("SubnetId"),
-                            "launch_time": instance["LaunchTime"].isoformat(),
-                            "monitoring_enabled": instance.get("Monitoring", {}).get("State") == "enabled",
-                            "source_dest_check": instance.get("SourceDestCheck"),
-                            "ebs_optimized": instance.get("EbsOptimized"),
-                            "detailed_monitoring": instance.get("Monitoring", {}).get("State") == "enabled",
-                            "iam_instance_profile": instance.get("IamInstanceProfile"),
-                            "tags": {t["Key"]: t["Value"] for t in instance.get("Tags", [])},
-                            "block_device_mappings": [
-                                {
-                                    "device_name": bdm.get("DeviceName"),
-                                    "ebs": {
-                                        "volume_id": bdm.get("Ebs", {}).get("VolumeId"),
-                                        "delete_on_termination": bdm.get("Ebs", {}).get("DeleteOnTermination"),
+                        instances.append(
+                            {
+                                "instance_id": instance["InstanceId"],
+                                "instance_type": instance["InstanceType"],
+                                "state": instance["State"]["Name"],
+                                "key_name": instance.get("KeyName"),
+                                "security_groups": [
+                                    sg["GroupId"] for sg in instance.get("SecurityGroups", [])
+                                ],
+                                "public_ip": instance.get("PublicIpAddress"),
+                                "private_ip": instance.get("PrivateIpAddress"),
+                                "vpc_id": instance.get("VpcId"),
+                                "subnet_id": instance.get("SubnetId"),
+                                "launch_time": instance["LaunchTime"].isoformat(),
+                                "monitoring_enabled": instance.get("Monitoring", {}).get("State")
+                                == "enabled",
+                                "source_dest_check": instance.get("SourceDestCheck"),
+                                "ebs_optimized": instance.get("EbsOptimized"),
+                                "detailed_monitoring": instance.get("Monitoring", {}).get("State")
+                                == "enabled",
+                                "iam_instance_profile": instance.get("IamInstanceProfile"),
+                                "tags": {t["Key"]: t["Value"] for t in instance.get("Tags", [])},
+                                "block_device_mappings": [
+                                    {
+                                        "device_name": bdm.get("DeviceName"),
+                                        "ebs": {
+                                            "volume_id": bdm.get("Ebs", {}).get("VolumeId"),
+                                            "delete_on_termination": bdm.get("Ebs", {}).get(
+                                                "DeleteOnTermination"
+                                            ),
+                                        },
                                     }
-                                }
-                                for bdm in instance.get("BlockDeviceMappings", [])
-                            ],
-                        })
+                                    for bdm in instance.get("BlockDeviceMappings", [])
+                                ],
+                            }
+                        )
 
             logger.debug("Collected %d EC2 instances", len(instances))
         except ClientError as e:
@@ -128,19 +130,22 @@ class EC2Collector:
             paginator = self.ec2.get_paginator("describe_security_groups")
             for page in paginator.paginate():
                 for sg in page["SecurityGroups"]:
-                    security_groups.append({
-                        "group_id": sg["GroupId"],
-                        "group_name": sg["GroupName"],
-                        "vpc_id": sg.get("VpcId"),
-                        "description": sg.get("Description"),
-                        "ingress_rules": [
-                            self._format_rule(rule) for rule in sg.get("IpPermissions", [])
-                        ],
-                        "egress_rules": [
-                            self._format_rule(rule) for rule in sg.get("IpPermissionsEgress", [])
-                        ],
-                        "tags": {t["Key"]: t["Value"] for t in sg.get("Tags", [])},
-                    })
+                    security_groups.append(
+                        {
+                            "group_id": sg["GroupId"],
+                            "group_name": sg["GroupName"],
+                            "vpc_id": sg.get("VpcId"),
+                            "description": sg.get("Description"),
+                            "ingress_rules": [
+                                self._format_rule(rule) for rule in sg.get("IpPermissions", [])
+                            ],
+                            "egress_rules": [
+                                self._format_rule(rule)
+                                for rule in sg.get("IpPermissionsEgress", [])
+                            ],
+                            "tags": {t["Key"]: t["Value"] for t in sg.get("Tags", [])},
+                        }
+                    )
 
             logger.debug("Collected %d security groups", len(security_groups))
         except ClientError as e:
@@ -156,26 +161,28 @@ class EC2Collector:
             paginator = self.ec2.get_paginator("describe_volumes")
             for page in paginator.paginate():
                 for volume in page["Volumes"]:
-                    volumes.append({
-                        "volume_id": volume["VolumeId"],
-                        "size": volume["Size"],
-                        "volume_type": volume["VolumeType"],
-                        "state": volume["State"],
-                        "availability_zone": volume["AvailabilityZone"],
-                        "encrypted": volume["Encrypted"],
-                        "iops": volume.get("Iops"),
-                        "throughput": volume.get("Throughput"),
-                        "kms_key_id": volume.get("KmsKeyId"),
-                        "attachments": [
-                            {
-                                "instance_id": att["InstanceId"],
-                                "device": att["Device"],
-                                "state": att["State"],
-                            }
-                            for att in volume.get("Attachments", [])
-                        ],
-                        "tags": {t["Key"]: t["Value"] for t in volume.get("Tags", [])},
-                    })
+                    volumes.append(
+                        {
+                            "volume_id": volume["VolumeId"],
+                            "size": volume["Size"],
+                            "volume_type": volume["VolumeType"],
+                            "state": volume["State"],
+                            "availability_zone": volume["AvailabilityZone"],
+                            "encrypted": volume["Encrypted"],
+                            "iops": volume.get("Iops"),
+                            "throughput": volume.get("Throughput"),
+                            "kms_key_id": volume.get("KmsKeyId"),
+                            "attachments": [
+                                {
+                                    "instance_id": att["InstanceId"],
+                                    "device": att["Device"],
+                                    "state": att["State"],
+                                }
+                                for att in volume.get("Attachments", [])
+                            ],
+                            "tags": {t["Key"]: t["Value"] for t in volume.get("Tags", [])},
+                        }
+                    )
 
             logger.debug("Collected %d EBS volumes", len(volumes))
         except ClientError as e:
@@ -191,18 +198,20 @@ class EC2Collector:
             paginator = self.ec2.get_paginator("describe_snapshots")
             for page in paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
-                    snapshots.append({
-                        "snapshot_id": snapshot["SnapshotId"],
-                        "volume_id": snapshot.get("VolumeId"),
-                        "state": snapshot["State"],
-                        "start_time": snapshot["StartTime"].isoformat(),
-                        "size": snapshot["VolumeSize"],
-                        "encrypted": snapshot["Encrypted"],
-                        "progress": snapshot.get("Progress"),
-                        "description": snapshot.get("Description"),
-                        "public": snapshot.get("Public", False),
-                        "tags": {t["Key"]: t["Value"] for t in snapshot.get("Tags", [])},
-                    })
+                    snapshots.append(
+                        {
+                            "snapshot_id": snapshot["SnapshotId"],
+                            "volume_id": snapshot.get("VolumeId"),
+                            "state": snapshot["State"],
+                            "start_time": snapshot["StartTime"].isoformat(),
+                            "size": snapshot["VolumeSize"],
+                            "encrypted": snapshot["Encrypted"],
+                            "progress": snapshot.get("Progress"),
+                            "description": snapshot.get("Description"),
+                            "public": snapshot.get("Public", False),
+                            "tags": {t["Key"]: t["Value"] for t in snapshot.get("Tags", [])},
+                        }
+                    )
 
             logger.debug("Collected %d EBS snapshots", len(snapshots))
         except ClientError as e:
@@ -217,13 +226,17 @@ class EC2Collector:
         try:
             response = self.ec2.describe_key_pairs()
             for kp in response.get("KeyPairs", []):
-                key_pairs.append({
-                    "key_name": kp["KeyName"],
-                    "key_fingerprint": kp.get("KeyFingerprint"),
-                    "key_type": kp.get("KeyType"),
-                    "create_time": kp.get("CreateTime", "").isoformat() if kp.get("CreateTime") else None,
-                    "tags": {t["Key"]: t["Value"] for t in kp.get("Tags", [])},
-                })
+                key_pairs.append(
+                    {
+                        "key_name": kp["KeyName"],
+                        "key_fingerprint": kp.get("KeyFingerprint"),
+                        "key_type": kp.get("KeyType"),
+                        "create_time": kp.get("CreateTime", "").isoformat()
+                        if kp.get("CreateTime")
+                        else None,
+                        "tags": {t["Key"]: t["Value"] for t in kp.get("Tags", [])},
+                    }
+                )
 
             logger.debug("Collected %d key pairs", len(key_pairs))
         except ClientError as e:
@@ -239,14 +252,16 @@ class EC2Collector:
             paginator = self.ec2.get_paginator("describe_vpcs")
             for page in paginator.paginate():
                 for vpc in page["Vpcs"]:
-                    vpcs.append({
-                        "vpc_id": vpc["VpcId"],
-                        "cidr_block": vpc["CidrBlock"],
-                        "state": vpc["State"],
-                        "is_default": vpc["IsDefault"],
-                        "dns_hostnames": vpc.get("Ipv6CidrBlockAssociationSet", []),
-                        "tags": {t["Key"]: t["Value"] for t in vpc.get("Tags", [])},
-                    })
+                    vpcs.append(
+                        {
+                            "vpc_id": vpc["VpcId"],
+                            "cidr_block": vpc["CidrBlock"],
+                            "state": vpc["State"],
+                            "is_default": vpc["IsDefault"],
+                            "dns_hostnames": vpc.get("Ipv6CidrBlockAssociationSet", []),
+                            "tags": {t["Key"]: t["Value"] for t in vpc.get("Tags", [])},
+                        }
+                    )
 
             logger.debug("Collected %d VPCs", len(vpcs))
         except ClientError as e:
@@ -262,15 +277,17 @@ class EC2Collector:
             paginator = self.ec2.get_paginator("describe_subnets")
             for page in paginator.paginate():
                 for subnet in page["Subnets"]:
-                    subnets.append({
-                        "subnet_id": subnet["SubnetId"],
-                        "vpc_id": subnet["VpcId"],
-                        "cidr_block": subnet["CidrBlock"],
-                        "availability_zone": subnet["AvailabilityZone"],
-                        "available_ip_address_count": subnet["AvailableIpAddressCount"],
-                        "map_public_ip_on_launch": subnet.get("MapPublicIpOnLaunch"),
-                        "tags": {t["Key"]: t["Value"] for t in subnet.get("Tags", [])},
-                    })
+                    subnets.append(
+                        {
+                            "subnet_id": subnet["SubnetId"],
+                            "vpc_id": subnet["VpcId"],
+                            "cidr_block": subnet["CidrBlock"],
+                            "availability_zone": subnet["AvailabilityZone"],
+                            "available_ip_address_count": subnet["AvailableIpAddressCount"],
+                            "map_public_ip_on_launch": subnet.get("MapPublicIpOnLaunch"),
+                            "tags": {t["Key"]: t["Value"] for t in subnet.get("Tags", [])},
+                        }
+                    )
 
             logger.debug("Collected %d subnets", len(subnets))
         except ClientError as e:
@@ -286,22 +303,24 @@ class EC2Collector:
             paginator = self.ec2.get_paginator("describe_network_acls")
             for page in paginator.paginate():
                 for nacl in page["NetworkAcls"]:
-                    nacls.append({
-                        "network_acl_id": nacl["NetworkAclId"],
-                        "vpc_id": nacl["VpcId"],
-                        "is_default": nacl["IsDefault"],
-                        "ingress_entries": [
-                            self._format_nacl_entry(entry)
-                            for entry in nacl.get("Entries", [])
-                            if not entry.get("Egress", False)
-                        ],
-                        "egress_entries": [
-                            self._format_nacl_entry(entry)
-                            for entry in nacl.get("Entries", [])
-                            if entry.get("Egress", False)
-                        ],
-                        "tags": {t["Key"]: t["Value"] for t in nacl.get("Tags", [])},
-                    })
+                    nacls.append(
+                        {
+                            "network_acl_id": nacl["NetworkAclId"],
+                            "vpc_id": nacl["VpcId"],
+                            "is_default": nacl["IsDefault"],
+                            "ingress_entries": [
+                                self._format_nacl_entry(entry)
+                                for entry in nacl.get("Entries", [])
+                                if not entry.get("Egress", False)
+                            ],
+                            "egress_entries": [
+                                self._format_nacl_entry(entry)
+                                for entry in nacl.get("Entries", [])
+                                if entry.get("Egress", False)
+                            ],
+                            "tags": {t["Key"]: t["Value"] for t in nacl.get("Tags", [])},
+                        }
+                    )
 
             logger.debug("Collected %d network ACLs", len(nacls))
         except ClientError as e:
@@ -342,5 +361,5 @@ class EC2Collector:
             "port_range": {
                 "from": entry.get("PortRange", {}).get("From"),
                 "to": entry.get("PortRange", {}).get("To"),
-            }
+            },
         }

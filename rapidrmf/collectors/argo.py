@@ -37,16 +37,16 @@ def list_workflows(
     return data.get("items", [])
 
 
-def get_workflow(base_url: str, namespace: str, name: str, token: Optional[str] = None) -> Dict[str, Any]:
+def get_workflow(
+    base_url: str, namespace: str, name: str, token: Optional[str] = None
+) -> Dict[str, Any]:
     url = f"{base_url}/api/v1/workflows/{namespace}/{name}"
     r = requests.get(url, headers=_argo_headers(token), timeout=30)
     r.raise_for_status()
     return r.json()
 
 
-def get_workflow_logs(
-    base_url: str, namespace: str, name: str, token: Optional[str] = None
-) -> str:
+def get_workflow_logs(base_url: str, namespace: str, name: str, token: Optional[str] = None) -> str:
     url = f"{base_url}/api/v1/workflows/{namespace}/{name}/log"
     r = requests.get(url, headers=_argo_headers(token), timeout=60)
     r.raise_for_status()
@@ -148,7 +148,9 @@ def collect_argo(
             # This is a simplified approach; production may need S3 direct access
             try:
                 node_id = art_meta.get("node", "unknown")
-                art_path = download_artifact(base_url, namespace, wf.name, node_id, art_name, tdir, token)
+                art_path = download_artifact(
+                    base_url, namespace, wf.name, node_id, art_name, tdir, token
+                )
                 if art_path:
                     records.append(
                         ArtifactRecord(

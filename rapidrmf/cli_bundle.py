@@ -5,9 +5,16 @@ from pathlib import Path
 import typer
 from rich import print
 
-from .config import AppConfig
-from .bundles import generate_ed25519_keypair, save_keypair, load_private_key, load_public_key, create_bundle, verify_bundle
+from .bundles import (
+    create_bundle,
+    generate_ed25519_keypair,
+    load_private_key,
+    load_public_key,
+    save_keypair,
+    verify_bundle,
+)
 from .cli_common import vault_from_envcfg
+from .config import AppConfig
 
 bundle_app = typer.Typer(help="Air-gap bundles (keygen, create, verify, import)")
 
@@ -52,7 +59,9 @@ def bundle_create(
         files.append((out_file, k))
 
     sk = load_private_key(private_key_path)
-    create_bundle(environment=env, files=files, out_path=out_path, private_key=sk, note=note or None)
+    create_bundle(
+        environment=env, files=files, out_path=out_path, private_key=sk, note=note or None
+    )
     print(f"[green]Created bundle at {out_path} with {len(files)} file(s)")
 
 
@@ -63,7 +72,9 @@ def bundle_verify_cmd(
 ):
     vk = load_public_key(public_key_path)
     manifest = verify_bundle(bundle_path, vk)
-    print(f"[green]Bundle OK for environment '{manifest.environment}', items: {len(manifest.items)}")
+    print(
+        f"[green]Bundle OK for environment '{manifest.environment}', items: {len(manifest.items)}"
+    )
 
 
 @bundle_app.command("import", help="Verify bundle and import into vault")

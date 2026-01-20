@@ -9,12 +9,11 @@ Collects KMS evidence including:
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
+from ..common import finalize_evidence
 from .client import AWSClient
 
 logger = logging.getLogger(__name__)
@@ -45,20 +44,16 @@ class KMSCollector:
         """
         logger.info("Starting AWS KMS evidence collection")
 
-        evidence = {
+        data = {
             "keys": self.collect_keys(),
             "aliases": self.collect_aliases(),
-            "metadata": {
-                "collected_at": datetime.utcnow().isoformat(),
-                "account_id": self.client.get_account_id(),
-                "region": self.client.region,
-                "collector": "aws-kms",
-                "version": "1.0.0",
-            },
         }
-
-        evidence_json = json.dumps(evidence, sort_keys=True, default=str)
-        evidence["metadata"]["sha256"] = hashlib.sha256(evidence_json.encode()).hexdigest()
+        evidence = finalize_evidence(
+            data,
+            collector="aws-kms",
+            account_id=self.client.get_account_id(),
+            region=self.client.region,
+        )
 
         logger.info("KMS collection complete: %d keys", len(evidence["keys"]))
 
@@ -82,12 +77,12 @@ class KMSCollector:
 
         return keys
 
-    def _get_key_metadata(self, key_id: str) -> Optional[dict[str, Any]]:
+    def _get_key_metadata(self, key_id: str) -> dict[str, Any] | None:
         """Get detailed metadata for a KMS key."""
         try:
             desc_response = self.kms.describe_key(KeyId=key_id)
             key_metadata = desc_response.get("KeyMetadata", {})
-            
+
             # Get key policy
             policy_response = self.kms.get_key_policy(KeyId=key_id, PolicyName="default")
             policy = json.loads(policy_response.get("Policy", "{}"))
@@ -107,7 +102,9 @@ class KMSCollector:
                 "key_usage": key_metadata.get("KeyUsage"),
                 "key_spec": key_metadata.get("KeySpec"),
                 "multi_region": key_metadata.get("MultiRegion", False),
-                "creation_date": key_metadata.get("CreationDate", "").isoformat() if key_metadata.get("CreationDate") else None,
+                "creation_date": key_metadata.get("CreationDate", "").isoformat()
+                if key_metadata.get("CreationDate")
+                else None,
                 "customer_master_key_spec": key_metadata.get("CustomerMasterKeySpec"),
                 "encryption_algorithms": key_metadata.get("EncryptionAlgorithms", []),
                 "signing_algorithms": key_metadata.get("SigningAlgorithms", []),
@@ -127,14 +124,18 @@ class KMSCollector:
             paginator = self.kms.get_paginator("list_grants")
             for page in paginator.paginate(KeyId=key_id):
                 for grant in page.get("Grants", []):
-                    grants.append({
-                        "grant_id": grant.get("GrantId"),
-                        "grantee_principal": grant.get("GranteePrincipal"),
-                        "operations": grant.get("Operations", []),
-                        "creation_date": grant.get("CreationDate", "").isoformat() if grant.get("CreationDate") else None,
-                        "retiring_principal": grant.get("RetiringPrincipal"),
-                        "constraints": grant.get("Constraints", {}),
-                    })
+                    grants.append(
+                        {
+                            "grant_id": grant.get("GrantId"),
+                            "grantee_principal": grant.get("GranteePrincipal"),
+                            "operations": grant.get("Operations", []),
+                            "creation_date": grant.get("CreationDate", "").isoformat()
+                            if grant.get("CreationDate")
+                            else None,
+                            "retiring_principal": grant.get("RetiringPrincipal"),
+                            "constraints": grant.get("Constraints", {}),
+                        }
+                    )
         except ClientError as e:
             logger.warning("Failed to get grants for key %s: %s", key_id, e)
 
@@ -149,10 +150,12 @@ class KMSCollector:
             for page in paginator.paginate():
                 for alias in page.get("Aliases", []):
                     if not alias.get("AliasName", "").startswith("alias/aws/"):
-                        aliases.append({
-                            "alias_name": alias.get("AliasName"),
-                            "target_key_id": alias.get("TargetKeyId"),
-                        })
+                        aliases.append(
+                            {
+                                "alias_name": alias.get("AliasName"),
+                                "target_key_id": alias.get("TargetKeyId"),
+                            }
+                        )
 
             logger.debug("Collected %d KMS aliases", len(aliases))
         except ClientError as e:

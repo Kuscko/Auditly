@@ -13,7 +13,7 @@ from alembic.config import Config
 def get_alembic_config(database_url: Optional[str] = None) -> Config:
     """
     Get Alembic configuration.
-    
+
     Priority order for database URL:
     1. Explicit database_url parameter
     2. RAPIDRMF_DATABASE_URL environment variable
@@ -21,12 +21,12 @@ def get_alembic_config(database_url: Optional[str] = None) -> Config:
     """
     here = Path(__file__).resolve().parent.parent
     cfg = Config(str(here / "alembic.ini"))
-    
+
     # Override URL if provided or from environment
     url = database_url or os.getenv("RAPIDRMF_DATABASE_URL")
     if url:
         cfg.set_main_option("sqlalchemy.url", url)
-    
+
     return cfg
 
 

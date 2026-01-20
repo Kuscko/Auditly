@@ -167,11 +167,11 @@ projects = client.list_projects()
 for project in projects:
     project_id = project.project_id
     print(f"Collecting from project: {project_id}")
-    
+
     # Create client for this project
     project_client = GCPClient(project_id=project_id)
     collector = IAMCollector(project_client)
-    
+
     evidence = collector.collect_all()
     # Process evidence...
 ```

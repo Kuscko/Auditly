@@ -9,12 +9,11 @@ Collects CloudTrail evidence including:
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
+from ..common import finalize_evidence
 from .client import AWSClient
 
 logger = logging.getLogger(__name__)
@@ -46,20 +45,16 @@ class CloudTrailCollector:
         """
         logger.info("Starting AWS CloudTrail evidence collection")
 
-        evidence = {
+        data = {
             "trails": self.collect_trails(),
             "event_history": self.collect_event_history(),
-            "metadata": {
-                "collected_at": datetime.utcnow().isoformat(),
-                "account_id": self.client.get_account_id(),
-                "region": self.client.region,
-                "collector": "aws-cloudtrail",
-                "version": "1.0.0",
-            },
         }
-
-        evidence_json = json.dumps(evidence, sort_keys=True, default=str)
-        evidence["metadata"]["sha256"] = hashlib.sha256(evidence_json.encode()).hexdigest()
+        evidence = finalize_evidence(
+            data,
+            collector="aws-cloudtrail",
+            account_id=self.client.get_account_id(),
+            region=self.client.region,
+        )
 
         logger.info("CloudTrail collection complete: %d trails", len(evidence["trails"]))
 
@@ -87,7 +82,7 @@ class CloudTrailCollector:
                     "cloud_watch_logs_role_arn": trail.get("CloudWatchLogsRoleArn"),
                     "is_logging": self._get_trail_status(trail.get("Name")),
                 }
-                
+
                 trails.append(trail_config)
 
             logger.debug("Collected %d CloudTrail trails", len(trails))
@@ -109,26 +104,30 @@ class CloudTrailCollector:
 
         try:
             start_time = datetime.utcnow() - timedelta(days=days)
-            
+
             paginator = self.cloudtrail.get_paginator("lookup_events")
             for page in paginator.paginate(StartTime=start_time):
                 for event in page.get("Events", []):
-                    events.append({
-                        "event_id": event.get("EventId"),
-                        "event_name": event.get("EventName"),
-                        "event_time": event.get("EventTime", "").isoformat() if event.get("EventTime") else None,
-                        "username": event.get("Username"),
-                        "resources": [
-                            {
-                                "resource_type": r.get("ResourceType"),
-                                "resource_name": r.get("ResourceName"),
-                            }
-                            for r in event.get("Resources", [])
-                        ],
-                        "event_source": event.get("EventSource"),
-                        "access_key_id": event.get("AccessKeyId"),
-                        "cloud_trail_event": event.get("CloudTrailEvent"),
-                    })
+                    events.append(
+                        {
+                            "event_id": event.get("EventId"),
+                            "event_name": event.get("EventName"),
+                            "event_time": event.get("EventTime", "").isoformat()
+                            if event.get("EventTime")
+                            else None,
+                            "username": event.get("Username"),
+                            "resources": [
+                                {
+                                    "resource_type": r.get("ResourceType"),
+                                    "resource_name": r.get("ResourceName"),
+                                }
+                                for r in event.get("Resources", [])
+                            ],
+                            "event_source": event.get("EventSource"),
+                            "access_key_id": event.get("AccessKeyId"),
+                            "cloud_trail_event": event.get("CloudTrailEvent"),
+                        }
+                    )
 
             logger.debug("Collected %d CloudTrail events (last %d days)", len(events), days)
         except ClientError as e:

@@ -39,7 +39,7 @@ from .repositories import (
 
 class Repository:
     """Unified repository (backward compatible).
-    
+
     Delegates to domain-specific repositories internally.
     """
 

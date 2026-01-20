@@ -11,12 +11,10 @@ Collects IAM evidence including:
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
+from ..common import finalize_evidence
 from .client import AWSClient
 
 logger = logging.getLogger(__name__)
@@ -56,25 +54,20 @@ class IAMCollector:
         """
         logger.info("Starting AWS IAM evidence collection")
 
-        evidence = {
+        data = {
             "users": self.collect_users(),
             "roles": self.collect_roles(),
             "policies": self.collect_policies(),
             "groups": self.collect_groups(),
             "password_policy": self.collect_password_policy(),
             "account_summary": self.collect_account_summary(),
-            "metadata": {
-                "collected_at": datetime.utcnow().isoformat(),
-                "account_id": self.client.get_account_id(),
-                "region": self.client.region,
-                "collector": "aws-iam",
-                "version": "1.0.0",
-            },
         }
-
-        # Calculate evidence hash
-        evidence_json = json.dumps(evidence, sort_keys=True, default=str)
-        evidence["metadata"]["sha256"] = hashlib.sha256(evidence_json.encode()).hexdigest()
+        evidence = finalize_evidence(
+            data,
+            collector="aws-iam",
+            account_id=self.client.get_account_id(),
+            region=self.client.region,
+        )
 
         logger.info(
             "IAM collection complete: %d users, %d roles, %d policies",
@@ -114,21 +107,23 @@ class IAMCollector:
                     # Get groups
                     groups = self._get_user_groups(user_name)
 
-                    users.append({
-                        "user_name": user_name,
-                        "user_id": user["UserId"],
-                        "arn": user["Arn"],
-                        "create_date": user["CreateDate"].isoformat(),
-                        "password_last_used": user.get("PasswordLastUsed", "").isoformat()
-                        if user.get("PasswordLastUsed")
-                        else None,
-                        "mfa_enabled": len(mfa_devices) > 0,
-                        "mfa_devices": mfa_devices,
-                        "access_keys": access_keys,
-                        "attached_policies": attached_policies,
-                        "inline_policies": inline_policies,
-                        "groups": groups,
-                    })
+                    users.append(
+                        {
+                            "user_name": user_name,
+                            "user_id": user["UserId"],
+                            "arn": user["Arn"],
+                            "create_date": user["CreateDate"].isoformat(),
+                            "password_last_used": user.get("PasswordLastUsed", "").isoformat()
+                            if user.get("PasswordLastUsed")
+                            else None,
+                            "mfa_enabled": len(mfa_devices) > 0,
+                            "mfa_devices": mfa_devices,
+                            "access_keys": access_keys,
+                            "attached_policies": attached_policies,
+                            "inline_policies": inline_policies,
+                            "groups": groups,
+                        }
+                    )
 
             logger.debug("Collected %d IAM users", len(users))
         except ClientError as e:
@@ -156,16 +151,18 @@ class IAMCollector:
                     # Get inline policies
                     inline_policies = self._get_inline_role_policies(role_name)
 
-                    roles.append({
-                        "role_name": role_name,
-                        "role_id": role["RoleId"],
-                        "arn": role["Arn"],
-                        "create_date": role["CreateDate"].isoformat(),
-                        "assume_role_policy": role["AssumeRolePolicyDocument"],
-                        "max_session_duration": role.get("MaxSessionDuration"),
-                        "attached_policies": attached_policies,
-                        "inline_policies": inline_policies,
-                    })
+                    roles.append(
+                        {
+                            "role_name": role_name,
+                            "role_id": role["RoleId"],
+                            "arn": role["Arn"],
+                            "create_date": role["CreateDate"].isoformat(),
+                            "assume_role_policy": role["AssumeRolePolicyDocument"],
+                            "max_session_duration": role.get("MaxSessionDuration"),
+                            "attached_policies": attached_policies,
+                            "inline_policies": inline_policies,
+                        }
+                    )
 
             logger.debug("Collected %d IAM roles", len(roles))
         except ClientError as e:
@@ -195,17 +192,19 @@ class IAMCollector:
                         policy_arn, policy["DefaultVersionId"]
                     )
 
-                    policies.append({
-                        "policy_name": policy["PolicyName"],
-                        "policy_id": policy["PolicyId"],
-                        "arn": policy_arn,
-                        "create_date": policy["CreateDate"].isoformat(),
-                        "update_date": policy["UpdateDate"].isoformat(),
-                        "attachment_count": policy["AttachmentCount"],
-                        "is_attachable": policy["IsAttachable"],
-                        "default_version_id": policy["DefaultVersionId"],
-                        "policy_document": policy_document,
-                    })
+                    policies.append(
+                        {
+                            "policy_name": policy["PolicyName"],
+                            "policy_id": policy["PolicyId"],
+                            "arn": policy_arn,
+                            "create_date": policy["CreateDate"].isoformat(),
+                            "update_date": policy["UpdateDate"].isoformat(),
+                            "attachment_count": policy["AttachmentCount"],
+                            "is_attachable": policy["IsAttachable"],
+                            "default_version_id": policy["DefaultVersionId"],
+                            "policy_document": policy_document,
+                        }
+                    )
 
             logger.debug("Collected %d IAM policies (scope=%s)", len(policies), scope)
         except ClientError as e:
@@ -236,15 +235,17 @@ class IAMCollector:
                     # Get inline policies
                     inline_policies = self._get_inline_group_policies(group_name)
 
-                    groups.append({
-                        "group_name": group_name,
-                        "group_id": group["GroupId"],
-                        "arn": group["Arn"],
-                        "create_date": group["CreateDate"].isoformat(),
-                        "members": members,
-                        "attached_policies": attached_policies,
-                        "inline_policies": inline_policies,
-                    })
+                    groups.append(
+                        {
+                            "group_name": group_name,
+                            "group_id": group["GroupId"],
+                            "arn": group["Arn"],
+                            "create_date": group["CreateDate"].isoformat(),
+                            "members": members,
+                            "attached_policies": attached_policies,
+                            "inline_policies": inline_policies,
+                        }
+                    )
 
             logger.debug("Collected %d IAM groups", len(groups))
         except ClientError as e:
@@ -252,7 +253,7 @@ class IAMCollector:
 
         return groups
 
-    def collect_password_policy(self) -> Optional[dict[str, Any]]:
+    def collect_password_policy(self) -> dict[str, Any] | None:
         """Collect account password policy.
 
         Returns:
@@ -407,7 +408,7 @@ class IAMCollector:
         except ClientError:
             return []
 
-    def _get_policy_version(self, policy_arn: str, version_id: str) -> Optional[dict]:
+    def _get_policy_version(self, policy_arn: str, version_id: str) -> dict | None:
         """Get policy version document."""
         try:
             response = self.iam.get_policy_version(PolicyArn=policy_arn, VersionId=version_id)

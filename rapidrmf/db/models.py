@@ -1,28 +1,30 @@
 """SQLAlchemy ORM models for RapidRMF v0.2."""
 
 from datetime import datetime
-from typing import Optional
+from enum import Enum
 
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    DateTime,
-    Text,
     JSON,
-    ForeignKey,
     Boolean,
-    Enum as SQLEnum,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
     UniqueConstraint,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import relationship
-from enum import Enum
 
 from . import Base
 
 
 class ValidationStatus(str, Enum):
     """Validation status enumeration."""
+
     PASS = "pass"
     FAIL = "fail"
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"
@@ -31,6 +33,7 @@ class ValidationStatus(str, Enum):
 
 class System(Base):
     """A system registered for compliance monitoring."""
+
     __tablename__ = "systems"
 
     id = Column(Integer, primary_key=True)
@@ -44,7 +47,9 @@ class System(Base):
     # Relationships
     evidence = relationship("Evidence", back_populates="system", cascade="all, delete-orphan")
     findings = relationship("Finding", back_populates="system", cascade="all, delete-orphan")
-    validation_results = relationship("ValidationResult", back_populates="system", cascade="all, delete-orphan")
+    validation_results = relationship(
+        "ValidationResult", back_populates="system", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<System(id={self.id}, name={self.name}, env={self.environment})>"
@@ -52,11 +57,14 @@ class System(Base):
 
 class Evidence(Base):
     """Collected evidence for a system."""
+
     __tablename__ = "evidence"
 
     id = Column(Integer, primary_key=True)
     system_id = Column(Integer, ForeignKey("systems.id"), nullable=False, index=True)
-    evidence_type = Column(String(100), nullable=False, index=True)  # terraform-plan, azure-config, etc.
+    evidence_type = Column(
+        String(100), nullable=False, index=True
+    )  # terraform-plan, azure-config, etc.
     key = Column(String(500), nullable=False)  # Storage key in vault
     vault_path = Column(String(500), nullable=True)  # MinIO/S3 path
     filename = Column(String(255), nullable=True)
@@ -68,9 +76,15 @@ class Evidence(Base):
 
     # Relationships
     system = relationship("System", back_populates="evidence")
-    manifest_entries = relationship("EvidenceManifestEntry", back_populates="evidence", cascade="all, delete-orphan")
-    versions = relationship("EvidenceVersion", back_populates="evidence", cascade="all, delete-orphan")
-    access_logs = relationship("EvidenceAccessLog", back_populates="evidence", cascade="all, delete-orphan")
+    manifest_entries = relationship(
+        "EvidenceManifestEntry", back_populates="evidence", cascade="all, delete-orphan"
+    )
+    versions = relationship(
+        "EvidenceVersion", back_populates="evidence", cascade="all, delete-orphan"
+    )
+    access_logs = relationship(
+        "EvidenceAccessLog", back_populates="evidence", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Evidence(id={self.id}, type={self.evidence_type}, system_id={self.system_id})>"
@@ -78,13 +92,18 @@ class Evidence(Base):
 
 class Catalog(Base):
     """Compliance framework catalogs (NIST, FedRAMP, STIG, etc.)."""
+
     __tablename__ = "catalogs"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(100), unique=True, nullable=False, index=True)  # nist-800-53-rev5, fedramp-moderate, etc.
+    name = Column(
+        String(100), unique=True, nullable=False, index=True
+    )  # nist-800-53-rev5, fedramp-moderate, etc.
     title = Column(String(255), nullable=False)
     version = Column(String(50), nullable=True)
-    framework = Column(String(100), nullable=False, index=True)  # NIST, FedRAMP, STIG, HIPAA, PCI, ISO, etc.
+    framework = Column(
+        String(100), nullable=False, index=True
+    )  # NIST, FedRAMP, STIG, HIPAA, PCI, ISO, etc.
     baseline = Column(String(50), nullable=True)  # Low, Moderate, High, etc.
     oscal_path = Column(String(500), nullable=True)  # Path to OSCAL JSON file
     loaded_at = Column(DateTime, default=datetime.utcnow)
@@ -99,6 +118,7 @@ class Catalog(Base):
 
 class Control(Base):
     """Individual control within a catalog."""
+
     __tablename__ = "controls"
 
     id = Column(Integer, primary_key=True)
@@ -113,8 +133,12 @@ class Control(Base):
 
     # Relationships
     catalog = relationship("Catalog", back_populates="controls")
-    requirements = relationship("ControlRequirement", back_populates="control", cascade="all, delete-orphan")
-    validation_results = relationship("ValidationResult", back_populates="control", cascade="all, delete-orphan")
+    requirements = relationship(
+        "ControlRequirement", back_populates="control", cascade="all, delete-orphan"
+    )
+    validation_results = relationship(
+        "ValidationResult", back_populates="control", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Control(control_id={self.control_id}, family={self.family})>"
@@ -122,6 +146,7 @@ class Control(Base):
 
 class ControlRequirement(Base):
     """Evidence requirements for a control."""
+
     __tablename__ = "control_requirements"
 
     id = Column(Integer, primary_key=True)
@@ -139,6 +164,7 @@ class ControlRequirement(Base):
 
 class ValidationResult(Base):
     """Result of a single control validation."""
+
     __tablename__ = "validation_results"
 
     id = Column(Integer, primary_key=True)
@@ -161,6 +187,7 @@ class ValidationResult(Base):
 
 class Finding(Base):
     """A discovered compliance gap or issue."""
+
     __tablename__ = "findings"
 
     id = Column(Integer, primary_key=True)
@@ -169,7 +196,9 @@ class Finding(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     severity = Column(String(20), nullable=False, index=True)  # low, medium, high, critical
-    status = Column(String(50), default="open", nullable=False, index=True)  # open, investigating, remediating, closed
+    status = Column(
+        String(50), default="open", nullable=False, index=True
+    )  # open, investigating, remediating, closed
     found_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     closed_at = Column(DateTime, nullable=True)
     attributes = Column(JSON, default=dict, nullable=False)
@@ -184,6 +213,7 @@ class Finding(Base):
 
 class EvidenceManifest(Base):
     """Manifest for grouped evidence (tamper-evident bundles)."""
+
     __tablename__ = "evidence_manifests"
 
     id = Column(Integer, primary_key=True)
@@ -198,7 +228,9 @@ class EvidenceManifest(Base):
     attributes = Column(JSON, default=dict, nullable=False)
 
     # Relationships
-    entries = relationship("EvidenceManifestEntry", back_populates="manifest", cascade="all, delete-orphan")
+    entries = relationship(
+        "EvidenceManifestEntry", back_populates="manifest", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<EvidenceManifest(id={self.id}, env={self.environment})>"
@@ -206,6 +238,7 @@ class EvidenceManifest(Base):
 
 class EvidenceManifestEntry(Base):
     """Entry in an evidence manifest (artifact record)."""
+
     __tablename__ = "evidence_manifest_entries"
 
     id = Column(Integer, primary_key=True)
@@ -267,12 +300,15 @@ class EvidenceAccessLog(Base):
 
 class JobRun(Base):
     """Scheduler job run state for persistence and metrics."""
+
     __tablename__ = "job_runs"
 
     id = Column(Integer, primary_key=True)
     job_type = Column(String(100), nullable=False, index=True)  # validation, collection, report
     environment = Column(String(50), nullable=False, index=True)
-    status = Column(String(20), nullable=False, index=True, default="pending")  # pending, running, success, failed
+    status = Column(
+        String(20), nullable=False, index=True, default="pending"
+    )  # pending, running, success, failed
     started_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     finished_at = Column(DateTime, nullable=True, index=True)
     error = Column(Text, nullable=True)

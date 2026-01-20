@@ -26,17 +26,26 @@ class MinioEvidenceVault(EvidenceVault):
         if not self.client.bucket_exists(self.bucket):
             self.client.make_bucket(self.bucket)
 
-    def put_file(self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_file(
+        self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         p = Path(src_path)
         self.client.fput_object(self.bucket, dest_key, str(p), metadata=metadata or {})
         return {"bucket": self.bucket, "key": dest_key, "size": p.stat().st_size}
 
-    def put_json(self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_json(
+        self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         import io
 
         b = data.encode()
         self.client.put_object(
-            self.bucket, dest_key, io.BytesIO(b), length=len(b), content_type="application/json", metadata=metadata or {}
+            self.bucket,
+            dest_key,
+            io.BytesIO(b),
+            length=len(b),
+            content_type="application/json",
+            metadata=metadata or {},
         )
         return {"bucket": self.bucket, "key": dest_key, "size": len(b)}
 
@@ -61,6 +70,7 @@ class MinioEvidenceVault(EvidenceVault):
 
     def get_json(self, key: str) -> Dict[str, Any]:
         import json
+
         response = self.client.get_object(self.bucket, key)
         data = response.read()
         response.close()

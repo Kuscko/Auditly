@@ -5,24 +5,43 @@ from typing import Optional
 
 import typer
 from rich import print
-from rich.table import Table
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 
-from .config import AppConfig
-from .validators import CONTROL_REQUIREMENTS, FAMILY_PATTERNS, get_control_requirement
+from .cli_bundle import bundle_app
 
 # Import sub-apps
 from .cli_collect import collect_app
-from .cli_report import report_app
-from .cli_policy import policy_app
-from .cli_scan import scan_app
-from .cli_bundle import bundle_app
 from .cli_db import db_app
+from .cli_policy import policy_app
+from .cli_report import report_app
+from .cli_scan import scan_app
 from .cli_scheduler import scheduler_app
-
+from .config import AppConfig
+from .logging_utils import setup_logging
+from .validators import CONTROL_REQUIREMENTS, FAMILY_PATTERNS, get_control_requirement
 
 app = typer.Typer(help="RapidRMF utility CLI")
+
+
+@app.callback()
+def _init_logging(
+    log_level: str = typer.Option(
+        "INFO",
+        "--log-level",
+        help="Logging level (DEBUG, INFO, WARNING, ERROR)",
+        case_sensitive=False,
+    ),
+    log_json: bool = typer.Option(
+        False,
+        "--log-json",
+        help="Emit logs in JSON format",
+    ),
+):
+    """CLI-wide initialization for logging."""
+    setup_logging(level=log_level, json=log_json)
+
 
 # Register sub-applications
 app.add_typer(collect_app, name="collect")
@@ -51,7 +70,7 @@ def check_catalogs(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed catalog info"),
 ):
     """Validate configured OSCAL catalogs and profiles."""
-    from .oscal import load_oscal, OscalCatalog, OscalProfile
+    from .oscal import OscalCatalog, OscalProfile, load_oscal
 
     console = Console()
 
@@ -88,7 +107,9 @@ def check_catalogs(
             if isinstance(oscal_obj, OscalCatalog):
                 control_ids = oscal_obj.control_ids()
                 title = oscal_obj.metadata().get("title", "Untitled")
-                table.add_row(name, "Catalog", "[green]✓ Valid[/green]", title, str(len(control_ids)))
+                table.add_row(
+                    name, "Catalog", "[green]✓ Valid[/green]", title, str(len(control_ids))
+                )
                 total_valid += 1
 
                 if verbose:
@@ -102,7 +123,11 @@ def check_catalogs(
                 title = oscal_obj.title() or "Untitled"
                 import_hrefs = oscal_obj.import_hrefs()
                 table.add_row(
-                    name, "Profile", "[green]✓ Valid[/green]", title, str(len(imported_ids)) if imported_ids else "—"
+                    name,
+                    "Profile",
+                    "[green]✓ Valid[/green]",
+                    title,
+                    str(len(imported_ids)) if imported_ids else "—",
                 )
                 total_valid += 1
 
@@ -111,7 +136,11 @@ def check_catalogs(
                     if imported_ids:
                         console.print(
                             f"  Included controls: {', '.join(imported_ids[:10])}"
-                            + (f" ... (+{len(imported_ids)-10} more)" if len(imported_ids) > 10 else "")
+                            + (
+                                f" ... (+{len(imported_ids)-10} more)"
+                                if len(imported_ids) > 10
+                                else ""
+                            )
                         )
 
         except Exception as e:
@@ -140,7 +169,9 @@ def list_validators(
     if show_all:
         # Show family patterns
         console.print("\n[bold cyan]Control Family Patterns:[/bold cyan]")
-        console.print("[dim]These patterns apply to ALL controls in a family unless overridden[/dim]\n")
+        console.print(
+            "[dim]These patterns apply to ALL controls in a family unless overridden[/dim]\n"
+        )
 
         family_table = Table()
         family_table.add_column("Family", style="cyan", no_wrap=True)
@@ -190,16 +221,18 @@ def list_validators(
 
     console.print(table)
     console.print(f"\n[dim]Specific overrides: {len(CONTROL_REQUIREMENTS)}[/dim]")
-    console.print(f"[dim]Use --all flag to see family patterns covering all controls[/dim]")
+    console.print("[dim]Use --all flag to see family patterns covering all controls[/dim]")
 
 
 @app.command()
 def check_validator_coverage(
     config: Path = typer.Option("config.yaml", exists=True, help="Path to config.yaml"),
-    profile: Optional[str] = typer.Option(None, help="Specific profile to check (e.g., fedramp_high)"),
+    profile: Optional[str] = typer.Option(
+        None, help="Specific profile to check (e.g., fedramp_high)"
+    ),
 ):
     """Check validator coverage across all controls in configured catalogs."""
-    from .oscal import load_oscal, OscalCatalog, OscalProfile
+    from .oscal import OscalCatalog, OscalProfile, load_oscal
 
     console = Console()
 
@@ -271,7 +304,9 @@ def check_validator_coverage(
         if uncovered > 0:
             method.append(f"[red]{uncovered} uncovered[/red]")
 
-        table.add_row(name, str(total), str(covered), f"{pct:.1f}%", ", ".join(method) if method else "—")
+        table.add_row(
+            name, str(total), str(covered), f"{pct:.1f}%", ", ".join(method) if method else "—"
+        )
 
     console.print(table)
     console.print("\n[dim]Coverage methods:[/dim]")
@@ -282,10 +317,12 @@ def check_validator_coverage(
 @app.command()
 def test_validator(
     control_id: str = typer.Argument(..., help="Control ID to test (e.g., CM-2)"),
-    evidence: str = typer.Option("", help="Comma-separated evidence types (e.g., terraform-plan,change-request)"),
+    evidence: str = typer.Option(
+        "", help="Comma-separated evidence types (e.g., terraform-plan,change-request)"
+    ),
 ):
     """Test a control validator with sample evidence."""
-    from .validators import ValidationStatus, ComplianceValidator
+    from .validators import ComplianceValidator, ValidationStatus
 
     console = Console()
 

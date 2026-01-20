@@ -1,8 +1,8 @@
 """Database layer for RapidRMF."""
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Declarative base for all ORM models
 Base = declarative_base()
@@ -35,7 +35,9 @@ def init_db_async(database_url: str):
     """Initialize async database engine and session factory."""
     global _async_engine, _async_session_factory
     _async_engine = create_async_engine(database_url, echo=False, pool_pre_ping=True)
-    _async_session_factory = sessionmaker(_async_engine, class_=AsyncSession, expire_on_commit=False)
+    _async_session_factory = sessionmaker(
+        _async_engine, class_=AsyncSession, expire_on_commit=False
+    )
 
 
 def init_db_sync(database_url: str):

@@ -1,9 +1,10 @@
-﻿"""FastAPI application for RapidRMF REST API."""
+"""FastAPI application for RapidRMF REST API."""
 
-from fastapi import FastAPI
 import logging
 
-from .routers import collect_router, validate_router, report_router
+from fastapi import FastAPI
+
+from .routers import collect_router, report_router, validate_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
