@@ -26,14 +26,22 @@ def scan_system(
 
     summary = {
         "total_findings": sum(len(r.findings) for r in results.values()),
-        "high_severity": sum(len([f for f in r.findings if f.get("severity") == "high"]) for r in results.values()),
-        "scanners": {k: {"status": r.status, "findings": len(r.findings)} for k, r in results.items()},
+        "high_severity": sum(
+            len([f for f in r.findings if f.get("severity") == "high"]) for r in results.values()
+        ),
+        "scanners": {
+            k: {"status": r.status, "findings": len(r.findings)} for k, r in results.items()
+        },
     }
 
-    print(f"[cyan]Scan complete: {summary['total_findings']} findings ({summary['high_severity']} high severity)")
+    print(
+        f"[cyan]Scan complete: {summary['total_findings']} findings ({summary['high_severity']} high severity)"
+    )
 
     if out_json:
-        out_json.write_text(_json.dumps({k: _json.loads(v.to_json()) for k, v in results.items()}, indent=2))
+        out_json.write_text(
+            _json.dumps({k: _json.loads(v.to_json()) for k, v in results.items()}, indent=2)
+        )
         print(f"[green]Wrote scan results to {out_json}")
 
 
@@ -44,6 +52,8 @@ def scan_waivers(
     registry = WaiverRegistry.from_yaml(waivers_file)
     summary = registry.summary()
 
-    print(f"[cyan]Waivers: {summary['active']} active, {summary['expired']} expired, {summary['expiring_soon']} expiring soon")
+    print(
+        f"[cyan]Waivers: {summary['active']} active, {summary['expired']} expired, {summary['expiring_soon']} expiring soon"
+    )
     if summary["expiring_soon_ids"]:
         print(f"[yellow]Expiring soon: {', '.join(summary['expiring_soon_ids'])}")

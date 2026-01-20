@@ -3,36 +3,36 @@
 
 waivers:
   # Example: Control requires quarterly audit, but team does monthly instead
-  - control_id: AC-2
-    reason: "Account management audited monthly instead of quarterly; more frequent audits reduce risk"
-    compensating_controls:
-      - "Monthly IAM privilege review"
-      - "Automated least-privilege policy enforcement via Conftest"
-    approved_by: "Security Lead (John Doe)"
-    approved_date: "2024-01-06"
-    expires: "2025-01-06"  # ISO date; auto-expires one year later
-    notes: "Revisit on next ATO cycle"
+- control_id: AC-2
+  reason: Account management audited monthly instead of quarterly; more frequent audits reduce risk
+  compensating_controls:
+  - Monthly IAM privilege review
+  - Automated least-privilege policy enforcement via Conftest
+  approved_by: Security Lead (John Doe)
+  approved_date: '2024-01-06'
+  expires: '2025-01-06'    # ISO date; auto-expires one year later
+  notes: Revisit on next ATO cycle
 
   # Example: SBOM not available for legacy dependency
-  - control_id: SR-3
-    reason: "Legacy library (old-ssl-1.2) no longer maintained; SBOM unavailable"
-    compensating_controls:
-      - "Library runs in sandboxed container"
-      - "Network ingress/egress restricted via security group"
-      - "Plan to retire library by Q2 2025"
-    approved_by: "Security Lead (John Doe)"
-    approved_date: "2024-01-06"
-    expires: "2025-06-30"  # Temporary; expires before next ATO
-    notes: "Migration ticket: ENG-2847"
+- control_id: SR-3
+  reason: Legacy library (old-ssl-1.2) no longer maintained; SBOM unavailable
+  compensating_controls:
+  - Library runs in sandboxed container
+  - Network ingress/egress restricted via security group
+  - Plan to retire library by Q2 2025
+  approved_by: Security Lead (John Doe)
+  approved_date: '2024-01-06'
+  expires: '2025-06-30'    # Temporary; expires before next ATO
+  notes: 'Migration ticket: ENG-2847'
 
   # Example: MFA enforcement temporarily delayed
-  - control_id: AC-2
-    reason: "MFA enforcement delayed for 2 weeks during OKTA migration"
-    compensating_controls:
-      - "Strong password policy (18+ chars, complex)"
-      - "IP whitelisting for console access"
-      - "Daily access audits during transition"
-    approved_by: "CISO (Jane Smith)"
-    approved_date: "2024-01-06"
-    expires: "2024-01-20"  # Short-term waiver
-    notes: "OKTA migration complete by Jan 20; re-enable MFA immediately"
+- control_id: AC-2
+  reason: MFA enforcement delayed for 2 weeks during OKTA migration
+  compensating_controls:
+  - Strong password policy (18+ chars, complex)
+  - IP whitelisting for console access
+  - Daily access audits during transition
+  approved_by: CISO (Jane Smith)
+  approved_date: '2024-01-06'
+  expires: '2024-01-20'    # Short-term waiver
+  notes: OKTA migration complete by Jan 20; re-enable MFA immediately

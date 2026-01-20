@@ -4,18 +4,19 @@ Simple tests to verify collector structure, instantiation, and interfaces.
 Full collector behavior testing would require live AWS or complex moto mocking.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from rapidrmf.collectors.aws import (
     AWSClient,
-    IAMCollector,
-    EC2Collector,
-    S3Collector,
     CloudTrailCollector,
-    VPCCollector,
-    RDSCollector,
+    EC2Collector,
+    IAMCollector,
     KMSCollector,
+    RDSCollector,
+    S3Collector,
+    VPCCollector,
 )
 
 
@@ -43,20 +44,20 @@ class TestCollectorStructure:
             RDSCollector,
             KMSCollector,
         ]
-        
+
         for CollectorClass in collectors:
             mock_client = Mock(spec=AWSClient)
             collector = CollectorClass(mock_client)
-            
-            assert hasattr(collector, "collect_all"), (
-                f"{CollectorClass.__name__} missing collect_all() method"
-            )
-            assert callable(getattr(collector, "collect_all"))
+
+            assert hasattr(
+                collector, "collect_all"
+            ), f"{CollectorClass.__name__} missing collect_all() method"
+            assert callable(collector.collect_all)
 
     def test_aws_client_has_required_methods(self):
         """Verify AWSClient has required interface methods."""
         required_methods = ["get_client", "get_account_id"]
-        
+
         for method in required_methods:
             assert hasattr(AWSClient, method), f"AWSClient missing {method}() method"
 
@@ -71,17 +72,15 @@ class TestCollectorStructure:
             RDSCollector,
             KMSCollector,
         ]
-        
+
         mock_client = Mock(spec=AWSClient)
-        
+
         for CollectorClass in collectors:
             try:
                 collector = CollectorClass(mock_client)
                 assert collector is not None
             except Exception as e:
-                pytest.fail(
-                    f"{CollectorClass.__name__} failed instantiation with client: {e}"
-                )
+                pytest.fail(f"{CollectorClass.__name__} failed instantiation with client: {e}")
 
 
 class TestCollectorNaming:
@@ -98,7 +97,7 @@ class TestCollectorNaming:
             ("RDSCollector", RDSCollector),
             ("KMSCollector", KMSCollector),
         ]
-        
+
         for expected_name, collector_class in expected_collectors:
             assert collector_class.__name__ == expected_name, (
                 f"Collector name mismatch: expected {expected_name}, "
@@ -116,11 +115,11 @@ class TestCollectorNaming:
             RDSCollector,
             KMSCollector,
         ]
-        
+
         for CollectorClass in collectors:
-            assert CollectorClass.__doc__ is not None, (
-                f"{CollectorClass.__name__} missing docstring"
-            )
+            assert (
+                CollectorClass.__doc__ is not None
+            ), f"{CollectorClass.__name__} missing docstring"
             assert len(CollectorClass.__doc__.strip()) > 0
 
 
@@ -131,15 +130,15 @@ class TestCLIIntegration:
         """Verify CLI can access all collector classes."""
         try:
             from rapidrmf.collectors.aws import (
-                IAMCollector,
-                EC2Collector,
-                S3Collector,
                 CloudTrailCollector,
-                VPCCollector,
-                RDSCollector,
+                EC2Collector,
+                IAMCollector,
                 KMSCollector,
+                RDSCollector,
+                S3Collector,
+                VPCCollector,
             )
-            
+
             # Verify all imports work
             assert IAMCollector is not None
             assert EC2Collector is not None
@@ -148,7 +147,7 @@ class TestCLIIntegration:
             assert VPCCollector is not None
             assert RDSCollector is not None
             assert KMSCollector is not None
-            
+
         except ImportError as e:
             pytest.fail(f"CLI cannot import collectors: {e}")
 
@@ -159,7 +158,7 @@ class TestEvidenceFormat:
     def test_evidence_manifest_can_be_created(self):
         """Test that evidence manifests can be created with AWS evidence."""
         from rapidrmf.evidence import ArtifactRecord, EvidenceManifest
-        
+
         # Create sample AWS artifacts
         artifacts = [
             ArtifactRecord(
@@ -177,7 +176,7 @@ class TestEvidenceFormat:
                 metadata={"kind": "aws-ec2", "service": "ec2", "account_id": "123456789012"},
             ),
         ]
-        
+
         manifest = EvidenceManifest(
             version="1.0",
             environment="prod",
@@ -186,9 +185,9 @@ class TestEvidenceFormat:
             overall_hash=None,
             notes="AWS evidence collection",
         )
-        
+
         manifest.compute_overall_hash()
-        
+
         assert manifest.environment == "prod"
         assert len(manifest.artifacts) == 2
         assert manifest.overall_hash is not None

@@ -14,13 +14,14 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 try:
     from google.cloud import iam_admin_v1
     from google.iam.v1 import iam_policy_pb2
+
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
@@ -28,7 +29,7 @@ except ImportError:
 
 class IAMCollector:
     """Collector for GCP IAM evidence.
-    
+
     Compliance Controls Mapped:
     - AC-2: Account Management (service accounts, lifecycle)
     - AC-3: Access Enforcement (IAM policies, role bindings)
@@ -45,7 +46,7 @@ class IAMCollector:
         """
         self.client = client
         self.project_id = client.project_id
-        
+
         if GCP_AVAILABLE:
             self.iam_client = iam_admin_v1.IAMClient(credentials=client.credentials)
         else:
@@ -71,9 +72,7 @@ class IAMCollector:
 
         # Compute evidence checksum
         evidence_json = json.dumps(evidence, sort_keys=True, default=str)
-        evidence["metadata"]["sha256"] = hashlib.sha256(
-            evidence_json.encode()
-        ).hexdigest()
+        evidence["metadata"]["sha256"] = hashlib.sha256(evidence_json.encode()).hexdigest()
 
         return evidence
 
@@ -88,7 +87,7 @@ class IAMCollector:
         try:
             project_name = f"projects/{self.project_id}"
             request = iam_admin_v1.ListServiceAccountsRequest(name=project_name)
-            
+
             for sa in self.iam_client.list_service_accounts(request=request):
                 sa_dict = {
                     "name": sa.name,
@@ -99,7 +98,7 @@ class IAMCollector:
                     "description": sa.description,
                 }
                 service_accounts.append(sa_dict)
-                
+
             logger.info("Collected %d service accounts", len(service_accounts))
         except Exception as e:
             logger.error("Error collecting service accounts: %s", e)
@@ -117,7 +116,7 @@ class IAMCollector:
         try:
             parent = f"projects/{self.project_id}"
             request = iam_admin_v1.ListRolesRequest(parent=parent)
-            
+
             for role in self.iam_client.list_roles(request=request):
                 role_dict = {
                     "name": role.name,
@@ -128,7 +127,7 @@ class IAMCollector:
                     "deleted": role.deleted,
                 }
                 custom_roles.append(role_dict)
-                
+
             logger.info("Collected %d custom roles", len(custom_roles))
         except Exception as e:
             logger.error("Error collecting custom roles: %s", e)
@@ -146,21 +145,19 @@ class IAMCollector:
         try:
             # Get project IAM policy
             from google.cloud import resourcemanager_v3
-            
-            projects_client = resourcemanager_v3.ProjectsClient(
-                credentials=self.client.credentials
-            )
-            
+
+            projects_client = resourcemanager_v3.ProjectsClient(credentials=self.client.credentials)
+
             project_name = f"projects/{self.project_id}"
             policy = projects_client.get_iam_policy(resource=project_name)
-            
+
             bindings = []
             for binding in policy.bindings:
                 binding_dict = {
                     "role": binding.role,
                     "members": list(binding.members),
                 }
-                
+
                 # Include condition if present
                 if binding.condition:
                     binding_dict["condition"] = {
@@ -168,15 +165,17 @@ class IAMCollector:
                         "description": binding.condition.description,
                         "expression": binding.condition.expression,
                     }
-                    
+
                 bindings.append(binding_dict)
-            
-            policies.append({
-                "resource": project_name,
-                "bindings": bindings,
-                "etag": policy.etag.decode() if policy.etag else None,
-            })
-            
+
+            policies.append(
+                {
+                    "resource": project_name,
+                    "bindings": bindings,
+                    "etag": policy.etag.decode() if policy.etag else None,
+                }
+            )
+
             logger.info("Collected IAM policies with %d bindings", len(bindings))
         except Exception as e:
             logger.error("Error collecting IAM policies: %s", e)
@@ -194,39 +193,41 @@ class IAMCollector:
         try:
             project_name = f"projects/{self.project_id}"
             sa_request = iam_admin_v1.ListServiceAccountsRequest(name=project_name)
-            
+
             for sa in self.iam_client.list_service_accounts(request=sa_request):
                 # List keys for this service account
-                key_request = iam_admin_v1.ListServiceAccountKeysRequest(
-                    name=sa.name
-                )
-                
+                key_request = iam_admin_v1.ListServiceAccountKeysRequest(name=sa.name)
+
                 try:
-                    key_list = self.iam_client.list_service_account_keys(
-                        request=key_request
-                    )
-                    
+                    key_list = self.iam_client.list_service_account_keys(request=key_request)
+
                     for key in key_list.keys:
                         key_dict = {
                             "service_account": sa.email,
                             "key_name": key.name,
                             "key_algorithm": key.key_algorithm.name if key.key_algorithm else None,
                             "key_type": key.key_type.name if key.key_type else None,
-                            "valid_after_time": key.valid_after_time.isoformat() if key.valid_after_time else None,
-                            "valid_before_time": key.valid_before_time.isoformat() if key.valid_before_time else None,
+                            "valid_after_time": key.valid_after_time.isoformat()
+                            if key.valid_after_time
+                            else None,
+                            "valid_before_time": key.valid_before_time.isoformat()
+                            if key.valid_before_time
+                            else None,
                         }
-                        
+
                         # Calculate key age if valid_after_time exists
                         if key.valid_after_time:
-                            age_days = (datetime.now(key.valid_after_time.tzinfo) - key.valid_after_time).days
+                            age_days = (
+                                datetime.now(key.valid_after_time.tzinfo) - key.valid_after_time
+                            ).days
                             key_dict["age_days"] = age_days
                             key_dict["age_warning"] = age_days > 90  # Flag keys older than 90 days
-                        
+
                         keys.append(key_dict)
-                        
+
                 except Exception as e:
                     logger.warning("Error collecting keys for %s: %s", sa.email, e)
-                    
+
             logger.info("Collected %d service account keys", len(keys))
         except Exception as e:
             logger.error("Error collecting service account keys: %s", e)

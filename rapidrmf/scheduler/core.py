@@ -33,10 +33,10 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
     """
     cfg = AppConfig.load(Path(config_path))
     envcfg = cfg.environments.get(env_name)
-    
+
     if not envcfg:
         raise ValueError(f"Environment '{env_name}' not found in config")
-    
+
     if not envcfg.database_url:
         raise ValueError(f"Environment '{env_name}' has no database_url configured")
 
@@ -45,7 +45,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
     session_gen = get_async_session()
     session = await session_gen.__anext__()
     repo = Repository(session)
-    
+
     job = await repo.start_job_run(
         job_type="validation",
         environment=env_name,
@@ -59,7 +59,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
         controls = await repo.list_controls()
         control_map = {c.control_id.upper(): c for c in controls}
         control_ids = list(control_map.keys())
-        
+
         metrics["systems"] = len(systems)
         metrics["controls"] = len(control_ids)
 
@@ -71,7 +71,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
         for sys in systems:
             evidence_rows = await repo.list_evidence_for_system(sys)
             evidence_dict = {}
-            
+
             for ev in evidence_rows:
                 payload = {
                     "key": ev.key,
@@ -83,12 +83,12 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
                 evidence_dict.setdefault(ev.evidence_type, []).append(payload)
 
             results = validate_controls(control_ids, evidence_dict, system_state=None)
-            
+
             for cid, res in results.items():
                 control = control_map.get(cid.upper())
                 if not control:
                     continue
-                    
+
                 await repo.add_validation_result(
                     system=sys,
                     control=control,
@@ -102,14 +102,14 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
 
         await repo.finish_job_run(job, status="success", metrics=metrics)
         await session.commit()
-        
+
         logger.info(
             "Validation job completed successfully: %d systems, %d controls, %d results",
             metrics["systems"],
             metrics["controls"],
             metrics["results"],
         )
-        
+
         return {
             "status": "success",
             "job_id": job.id,
@@ -120,9 +120,9 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
         metrics["errors"] = metrics.get("errors", 0) + 1
         await repo.finish_job_run(job, status="failed", error=str(exc), metrics=metrics)
         await session.rollback()
-        
+
         logger.exception("Validation job failed for environment '%s'", env_name)
-        
+
         return {
             "status": "failed",
             "job_id": job.id,

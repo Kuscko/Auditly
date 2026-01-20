@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ except ImportError:
 
 class AWSClient:
     """AWS client wrapper for managing boto3 sessions and clients.
-    
+
     Handles:
     - Credential management (profile, access key, session token)
     - Multi-region support
@@ -31,10 +31,10 @@ class AWSClient:
     def __init__(
         self,
         region: str = "us-east-1",
-        profile_name: Optional[str] = None,
-        access_key_id: Optional[str] = None,
-        secret_access_key: Optional[str] = None,
-        session_token: Optional[str] = None,
+        profile_name: str | None = None,
+        access_key_id: str | None = None,
+        secret_access_key: str | None = None,
+        session_token: str | None = None,
     ):
         """Initialize AWS client.
 
@@ -68,11 +68,9 @@ class AWSClient:
             # Use default credential chain
             self.session = boto3.Session(region_name=region)
 
-        logger.info(
-            "Initialized AWS client for region=%s, profile=%s", region, profile_name
-        )
+        logger.info("Initialized AWS client for region=%s, profile=%s", region, profile_name)
 
-    def get_client(self, service: str, region: Optional[str] = None) -> Any:
+    def get_client(self, service: str, region: str | None = None) -> Any:
         """Get boto3 client for a service (cached).
 
         Args:
@@ -93,7 +91,7 @@ class AWSClient:
             try:
                 self._clients[cache_key] = self.session.client(service, region_name=region)
                 logger.debug("Created boto3 client for %s in %s", service, region)
-            except NoCredentialsError as e:
+            except NoCredentialsError:
                 logger.error("No AWS credentials found. Configure via AWS CLI or env vars.")
                 raise
             except (ClientError, BotoCoreError) as e:

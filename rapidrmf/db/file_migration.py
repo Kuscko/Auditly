@@ -7,11 +7,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from . import init_db_sync, get_sync_session
-from .models import System, Evidence, EvidenceManifest as DBManifest, EvidenceManifestEntry
+from . import get_sync_session, init_db_sync
+from .models import Evidence, EvidenceManifestEntry, System
+from .models import EvidenceManifest as DBManifest
 
 
-def migrate_manifests(manifests_dir: Path | str, env: str, database_url: str, env_description: Optional[str] = None) -> int:
+def migrate_manifests(
+    manifests_dir: Path | str, env: str, database_url: str, env_description: Optional[str] = None
+) -> int:
     """
     Load manifest JSON files from a directory and persist them into the database.
 
@@ -44,7 +47,9 @@ def migrate_manifests(manifests_dir: Path | str, env: str, database_url: str, en
         data = json.loads(mf.read_text())
         artifacts = data.get("artifacts", [])
         created_at_ts = data.get("created_at") or 0
-        created_at = datetime.utcfromtimestamp(created_at_ts) if created_at_ts else datetime.utcnow()
+        created_at = (
+            datetime.utcfromtimestamp(created_at_ts) if created_at_ts else datetime.utcnow()
+        )
         overall_hash = data.get("overall_hash")
         version = data.get("version", "0.1")
         environment = data.get("environment", env)

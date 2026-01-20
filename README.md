@@ -47,6 +47,19 @@ rapidrmf collect azure \
   --config config.yaml \
   --env edge \
   --output-dir ./evidence
+
+# Run multiple collections concurrently from a JSON list
+rapidrmf collect batch \
+  --requests-file requests.json \
+  --timeout 120
+```
+
+Where `requests.json` contains:
+```json
+[
+  {"config_path": "config.yaml", "environment": "prod", "provider": "terraform", "terraform_plan_path": "plan.json"},
+  {"config_path": "config.yaml", "environment": "prod", "provider": "github", "github_repo": "org/repo", "github_token": "...", "github_run_id": 12345}
+]
 ```
 
 ### Validation & Database

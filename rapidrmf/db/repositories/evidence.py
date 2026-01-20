@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
 from datetime import datetime
+from typing import Iterable, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import (
     Evidence,
+    EvidenceAccessLog,
     EvidenceManifest,
     EvidenceManifestEntry,
     EvidenceVersion,
-    EvidenceAccessLog,
     System,
 )
 

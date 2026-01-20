@@ -11,13 +11,13 @@ This package provides collectors for Google Cloud Platform services including:
 """
 
 from .client import GCPClient
-from .iam import IAMCollector
 from .compute import ComputeCollector
-from .storage import StorageCollector
-from .sql import CloudSQLCollector
-from .vpc import VPCCollector
+from .iam import IAMCollector
 from .kms import KMSCollector
 from .logging import LoggingCollector
+from .sql import CloudSQLCollector
+from .storage import StorageCollector
+from .vpc import VPCCollector
 
 __all__ = [
     "GCPClient",

@@ -62,7 +62,9 @@ def get_pipeline(base_url: str, project_id: str, token: str, pipeline_id: int) -
     )
 
 
-def list_pipeline_jobs(base_url: str, project_id: str, token: str, pipeline_id: int) -> List[Dict[str, Any]]:
+def list_pipeline_jobs(
+    base_url: str, project_id: str, token: str, pipeline_id: int
+) -> List[Dict[str, Any]]:
     url = f"{base_url}/api/v4/projects/{project_id}/pipelines/{pipeline_id}/jobs"
     r = requests.get(url, headers=_gitlab_headers(token), timeout=30)
     r.raise_for_status()

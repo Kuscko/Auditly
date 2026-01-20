@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional, Iterable
-
-from sqlalchemy import func
+from typing import Iterable
 
 from rich import print
+from sqlalchemy import func
 
 from .config import MinioStorageConfig, S3StorageConfig
+from .db import get_sync_session, init_db_sync
+from .db.models import Evidence, EvidenceManifestEntry, EvidenceVersion, System
+from .db.models import EvidenceManifest as DBManifest
 from .storage.minio_backend import MinioEvidenceVault
 from .storage.s3_backend import S3EvidenceVault
-from .db import init_db_sync, get_sync_session
-from .db.models import System, Evidence, EvidenceManifest as DBManifest, EvidenceManifestEntry, EvidenceVersion
 
 
 def vault_from_envcfg(envcfg):
@@ -43,7 +42,9 @@ def get_db_session(envcfg):
         return None
 
 
-def persist_manifest_and_artifacts(session, env: str, env_description: str | None, manifest, artifacts: Iterable):
+def persist_manifest_and_artifacts(
+    session, env: str, env_description: str | None, manifest, artifacts: Iterable
+):
     from datetime import datetime
 
     collected_dt = datetime.utcfromtimestamp(manifest.created_at)
@@ -60,7 +61,9 @@ def persist_manifest_and_artifacts(session, env: str, env_description: str | Non
         cleaned_metadata = {k: v for k, v in metadata.items() if k != "_local_path"}
         ev = Evidence(
             system=system,
-            evidence_type=metadata.get("kind", "unknown") if isinstance(metadata, dict) else "unknown",
+            evidence_type=metadata.get("kind", "unknown")
+            if isinstance(metadata, dict)
+            else "unknown",
             key=a.key,
             vault_path=None,
             filename=a.filename,
@@ -127,7 +130,9 @@ def persist_if_db(envcfg, env: str, manifest, artifacts: Iterable):
     if not session:
         return
     try:
-        persist_manifest_and_artifacts(session, env, getattr(envcfg, "description", None), manifest, artifacts)
+        persist_manifest_and_artifacts(
+            session, env, getattr(envcfg, "description", None), manifest, artifacts
+        )
         print("[green]Persisted evidence and manifest to database")
     except Exception as exc:
         print(f"[yellow]DB persistence failed; continuing: {exc}")
@@ -136,22 +141,23 @@ def persist_if_db(envcfg, env: str, manifest, artifacts: Iterable):
 def persist_validation_results(session, env: str, results_dict):
     """
     Persist validation results to database.
-    
+
     Args:
         session: Database session
         env: Environment/system name
         results_dict: Dict of control_id -> ValidationResult
     """
-    from .db.models import Control, ValidationStatus as DBValidationStatus
+    from .db.models import Control
+    from .db.models import ValidationStatus as DBValidationStatus
     from .validators import ValidationStatus
-    
+
     # Get or create system
     system = session.query(System).filter_by(name=env).one_or_none()
     if not system:
         system = System(name=env, environment=env, description=None, attributes={})
         session.add(system)
         session.flush()
-    
+
     # Process each validation result
     for control_id, result in results_dict.items():
         # Get or create control
@@ -162,19 +168,20 @@ def persist_validation_results(session, env: str, results_dict):
                 title=result.metadata.get("description", f"Control {control_id.upper()}"),
                 description=result.message,
                 family=control_id.split("-")[0].upper() if "-" in control_id else "UNKNOWN",
-                attributes={}
+                attributes={},
             )
             session.add(control)
             session.flush()
-        
+
         # Map ValidationStatus enum to DB enum
         if isinstance(result.status, ValidationStatus):
             db_status = DBValidationStatus[result.status.name]
         else:
             db_status = DBValidationStatus.UNKNOWN
-        
+
         # Create validation result
         from .db.models import ValidationResult as DBValidationResult
+
         validation = DBValidationResult(
             system=system,
             control=control,
@@ -185,14 +192,14 @@ def persist_validation_results(session, env: str, results_dict):
             attributes=result.metadata or {},
         )
         session.add(validation)
-    
+
     session.commit()
 
 
 def persist_validation_if_db(envcfg, env: str, results_dict):
     """
     Persist validation results to DB if database_url configured.
-    
+
     Args:
         envcfg: Environment configuration
         env: Environment/system name

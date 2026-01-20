@@ -12,44 +12,43 @@ Generates detailed HTML and JSON reports showing:
 """
 
 import json
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any, Tuple
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
 
 from rapidrmf.config import AppConfig
-from rapidrmf.oscal import load_oscal, OscalCatalog, OscalProfile
-from rapidrmf.validators import ComplianceValidator, get_control_requirement, ValidationResult
-from rapidrmf.evidence import ArtifactRecord
+from rapidrmf.oscal import OscalCatalog, OscalProfile, load_oscal
+from rapidrmf.validators import ComplianceValidator, ValidationResult, get_control_requirement
 
 
 def load_test_evidence() -> Dict[str, Any]:
     """Load comprehensive test evidence patterns"""
     test_data_path = Path(__file__).parent / "test_evidence_data.json"
-    with open(test_data_path, 'r', encoding='utf-8') as f:
+    with open(test_data_path, encoding="utf-8") as f:
         return json.load(f)
 
 
 def create_evidence_for_control(control_id: str, test_data: Dict[str, Any]) -> Dict[str, str]:
     """Create evidence dictionary for a specific control based on family and requirements"""
     evidence = {}
-    
+
     # Extract family from control ID (e.g., "AC-2" -> "AC")
-    family = control_id.split('-')[0].upper()
-    
+    family = control_id.split("-")[0].upper()
+
     # Map evidence types to this control based on family membership
-    for category, artifacts_dict in test_data['evidence_artifacts'].items():
+    for category, artifacts_dict in test_data["evidence_artifacts"].items():
         for evidence_type, evidence_info in artifacts_dict.items():
-            satisfies_families = evidence_info.get('satisfies_families', [])
+            satisfies_families = evidence_info.get("satisfies_families", [])
             # Add evidence if it satisfies this control's family
             if family in satisfies_families:
                 evidence[evidence_type] = f"test-artifact-{evidence_type}.json"
-    
+
     # If no family-specific evidence found, add a generic set to avoid empty evidence
     if not evidence:
-        evidence['audit-log'] = 'test-artifact-audit-log.json'
-        evidence['security-plan'] = 'test-artifact-security-plan.json'
-    
+        evidence["audit-log"] = "test-artifact-audit-log.json"
+        evidence["security-plan"] = "test-artifact-security-plan.json"
+
     return evidence
 
 
@@ -59,87 +58,83 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
     print("RapidRMF Comprehensive Validation Test")
     print("=" * 80)
     print()
-    
+
     # Load configuration
     print("Loading configuration...")
     config = AppConfig.load(config_path)
     print(f"✅ Loaded config: {config.organization}")
     print()
-    
+
     # Load all catalogs and profiles
     print("Loading OSCAL catalogs and profiles...")
     all_controls = {}  # control_id -> catalog_name
     catalog_stats = {}
-    
+
     for catalog_name, catalog_path in config.catalogs.get_all_catalogs().items():
         print(f"  Loading {catalog_name}...")
         oscal_obj = load_oscal(catalog_path)
-        
+
         if isinstance(oscal_obj, OscalCatalog):
             control_ids = oscal_obj.control_ids()
         elif isinstance(oscal_obj, OscalProfile):
             control_ids = oscal_obj.imported_control_ids()
         else:
             continue
-        
+
         catalog_stats[catalog_name] = len(control_ids)
         for control_id in control_ids:
             if control_id not in all_controls:
                 all_controls[control_id] = []
             all_controls[control_id].append(catalog_name)
-        
+
         print(f"    ✅ {len(control_ids)} controls")
-    
+
     print()
     print(f"Total unique controls across all catalogs: {len(all_controls)}")
     print()
-    
+
     # Validate each control
     print("Validating all controls...")
     print()
-    
+
     results = {
-        'metadata': {
-            'test_timestamp': datetime.now().isoformat() + 'Z',
-            'total_controls': len(all_controls),
-            'total_catalogs': len(catalog_stats),
-            'catalog_stats': catalog_stats,
-            'config_path': str(config_path)
+        "metadata": {
+            "test_timestamp": datetime.now().isoformat() + "Z",
+            "total_controls": len(all_controls),
+            "total_catalogs": len(catalog_stats),
+            "catalog_stats": catalog_stats,
+            "config_path": str(config_path),
         },
-        'controls': {},
-        'statistics': {
-            'by_status': defaultdict(int),
-            'by_family': defaultdict(lambda: {
-                'total': 0,
-                'pass': 0,
-                'insufficient': 0,
-                'failed': 0,
-                'unknown': 0
-            })
-        }
+        "controls": {},
+        "statistics": {
+            "by_status": defaultdict(int),
+            "by_family": defaultdict(
+                lambda: {"total": 0, "pass": 0, "insufficient": 0, "failed": 0, "unknown": 0}
+            ),
+        },
     }
-    
+
     validator = None  # Will be created per-control
-    
+
     # Process controls by family for organized output
     controls_by_family = defaultdict(list)
     for control_id in sorted(all_controls.keys()):
-        family = control_id.split('-')[0]
+        family = control_id.split("-")[0]
         controls_by_family[family].append(control_id)
-    
+
     total_processed = 0
     for family in sorted(controls_by_family.keys()):
         control_list = controls_by_family[family]
         print(f"Family {family}: {len(control_list)} controls")
-        
+
         for control_id in control_list:
             # Get control requirement
             requirement = get_control_requirement(control_id)
-            
+
             # Create evidence dictionary
             evidence = create_evidence_for_control(control_id, test_data)
             evidence_keys = set(evidence.keys())
-            
+
             # Validate
             if requirement:
                 validator = ComplianceValidator(requirement)
@@ -148,37 +143,39 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
                 # No validator - this shouldn't happen with family patterns
                 result = ValidationResult(
                     control_id=control_id,
-                    status='unknown',
-                    message='No validation pattern found',
+                    status="unknown",
+                    message="No validation pattern found",
                     evidence_keys=[],
-                    metadata={}
+                    metadata={},
                 )
-            
+
             # Record results
             status_str = result.status if isinstance(result.status, str) else result.status.value
-            results['controls'][control_id] = {
-                'catalogs': all_controls[control_id],
-                'requirement': requirement.description if requirement else 'No requirement defined',
-                'evidence_types': list(evidence.keys()),
-                'evidence_count': len(evidence),
-                'status': status_str,
-                'message': result.message,
-                'suggestions': result.suggestions if hasattr(result, 'suggestions') and result.suggestions else [],
-                'metadata': result.metadata
+            results["controls"][control_id] = {
+                "catalogs": all_controls[control_id],
+                "requirement": requirement.description if requirement else "No requirement defined",
+                "evidence_types": list(evidence.keys()),
+                "evidence_count": len(evidence),
+                "status": status_str,
+                "message": result.message,
+                "suggestions": result.suggestions
+                if hasattr(result, "suggestions") and result.suggestions
+                else [],
+                "metadata": result.metadata,
             }
-            
+
             # Update statistics
-            results['statistics']['by_status'][status_str] += 1
-            results['statistics']['by_family'][family]['total'] += 1
-            results['statistics']['by_family'][family][status_str] += 1
-            
+            results["statistics"]["by_status"][status_str] += 1
+            results["statistics"]["by_family"][family]["total"] += 1
+            results["statistics"]["by_family"][family][status_str] += 1
+
             total_processed += 1
             if total_processed % 50 == 0:
                 print(f"  Processed {total_processed}/{len(all_controls)} controls...")
-    
+
     print(f"✅ Validation complete: {total_processed} controls processed")
     print()
-    
+
     return results
 
 
@@ -346,14 +343,14 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
 <body>
     <div class="container">
         <h1>🛡️ RapidRMF Comprehensive Validation Report</h1>
-        
+
         <div class="metadata">
             <p><strong>Test Timestamp:</strong> {results['metadata']['test_timestamp']}</p>
             <p><strong>Configuration:</strong> {results['metadata']['config_path']}</p>
             <p><strong>Total Controls:</strong> {results['metadata']['total_controls']}</p>
             <p><strong>Catalogs Tested:</strong> {results['metadata']['total_catalogs']}</p>
         </div>
-        
+
         <h2>📊 Overall Statistics</h2>
         <div class="stats-grid">
             <div class="stat-card passed">
@@ -377,7 +374,7 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
                 <div class="stat-label">{results['statistics']['by_status'].get('unknown', 0) / results['metadata']['total_controls'] * 100:.1f}%</div>
             </div>
         </div>
-        
+
         <h2>📁 Catalog Statistics</h2>
         <table>
             <thead>
@@ -388,32 +385,32 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
             </thead>
             <tbody>
 """
-    
-    for catalog_name, count in sorted(results['metadata']['catalog_stats'].items()):
+
+    for catalog_name, count in sorted(results["metadata"]["catalog_stats"].items()):
         html += f"""
                 <tr>
                     <td>{catalog_name}</td>
                     <td>{count}</td>
                 </tr>
 """
-    
+
     html += """
             </tbody>
         </table>
-        
+
         <h2>📋 Validation Results by Family</h2>
 """
-    
+
     # Group controls by family
     controls_by_family = defaultdict(list)
-    for control_id, control_data in results['controls'].items():
-        family = control_id.split('-')[0]
+    for control_id, control_data in results["controls"].items():
+        family = control_id.split("-")[0]
         controls_by_family[family].append((control_id, control_data))
-    
+
     for family in sorted(controls_by_family.keys()):
-        family_stats = results['statistics']['by_family'][family]
+        family_stats = results["statistics"]["by_family"][family]
         controls = controls_by_family[family]
-        
+
         html += f"""
         <div class="family-section">
             <div class="family-header">Family {family} ({family_stats['total']} controls)</div>
@@ -447,11 +444,13 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
                 </thead>
                 <tbody>
 """
-        
+
         for control_id, control_data in sorted(controls):
-            catalog_badges = ''.join([f'<span class="catalog-badge">{cat}</span>' for cat in control_data['catalogs']])
-            details_id = control_id.replace('.', '_')
-            
+            catalog_badges = "".join(
+                [f'<span class="catalog-badge">{cat}</span>' for cat in control_data["catalogs"]]
+            )
+            details_id = control_id.replace(".", "_")
+
             html += f"""
                     <tr class="control-row">
                         <td><strong>{control_id}</strong></td>
@@ -468,33 +467,33 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
                                 <p><strong>Evidence Types ({len(control_data['evidence_types'])}):</strong><br>
                                 <span class="evidence-list">{', '.join(sorted(control_data['evidence_types']))}</span></p>
 """
-            
-            if control_data['suggestions']:
-                html += f"""
+
+            if control_data["suggestions"]:
+                html += """
                                 <p><strong>Suggestions:</strong></p>
                                 <ul>
 """
-                for suggestion in control_data['suggestions']:
+                for suggestion in control_data["suggestions"]:
                     html += f"                                    <li>{suggestion}</li>\n"
                 html += """
                                 </ul>
 """
-            
+
             html += """
                             </div>
                         </td>
                     </tr>
 """
-        
+
         html += """
                 </tbody>
             </table>
         </div>
 """
-    
+
     html += """
     </div>
-    
+
     <script>
         function toggleDetails(id) {
             const element = document.getElementById(id);
@@ -504,14 +503,14 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
 </body>
 </html>
 """
-    
-    with open(output_path, 'w', encoding='utf-8') as f:
+
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
 
 
 def generate_json_report(results: Dict[str, Any], output_path: Path):
     """Generate JSON report"""
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
 
@@ -521,27 +520,37 @@ def print_summary(results: Dict[str, Any]):
     print("Test Summary")
     print("=" * 80)
     print()
-    
-    total = results['metadata']['total_controls']
-    by_status = results['statistics']['by_status']
-    
+
+    total = results["metadata"]["total_controls"]
+    by_status = results["statistics"]["by_status"]
+
     print(f"Total Controls Tested: {total}")
-    print(f"  ✅ Passed:       {by_status.get('pass', 0):4d} ({by_status.get('pass', 0)/total*100:5.1f}%)")
-    print(f"  ⚠️  Insufficient: {by_status.get('insufficient', 0):4d} ({by_status.get('insufficient', 0)/total*100:5.1f}%)")
-    print(f"  ❌ Failed:       {by_status.get('failed', 0):4d} ({by_status.get('failed', 0)/total*100:5.1f}%)")
-    print(f"  ❓ Unknown:      {by_status.get('unknown', 0):4d} ({by_status.get('unknown', 0)/total*100:5.1f}%)")
+    print(
+        f"  ✅ Passed:       {by_status.get('pass', 0):4d} ({by_status.get('pass', 0)/total*100:5.1f}%)"
+    )
+    print(
+        f"  ⚠️  Insufficient: {by_status.get('insufficient', 0):4d} ({by_status.get('insufficient', 0)/total*100:5.1f}%)"
+    )
+    print(
+        f"  ❌ Failed:       {by_status.get('failed', 0):4d} ({by_status.get('failed', 0)/total*100:5.1f}%)"
+    )
+    print(
+        f"  ❓ Unknown:      {by_status.get('unknown', 0):4d} ({by_status.get('unknown', 0)/total*100:5.1f}%)"
+    )
     print()
-    
+
     print("Family Coverage:")
-    for family in sorted(results['statistics']['by_family'].keys()):
-        stats = results['statistics']['by_family'][family]
-        print(f"  {family}: {stats['total']} controls "
-              f"({stats['pass']} passed, {stats['insufficient']} insufficient, "
-              f"{stats['failed']} failed, {stats['unknown']} unknown)")
+    for family in sorted(results["statistics"]["by_family"].keys()):
+        stats = results["statistics"]["by_family"][family]
+        print(
+            f"  {family}: {stats['total']} controls "
+            f"({stats['pass']} passed, {stats['insufficient']} insufficient, "
+            f"{stats['failed']} failed, {stats['unknown']} unknown)"
+        )
     print()
-    
+
     print("Catalogs Tested:")
-    for catalog_name, count in sorted(results['metadata']['catalog_stats'].items()):
+    for catalog_name, count in sorted(results["metadata"]["catalog_stats"].items()):
         print(f"  {catalog_name}: {count} controls")
     print()
 
@@ -550,30 +559,30 @@ def main():
     """Main test execution"""
     # Load test data
     test_data = load_test_evidence()
-    
+
     # Run validation
     config_path = "config.example.yaml"
     results = validate_all_controls(config_path, test_data)
-    
+
     # Generate reports
     print("Generating reports...")
     output_dir = Path(__file__).parent / "validation_reports"
     output_dir.mkdir(exist_ok=True)
-    
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     html_path = output_dir / f"validation_report_{timestamp}.html"
     json_path = output_dir / f"validation_report_{timestamp}.json"
-    
+
     generate_html_report(results, html_path)
     generate_json_report(results, json_path)
-    
+
     print(f"✅ HTML report: {html_path}")
     print(f"✅ JSON report: {json_path}")
     print()
-    
+
     # Print summary
     print_summary(results)
-    
+
     print("=" * 80)
     print("🎉 Comprehensive validation test complete!")
     print("=" * 80)

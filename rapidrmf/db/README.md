@@ -60,7 +60,7 @@ from rapidrmf.db.repositories import CatalogRepository, ControlRepository
 async with get_async_session() as session:
     catalog_repo = CatalogRepository(session)
     control_repo = ControlRepository(session)
-    
+
     catalog = await catalog_repo.upsert_catalog("nist-800-53", "NIST SP 800-53", "NIST")
     control = await control_repo.upsert_control(catalog, "AC-2", "Account Management", "AC")
 ```
@@ -200,14 +200,14 @@ from rapidrmf.db import get_async_session
 
 async with get_async_session() as session:
     repo = Repository(session)
-    
+
     # Create/update a system
     system = await repo.upsert_system(
         system_id="prod-app-01",
         name="Production Application",
         system_type="web-application"
     )
-    
+
     # Add evidence
     evidence = await repo.add_evidence(
         system=system,
@@ -216,20 +216,20 @@ async with get_async_session() as session:
         source="terraform-state",
         vault_path="s3://evidence/prod-app-01/terraform/state.json"
     )
-    
+
     # NEW v0.2: Store validation results
     catalog = await repo.upsert_catalog(
         name="nist-800-53-rev5",
         title="NIST SP 800-53 Rev 5",
         version="5.1.1"
     )
-    
+
     control = await repo.upsert_control(
         catalog=catalog,
         control_id="AC-2",
         title="Account Management"
     )
-    
+
     result = await repo.add_validation_result(
         system=system,
         control=control,
@@ -238,11 +238,11 @@ async with get_async_session() as session:
         evidence_keys=["terraform-plan", "audit-log"],
         remediation=None
     )
-    
+
     # Query validation results
     latest = await repo.get_latest_validation_results(system, limit=10)
     passed = await repo.get_validation_results_by_status(system, ValidationStatus.PASS)
-    
+
     await session.commit()
 ```
 

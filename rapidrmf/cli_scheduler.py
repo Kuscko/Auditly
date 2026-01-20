@@ -4,10 +4,10 @@ import typer
 from rich import print
 from rich.table import Table
 
-from .scheduler import runner
 from .config import AppConfig
-from .db import init_db_async, get_async_session
+from .db import get_async_session, init_db_async
 from .db.repository import Repository
+from .scheduler import runner
 
 scheduler_app = typer.Typer(help="Scheduled validation controls")
 
@@ -62,13 +62,14 @@ def list_runs(
         session = await session_gen.__anext__()
         repo = Repository(session)
         runs = await repo.get_recent_job_runs(job_type="validation", environment=env, limit=limit)
-        
+
         # Filter by status if provided
         if status:
             runs = [r for r in runs if r.status == status]
-        
+
         if json_output:
             import json
+
             data = [
                 {
                     "id": r.id,
@@ -101,8 +102,9 @@ def list_runs(
                     (r.error or "").split("\n")[0][:80],
                 )
             print(table)
-        
+
         await session.close()
 
     import asyncio
+
     asyncio.run(_list())

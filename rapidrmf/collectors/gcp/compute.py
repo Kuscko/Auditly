@@ -14,12 +14,13 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 try:
     from google.cloud import compute_v1
+
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
@@ -27,7 +28,7 @@ except ImportError:
 
 class ComputeCollector:
     """Collector for GCP Compute Engine evidence.
-    
+
     Compliance Controls Mapped:
     - AC-4: Information Flow Enforcement (firewall rules)
     - SC-7: Boundary Protection (firewall configuration)
@@ -45,7 +46,7 @@ class ComputeCollector:
         """
         self.client = client
         self.project_id = client.project_id
-        
+
         if not GCP_AVAILABLE:
             raise ImportError("google-cloud-compute required for Compute collector")
 
@@ -69,9 +70,7 @@ class ComputeCollector:
 
         # Compute evidence checksum
         evidence_json = json.dumps(evidence, sort_keys=True, default=str)
-        evidence["metadata"]["sha256"] = hashlib.sha256(
-            evidence_json.encode()
-        ).hexdigest()
+        evidence["metadata"]["sha256"] = hashlib.sha256(evidence_json.encode()).hexdigest()
 
         return evidence
 
@@ -84,23 +83,21 @@ class ComputeCollector:
         instances = []
 
         try:
-            instances_client = compute_v1.InstancesClient(
-                credentials=self.client.credentials
-            )
-            
+            instances_client = compute_v1.InstancesClient(credentials=self.client.credentials)
+
             # Get all zones
             zones_client = compute_v1.ZonesClient(credentials=self.client.credentials)
             zones = zones_client.list(project=self.project_id)
-            
+
             for zone in zones:
                 zone_name = zone.name
-                
+
                 try:
                     request = compute_v1.ListInstancesRequest(
                         project=self.project_id,
                         zone=zone_name,
                     )
-                    
+
                     for instance in instances_client.list(request=request):
                         instance_dict = {
                             "name": instance.name,
@@ -121,37 +118,46 @@ class ComputeCollector:
                             "network_interfaces": [
                                 {
                                     "network": ni.network.split("/")[-1] if ni.network else None,
-                                    "subnet": ni.subnetwork.split("/")[-1] if ni.subnetwork else None,
-                                    "internal_ip": ni.network_i_p if hasattr(ni, 'network_i_p') else None,
+                                    "subnet": ni.subnetwork.split("/")[-1]
+                                    if ni.subnetwork
+                                    else None,
+                                    "internal_ip": ni.network_i_p
+                                    if hasattr(ni, "network_i_p")
+                                    else None,
                                     "access_configs": [
                                         {
                                             "name": ac.name,
-                                            "nat_ip": ac.nat_i_p if hasattr(ac, 'nat_i_p') else None,
+                                            "nat_ip": ac.nat_i_p
+                                            if hasattr(ac, "nat_i_p")
+                                            else None,
                                         }
                                         for ac in ni.access_configs
-                                    ] if ni.access_configs else [],
+                                    ]
+                                    if ni.access_configs
+                                    else [],
                                 }
                                 for ni in instance.network_interfaces
                             ],
-                            "metadata": {
-                                item.key: item.value
-                                for item in instance.metadata.items
-                            } if instance.metadata and instance.metadata.items else {},
+                            "metadata": {item.key: item.value for item in instance.metadata.items}
+                            if instance.metadata and instance.metadata.items
+                            else {},
                             "service_accounts": [
                                 {
                                     "email": sa.email,
                                     "scopes": list(sa.scopes),
                                 }
                                 for sa in instance.service_accounts
-                            ] if instance.service_accounts else [],
+                            ]
+                            if instance.service_accounts
+                            else [],
                             "labels": dict(instance.labels) if instance.labels else {},
                             "deletion_protection": instance.deletion_protection,
                         }
                         instances.append(instance_dict)
-                        
+
                 except Exception as e:
                     logger.warning("Error collecting instances in zone %s: %s", zone_name, e)
-                    
+
             logger.info("Collected %d instances", len(instances))
         except Exception as e:
             logger.error("Error collecting instances: %s", e)
@@ -170,16 +176,16 @@ class ComputeCollector:
             disks_client = compute_v1.DisksClient(credentials=self.client.credentials)
             zones_client = compute_v1.ZonesClient(credentials=self.client.credentials)
             zones = zones_client.list(project=self.project_id)
-            
+
             for zone in zones:
                 zone_name = zone.name
-                
+
                 try:
                     request = compute_v1.ListDisksRequest(
                         project=self.project_id,
                         zone=zone_name,
                     )
-                    
+
                     for disk in disks_client.list(request=request):
                         disk_dict = {
                             "name": disk.name,
@@ -189,19 +195,29 @@ class ComputeCollector:
                             "type": disk.type_.split("/")[-1] if disk.type_ else None,
                             "status": disk.status,
                             "creation_timestamp": disk.creation_timestamp,
-                            "source_image": disk.source_image.split("/")[-1] if disk.source_image else None,
-                            "source_snapshot": disk.source_snapshot.split("/")[-1] if disk.source_snapshot else None,
-                            "users": [user.split("/")[-1] for user in disk.users] if disk.users else [],
+                            "source_image": disk.source_image.split("/")[-1]
+                            if disk.source_image
+                            else None,
+                            "source_snapshot": disk.source_snapshot.split("/")[-1]
+                            if disk.source_snapshot
+                            else None,
+                            "users": [user.split("/")[-1] for user in disk.users]
+                            if disk.users
+                            else [],
                             "labels": dict(disk.labels) if disk.labels else {},
                             "disk_encryption_key": {
-                                "kms_key_name": disk.disk_encryption_key.kms_key_name if disk.disk_encryption_key else None,
-                            } if disk.disk_encryption_key else None,
+                                "kms_key_name": disk.disk_encryption_key.kms_key_name
+                                if disk.disk_encryption_key
+                                else None,
+                            }
+                            if disk.disk_encryption_key
+                            else None,
                         }
                         disks.append(disk_dict)
-                        
+
                 except Exception as e:
                     logger.warning("Error collecting disks in zone %s: %s", zone_name, e)
-                    
+
             logger.info("Collected %d disks", len(disks))
         except Exception as e:
             logger.error("Error collecting disks: %s", e)
@@ -217,12 +233,10 @@ class ComputeCollector:
         firewalls = []
 
         try:
-            firewalls_client = compute_v1.FirewallsClient(
-                credentials=self.client.credentials
-            )
-            
+            firewalls_client = compute_v1.FirewallsClient(credentials=self.client.credentials)
+
             request = compute_v1.ListFirewallsRequest(project=self.project_id)
-            
+
             for firewall in firewalls_client.list(request=request):
                 firewall_dict = {
                     "name": firewall.name,
@@ -233,7 +247,9 @@ class ComputeCollector:
                     "direction": firewall.direction,
                     "disabled": firewall.disabled,
                     "source_ranges": list(firewall.source_ranges) if firewall.source_ranges else [],
-                    "destination_ranges": list(firewall.destination_ranges) if firewall.destination_ranges else [],
+                    "destination_ranges": list(firewall.destination_ranges)
+                    if firewall.destination_ranges
+                    else [],
                     "source_tags": list(firewall.source_tags) if firewall.source_tags else [],
                     "target_tags": list(firewall.target_tags) if firewall.target_tags else [],
                     "allowed": [
@@ -242,17 +258,21 @@ class ComputeCollector:
                             "ports": list(rule.ports) if rule.ports else [],
                         }
                         for rule in firewall.allowed
-                    ] if firewall.allowed else [],
+                    ]
+                    if firewall.allowed
+                    else [],
                     "denied": [
                         {
                             "ip_protocol": rule.i_p_protocol,
                             "ports": list(rule.ports) if rule.ports else [],
                         }
                         for rule in firewall.denied
-                    ] if firewall.denied else [],
+                    ]
+                    if firewall.denied
+                    else [],
                 }
                 firewalls.append(firewall_dict)
-                
+
             logger.info("Collected %d firewall rules", len(firewalls))
         except Exception as e:
             logger.error("Error collecting firewalls: %s", e)
@@ -268,12 +288,10 @@ class ComputeCollector:
         snapshots = []
 
         try:
-            snapshots_client = compute_v1.SnapshotsClient(
-                credentials=self.client.credentials
-            )
-            
+            snapshots_client = compute_v1.SnapshotsClient(credentials=self.client.credentials)
+
             request = compute_v1.ListSnapshotsRequest(project=self.project_id)
-            
+
             for snapshot in snapshots_client.list(request=request):
                 snapshot_dict = {
                     "name": snapshot.name,
@@ -281,16 +299,22 @@ class ComputeCollector:
                     "creation_timestamp": snapshot.creation_timestamp,
                     "disk_size_gb": snapshot.disk_size_gb,
                     "storage_bytes": snapshot.storage_bytes,
-                    "source_disk": snapshot.source_disk.split("/")[-1] if snapshot.source_disk else None,
+                    "source_disk": snapshot.source_disk.split("/")[-1]
+                    if snapshot.source_disk
+                    else None,
                     "status": snapshot.status,
                     "snapshot_encryption_key": {
-                        "kms_key_name": snapshot.snapshot_encryption_key.kms_key_name if snapshot.snapshot_encryption_key else None,
-                    } if snapshot.snapshot_encryption_key else None,
+                        "kms_key_name": snapshot.snapshot_encryption_key.kms_key_name
+                        if snapshot.snapshot_encryption_key
+                        else None,
+                    }
+                    if snapshot.snapshot_encryption_key
+                    else None,
                     "labels": dict(snapshot.labels) if snapshot.labels else {},
                     "auto_created": snapshot.auto_created,
                 }
                 snapshots.append(snapshot_dict)
-                
+
             logger.info("Collected %d snapshots", len(snapshots))
         except Exception as e:
             logger.error("Error collecting snapshots: %s", e)

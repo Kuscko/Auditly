@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-from sqlalchemy import select, func
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .db.models import Evidence, EvidenceVersion, EvidenceAccessLog
+from .db.models import Evidence, EvidenceAccessLog, EvidenceVersion
 
 
 class EvidenceLifecycleManager:
@@ -24,35 +25,35 @@ class EvidenceLifecycleManager:
     ) -> List[Evidence]:
         """
         Find evidence that hasn't been updated within the staleness threshold.
-        
+
         Args:
             system_id: System ID to check
             staleness_threshold_days: Evidence older than this is considered stale
             evidence_type: Optional filter by evidence type
-        
+
         Returns:
             List of stale Evidence records
         """
         threshold_date = datetime.utcnow() - timedelta(days=staleness_threshold_days)
-        
+
         query = select(Evidence).where(
             Evidence.system_id == system_id,
             Evidence.collected_at < threshold_date,
         )
-        
+
         if evidence_type:
             query = query.where(Evidence.evidence_type == evidence_type)
-        
+
         result = self.session.execute(query)
         return list(result.scalars().all())
 
     def get_evidence_versions(self, evidence_id: int) -> List[EvidenceVersion]:
         """
         Get all versions of an evidence record, ordered by version number.
-        
+
         Args:
             evidence_id: Evidence ID
-        
+
         Returns:
             List of EvidenceVersion records
         """
@@ -72,12 +73,12 @@ class EvidenceLifecycleManager:
     ) -> List[Evidence]:
         """
         Find duplicate evidence by SHA256 hash.
-        
+
         Args:
             system_id: System ID
             sha256_hash: SHA256 hash to search for
             exclude_evidence_id: Optional evidence ID to exclude from results
-        
+
         Returns:
             List of Evidence records with matching hash
         """
@@ -85,10 +86,10 @@ class EvidenceLifecycleManager:
             Evidence.system_id == system_id,
             Evidence.sha256 == sha256_hash,
         )
-        
+
         if exclude_evidence_id:
             query = query.where(Evidence.id != exclude_evidence_id)
-        
+
         result = self.session.execute(query)
         return list(result.scalars().all())
 
@@ -100,12 +101,12 @@ class EvidenceLifecycleManager:
     ) -> Dict[str, Any]:
         """
         Compare two versions of evidence to detect configuration drift.
-        
+
         Args:
             evidence_id: Evidence ID
             version1: First version number
             version2: Second version number
-        
+
         Returns:
             Dict with drift analysis
         """
@@ -115,36 +116,38 @@ class EvidenceLifecycleManager:
                 EvidenceVersion.version == version1,
             )
         ).scalar_one_or_none()
-        
+
         v2 = self.session.execute(
             select(EvidenceVersion).where(
                 EvidenceVersion.evidence_id == evidence_id,
                 EvidenceVersion.version == version2,
             )
         ).scalar_one_or_none()
-        
+
         if not v1 or not v2:
             return {"error": "Version not found"}
-        
+
         # Simple drift detection: compare JSON data
         data1 = v1.data
         data2 = v2.data
-        
+
         # Find changed keys
         all_keys = set(data1.keys()) | set(data2.keys())
         changes = {}
-        
+
         for key in all_keys:
             val1 = data1.get(key)
             val2 = data2.get(key)
-            
+
             if val1 != val2:
                 changes[key] = {
                     "old": val1,
                     "new": val2,
-                    "change_type": "added" if key not in data1 else ("removed" if key not in data2 else "modified"),
+                    "change_type": "added"
+                    if key not in data1
+                    else ("removed" if key not in data2 else "modified"),
                 }
-        
+
         return {
             "evidence_id": evidence_id,
             "version1": version1,
@@ -162,11 +165,11 @@ class EvidenceLifecycleManager:
     ) -> List[EvidenceAccessLog]:
         """
         Get access log for evidence.
-        
+
         Args:
             evidence_id: Evidence ID
             limit: Maximum number of entries to return
-        
+
         Returns:
             List of EvidenceAccessLog records
         """
@@ -189,14 +192,14 @@ class EvidenceLifecycleManager:
     ) -> EvidenceAccessLog:
         """
         Log evidence access for audit trail.
-        
+
         Args:
             evidence_id: Evidence ID
             user_id: User or system identifier
             action: Action taken (read, write, delete, validate)
             ip_address: Optional IP address
             attributes: Optional additional attributes
-        
+
         Returns:
             Created EvidenceAccessLog record
         """
@@ -218,11 +221,11 @@ class EvidenceLifecycleManager:
     ) -> Evidence:
         """
         Mark evidence as expired for retention policy.
-        
+
         Args:
             evidence_id: Evidence ID
             expires_at: Expiration timestamp
-        
+
         Returns:
             Updated Evidence record
         """
@@ -235,10 +238,10 @@ class EvidenceLifecycleManager:
     def get_evidence_age_days(self, evidence: Evidence) -> int:
         """
         Calculate age of evidence in days.
-        
+
         Args:
             evidence: Evidence record
-        
+
         Returns:
             Age in days
         """
@@ -252,11 +255,11 @@ class EvidenceLifecycleManager:
     ) -> bool:
         """
         Check if evidence needs to be recollected.
-        
+
         Args:
             evidence: Evidence record
             recollection_threshold_days: Threshold for staleness
-        
+
         Returns:
             True if evidence should be recollected
         """

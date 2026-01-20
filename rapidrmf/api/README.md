@@ -98,6 +98,48 @@ POST /collect
 }
 ```
 
+### POST `/collect/batch`
+
+Collect evidence from multiple providers concurrently. Each request object mirrors the single-provider `/collect` payload. Results and errors are keyed by request index and provider (e.g., `req-0-terraform`).
+
+**Example**:
+```json
+POST /collect/batch
+{
+  "requests": [
+    {"config_path": "config.yaml", "environment": "prod", "provider": "terraform", "terraform_plan_path": "plan.json"},
+    {"config_path": "config.yaml", "environment": "prod", "provider": "github", "github_repo": "org/repo", "github_token": "...", "github_run_id": 12345}
+  ],
+  "timeout_seconds": 120
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "results": {
+    "req-0-terraform": [2, "manifests/prod/terraform-manifest.json", "Collected 2 artifacts from terraform"],
+    "req-1-github": [2, "manifests/prod/github-run-12345.json", "Collected 2 artifacts from github"]
+  },
+  "errors": {},
+  "succeeded": 2,
+  "failed": 0,
+  "message": "Batch collection completed"
+}
+```
+
+Mixed success/failure returns partial results with errors keyed per request:
+```json
+{
+  "success": true,
+  "results": {"req-0-terraform": [1, "manifests/x/terraform-manifest.json", "ok terraform"]},
+  "errors": {"req-1-github": "Timeout after 120s"},
+  "succeeded": 1,
+  "failed": 1
+}
+```
+
 **Example - GitHub Actions**:
 ```json
 POST /collect
@@ -328,6 +370,19 @@ curl -X POST http://localhost:8000/collect \
     "environment": "production",
     "provider": "terraform",
     "terraform_plan_path": "/path/to/plan.json"
+  }'
+```
+
+**Collect Batch Evidence (multiple providers)**:
+```bash
+curl -X POST http://localhost:8000/collect/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requests": [
+      {"config_path": "config.yaml", "environment": "production", "provider": "terraform", "terraform_plan_path": "plan.json"},
+      {"config_path": "config.yaml", "environment": "production", "provider": "github", "github_repo": "org/repo", "github_token": "...", "github_run_id": 12345}
+    ],
+    "timeout_seconds": 120
   }'
 ```
 

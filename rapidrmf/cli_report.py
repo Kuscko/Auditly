@@ -6,11 +6,11 @@ from typing import Optional
 import typer
 
 from .config import AppConfig
-from .evidence import EvidenceManifest, ArtifactRecord
-from .reporting.report import readiness_summary, write_html, control_coverage_placeholder
-from .reporting.validation_reports import generate_engineer_report, generate_auditor_report
-from .oscal import load_oscal, OscalCatalog, OscalProfile
-from .mapping import ControlMapping, match_evidence_to_controls, compute_control_coverage
+from .evidence import ArtifactRecord, EvidenceManifest
+from .mapping import ControlMapping, compute_control_coverage, match_evidence_to_controls
+from .oscal import OscalCatalog, OscalProfile, load_oscal
+from .reporting.report import control_coverage_placeholder, readiness_summary, write_html
+from .reporting.validation_reports import generate_auditor_report, generate_engineer_report
 from .validators import validate_controls
 from .waivers import WaiverRegistry
 
@@ -26,12 +26,15 @@ def report_readiness(
     staging = Path(".rapidrmf_manifests")
     staging.mkdir(exist_ok=True)
     if not any(staging.glob(f"{env}-*.json")):
-        dummy = EvidenceManifest.create(env, [ArtifactRecord(key="noop", filename="noop", sha256="0", size=0, metadata={})])
+        dummy = EvidenceManifest.create(
+            env, [ArtifactRecord(key="noop", filename="noop", sha256="0", size=0, metadata={})]
+        )
         (staging / f"{env}-dummy.json").write_text(dummy.to_json())
 
     manifests = []
     for p in staging.glob(f"{env}-*.json"):
         import json as _json
+
         data = _json.loads(p.read_text())
         m = EvidenceManifest(
             version=data["version"],
@@ -71,12 +74,16 @@ def report_readiness(
         else:
             summary["controls"] = control_coverage_placeholder(control_ids, manifests)
 
-        evidence_dict = {a.metadata.get("kind", "unknown"): True for m in manifests for a in m.artifacts}
+        evidence_dict = {
+            a.metadata.get("kind", "unknown"): True for m in manifests for a in m.artifacts
+        }
         validation_results = validate_controls(control_ids, evidence_dict)
         summary["validation"] = {
             "passed": sum(1 for r in validation_results.values() if r.status.value == "pass"),
             "failed": sum(1 for r in validation_results.values() if r.status.value == "fail"),
-            "insufficient": sum(1 for r in validation_results.values() if r.status.value == "insufficient_evidence"),
+            "insufficient": sum(
+                1 for r in validation_results.values() if r.status.value == "insufficient_evidence"
+            ),
         }
 
         waiver_file = Path("waivers.yaml")
@@ -93,10 +100,13 @@ def report_readiness(
 @report_app.command("engineer", help="Generate engineer-focused validation report")
 def report_engineer(
     evidence_file: Path = typer.Option(..., exists=True, help="JSON file with evidence dict"),
-    control_ids: Optional[str] = typer.Option(None, help="Comma-separated control IDs (default: sample)"),
+    control_ids: Optional[str] = typer.Option(
+        None, help="Comma-separated control IDs (default: sample)"
+    ),
     out: Path = typer.Option(Path("engineer-report.html"), help="Output HTML path"),
 ):
     import json as _json
+
     from .validators import FAMILY_PATTERNS
 
     if control_ids:
@@ -115,10 +125,13 @@ def report_engineer(
 @report_app.command("auditor", help="Generate auditor-focused validation report")
 def report_auditor(
     evidence_file: Path = typer.Option(..., exists=True, help="JSON file with evidence dict"),
-    control_ids: Optional[str] = typer.Option(None, help="Comma-separated control IDs (default: sample)"),
+    control_ids: Optional[str] = typer.Option(
+        None, help="Comma-separated control IDs (default: sample)"
+    ),
     out: Path = typer.Option(Path("auditor-report.html"), help="Output HTML path"),
 ):
     import json as _json
+
     from .validators import FAMILY_PATTERNS
 
     if control_ids:

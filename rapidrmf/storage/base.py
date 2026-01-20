@@ -7,11 +7,15 @@ from typing import Any, Dict
 
 class EvidenceVault(ABC):
     @abstractmethod
-    def put_file(self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_file(
+        self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
-    def put_json(self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_json(
+        self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod

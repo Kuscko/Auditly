@@ -35,5 +35,7 @@ def collect_terraform(
                 metadata={"kind": "terraform-apply-log", **(extra_metadata or {})},
             )
         )
-    manifest = EvidenceManifest.create(environment=environment, artifacts=artifacts, notes="terraform collection")
+    manifest = EvidenceManifest.create(
+        environment=environment, artifacts=artifacts, notes="terraform collection"
+    )
     return artifacts, manifest

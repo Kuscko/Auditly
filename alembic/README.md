@@ -167,7 +167,7 @@ The initial migration (`b297497b0925_*`) creates the foundational schema:
 1. **Modify models** in `rapidrmf/db/models.py`
 2. **Generate migration**: `alembic revision --autogenerate -m "description"`
 3. **Review migration** in `alembic/versions/`
-4. **Test migration**: 
+4. **Test migration**:
    ```bash
    alembic upgrade head  # Apply
    alembic downgrade -1  # Test rollback

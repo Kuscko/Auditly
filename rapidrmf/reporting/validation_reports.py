@@ -1,13 +1,12 @@
 """
 Generate validation reports for engineers and ATO auditors.
 """
+
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
-from dataclasses import asdict
+from typing import Any, Dict
 
 from ..validators import ValidationResult, ValidationStatus
 
@@ -15,7 +14,7 @@ from ..validators import ValidationResult, ValidationStatus
 def _write_html(path: Path | str, html: str) -> None:
     """Write HTML with UTF-8 encoding (no BOM)."""
     p = Path(path)
-    with open(p, 'w', encoding='utf-8') as f:
+    with open(p, "w", encoding="utf-8") as f:
         f.write(html)
 
 
@@ -42,20 +41,22 @@ def generate_engineer_report(
 ) -> None:
     """
     Generate an engineer-focused HTML report with failures and remediation steps.
-    
+
     Args:
         results: Dictionary of control_id -> ValidationResult
         evidence: Evidence dict used in validation
         output_path: Path to write HTML report
     """
     p = Path(output_path)
-    
+
     # Get guidance for evidence collection
     evidence_guidance = _get_evidence_guidance()
-    
+
     # Categorize results
     passed = {cid: r for cid, r in results.items() if r.status == ValidationStatus.PASS}
-    insufficient = {cid: r for cid, r in results.items() if r.status == ValidationStatus.INSUFFICIENT_EVIDENCE}
+    insufficient = {
+        cid: r for cid, r in results.items() if r.status == ValidationStatus.INSUFFICIENT_EVIDENCE
+    }
     failed = {cid: r for cid, r in results.items() if r.status == ValidationStatus.FAIL}
     remediation_rows = ""
     for cid in sorted(list(failed.keys()) + list(insufficient.keys())):
@@ -66,29 +67,33 @@ def generate_engineer_report(
         required_all = metadata.get("required_all", [])
         missing = metadata.get("missing", [])
         options = metadata.get("options", [])
-        
+
         # Build list of required evidence with guidance
         needed_evidence = []
         if required_all:
             needed_evidence.extend(required_all)
         if options:
             needed_evidence.extend(options)
-        
+
         guidance_text = ""
         for ev_type in needed_evidence:
-            guidance = evidence_guidance.get(ev_type, f"<strong>{ev_type}:</strong> Collect evidence for this requirement.")
+            guidance = evidence_guidance.get(
+                ev_type, f"<strong>{ev_type}:</strong> Collect evidence for this requirement."
+            )
             guidance_text += f"<div style='margin: 8px 0; padding: 8px; background: #f0f7ff; border-left: 3px solid #1976d2; border-radius: 2px;'>{guidance}</div>"
-        
+
         requirement_text = ""
         if required_all:
             requirement_text += f"<strong>Required:</strong> All of {', '.join(required_all)}<br/>"
         if required_any:
-            requirement_text += f"<strong>Options:</strong> At least one of {', '.join(required_any)}<br/>"
+            requirement_text += (
+                f"<strong>Options:</strong> At least one of {', '.join(required_any)}<br/>"
+            )
         if missing:
             requirement_text += f"<strong>Missing:</strong> {', '.join(missing)}<br/>"
         if options:
             requirement_text += f"<strong>Need one of:</strong> {', '.join(options)}<br/>"
-        
+
         remediation_rows += f"""
         <tr>
             <td><strong>{cid}</strong></td>
@@ -96,7 +101,7 @@ def generate_engineer_report(
             <td><em>{remediation}</em><br/>{guidance_text}</td>
         </tr>
         """
-    
+
     # Build evidence summary
     evidence_summary = "<ul>"
     for ev_type, ev_data in evidence.items():
@@ -106,14 +111,14 @@ def generate_engineer_report(
         else:
             evidence_summary += f"<li><strong>{ev_type}</strong>: (value)</li>"
     evidence_summary += "</ul>"
-    
+
     # Calculate stats
     total = len(results)
     pass_count = len(passed)
     insufficient_count = len(insufficient)
     fail_count = len(failed)
     pass_rate = (pass_count / total * 100) if total > 0 else 0
-    
+
     # Determine status color
     if fail_count > 0:
         status_color = "#d32f2f"  # red
@@ -124,7 +129,7 @@ def generate_engineer_report(
     else:
         status_color = "#388e3c"  # green
         status_text = "COMPLIANT"
-    
+
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -317,7 +322,7 @@ def generate_engineer_report(
         <div class="status">Status: <strong>{status_text}</strong></div>
         <p class="timestamp">Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
     </div>
-    
+
     <div class="content">
     <div class="summary">
         <div class="summary-card">
@@ -337,7 +342,7 @@ def generate_engineer_report(
             <div class="label">Total Controls</div>
         </div>
     </div>
-    
+
     <div class="section">
         <h2>Available Evidence</h2>
         <p>Evidence sources already collected or available in your environment:</p>
@@ -345,7 +350,7 @@ def generate_engineer_report(
             {evidence_summary}
         </div>
     </div>
-    
+
     <div class="section">
         <h2>Action Items ({fail_count + insufficient_count} controls)</h2>
         <p>Controls below are missing required evidence. Collect the indicated evidence types to satisfy control compliance criteria.</p>
@@ -362,7 +367,7 @@ def generate_engineer_report(
             </tbody>
         </table>
     </div>
-    
+
     <div class="section">
         <h2>Compliant Controls ({pass_count})</h2>
         <p>The following {pass_count} controls have the required evidence and satisfy compliance criteria:</p>
@@ -385,37 +390,39 @@ def generate_auditor_report(
 ) -> None:
     """
     Generate an ATO auditor-focused HTML report with evidence traceability.
-    
+
     Args:
         results: Dictionary of control_id -> ValidationResult
         evidence: Evidence dict used in validation
         output_path: Path to write HTML report
     """
     p = Path(output_path)
-    
+
     # Build detailed control table with evidence
     control_rows = ""
     for cid in sorted(results.keys()):
         result = results[cid]
         status_class = result.status.value.lower().replace("_", "-")
         status_display = result.status.value.replace("_", " ").title()
-        
+
         metadata = result.metadata or {}
         evidence_locations = metadata.get("evidence_locations", {})
         matched_any = metadata.get("matched_required_any", [])
         matched_all = metadata.get("matched_required_all", [])
         required_any = metadata.get("required_any", [])
         required_all = metadata.get("required_all", [])
-        
+
         # Build evidence table
         evidence_html = ""
         if evidence_locations:
             evidence_html = "<table style='font-size: 11px; margin: 5px 0;'>"
             for ev_type, ev_info in evidence_locations.items():
-                path = ev_info.get("path", "(inline)") if isinstance(ev_info, dict) else str(ev_info)
+                path = (
+                    ev_info.get("path", "(inline)") if isinstance(ev_info, dict) else str(ev_info)
+                )
                 evidence_html += f"<tr><td><code>{ev_type}</code></td><td>{path}</td></tr>"
             evidence_html += "</table>"
-        
+
         # Build requirements status
         req_html = "<div style='font-size: 11px; margin: 5px 0;'>"
         if required_all:
@@ -425,7 +432,7 @@ def generate_auditor_report(
             matched = ", ".join(matched_any) if matched_any else "NONE"
             req_html += f"<p><strong>Required Any:</strong> {', '.join(required_any)}<br/><em style='color: #666;'>Matched: {matched}</em></p>"
         req_html += "</div>"
-        
+
         control_rows += f"""
         <tr>
             <td><strong>{cid}</strong></td>
@@ -435,7 +442,7 @@ def generate_auditor_report(
             <td style='color: #666; font-size: 11px;'>{result.message}</td>
         </tr>
         """
-    
+
     # Build evidence inventory
     evidence_inventory = ""
     for ev_type, ev_data in evidence.items():
@@ -449,13 +456,15 @@ def generate_auditor_report(
             <div style='font-size: 12px; color: #555; margin-top: 5px;'>{details}</div>
         </div>
         """
-    
+
     # Calculate stats
     total = len(results)
     passed = sum(1 for r in results.values() if r.status == ValidationStatus.PASS)
-    insufficient = sum(1 for r in results.values() if r.status == ValidationStatus.INSUFFICIENT_EVIDENCE)
+    insufficient = sum(
+        1 for r in results.values() if r.status == ValidationStatus.INSUFFICIENT_EVIDENCE
+    )
     failed = sum(1 for r in results.values() if r.status == ValidationStatus.FAIL)
-    
+
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -655,7 +664,7 @@ def generate_auditor_report(
         <p>Comprehensive evidence traceability and control compliance assessment</p>
         <div class="timestamp">Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}</div>
     </div>
-    
+
     <div class="content">
     <div class="stats">
         <div class="stat-card">
@@ -675,13 +684,13 @@ def generate_auditor_report(
             <div class="label">Total Controls</div>
         </div>
     </div>
-    
+
     <div class="section">
         <h2>Evidence Inventory</h2>
         <p>All evidence sources used in this validation:</p>
         {evidence_inventory}
     </div>
-    
+
     <div class="section">
         <h2>Control Validation Details</h2>
         <p>Detailed assessment of each control with evidence traceability:</p>
@@ -700,7 +709,7 @@ def generate_auditor_report(
             </tbody>
         </table>
     </div>
-    
+
     <div class="section">
         <h2>Summary</h2>
         <p><strong>Compliance Rate:</strong> {passed}/{total} controls ({passed/total*100:.1f}%) meet requirements</p>

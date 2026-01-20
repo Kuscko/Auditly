@@ -10,20 +10,6 @@ from alembic import context
 
 # Import our models
 from rapidrmf.db import Base
-from rapidrmf.db.models import (
-    System,
-    Evidence,
-    Catalog,
-    Control,
-    ControlRequirement,
-    ValidationResult,
-    Finding,
-    EvidenceManifest,
-    EvidenceManifestEntry,
-    JobRun,
-    EvidenceVersion,
-    EvidenceAccessLog,
-)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

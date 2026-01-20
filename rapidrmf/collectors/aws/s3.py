@@ -10,12 +10,10 @@ Collects S3 evidence including:
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
+from ..common import finalize_evidence
 from .client import AWSClient
 
 logger = logging.getLogger(__name__)
@@ -46,19 +44,13 @@ class S3Collector:
         """
         logger.info("Starting AWS S3 evidence collection")
 
-        evidence = {
-            "buckets": self.collect_buckets(),
-            "metadata": {
-                "collected_at": datetime.utcnow().isoformat(),
-                "account_id": self.client.get_account_id(),
-                "region": self.client.region,
-                "collector": "aws-s3",
-                "version": "1.0.0",
-            },
-        }
-
-        evidence_json = json.dumps(evidence, sort_keys=True, default=str)
-        evidence["metadata"]["sha256"] = hashlib.sha256(evidence_json.encode()).hexdigest()
+        data = {"buckets": self.collect_buckets()}
+        evidence = finalize_evidence(
+            data,
+            collector="aws-s3",
+            account_id=self.client.get_account_id(),
+            region=self.client.region,
+        )
 
         logger.info("S3 collection complete: %d buckets", len(evidence["buckets"]))
 
@@ -72,7 +64,7 @@ class S3Collector:
             response = self.s3.list_buckets()
             for bucket in response.get("Buckets", []):
                 bucket_name = bucket["Name"]
-                
+
                 bucket_config = {
                     "name": bucket_name,
                     "creation_date": bucket["CreationDate"].isoformat(),
@@ -86,7 +78,7 @@ class S3Collector:
                     "lifecycle": self._get_lifecycle_rules(bucket_name),
                     "tags": self._get_bucket_tags(bucket_name),
                 }
-                
+
                 buckets.append(bucket_config)
 
             logger.debug("Collected %d S3 buckets", len(buckets))
@@ -95,7 +87,7 @@ class S3Collector:
 
         return buckets
 
-    def _get_bucket_region(self, bucket_name: str) -> Optional[str]:
+    def _get_bucket_region(self, bucket_name: str) -> str | None:
         """Get bucket region."""
         try:
             response = self.s3.get_bucket_location(Bucket=bucket_name)
@@ -114,7 +106,7 @@ class S3Collector:
         except ClientError:
             return {"status": "Not set", "mfa_delete": None}
 
-    def _get_bucket_encryption(self, bucket_name: str) -> Optional[dict[str, Any]]:
+    def _get_bucket_encryption(self, bucket_name: str) -> dict[str, Any] | None:
         """Get bucket encryption configuration."""
         try:
             response = self.s3.get_bucket_encryption(Bucket=bucket_name)
@@ -122,8 +114,12 @@ class S3Collector:
             return {
                 "rules": [
                     {
-                        "algorithm": rule.get("ApplyServerSideEncryptionByDefault", {}).get("SSEAlgorithm"),
-                        "kms_key_id": rule.get("ApplyServerSideEncryptionByDefault", {}).get("KMSMasterKeyID"),
+                        "algorithm": rule.get("ApplyServerSideEncryptionByDefault", {}).get(
+                            "SSEAlgorithm"
+                        ),
+                        "kms_key_id": rule.get("ApplyServerSideEncryptionByDefault", {}).get(
+                            "KMSMasterKeyID"
+                        ),
                     }
                     for rule in rules
                 ]
@@ -145,7 +141,7 @@ class S3Collector:
         except ClientError:
             return {}
 
-    def _get_bucket_acl(self, bucket_name: str) -> Optional[dict[str, Any]]:
+    def _get_bucket_acl(self, bucket_name: str) -> dict[str, Any] | None:
         """Get bucket ACL."""
         try:
             response = self.s3.get_bucket_acl(Bucket=bucket_name)
@@ -162,7 +158,7 @@ class S3Collector:
         except ClientError:
             return None
 
-    def _get_bucket_policy(self, bucket_name: str) -> Optional[dict]:
+    def _get_bucket_policy(self, bucket_name: str) -> dict | None:
         """Get bucket policy."""
         try:
             response = self.s3.get_bucket_policy(Bucket=bucket_name)
@@ -171,7 +167,7 @@ class S3Collector:
         except ClientError:
             return None
 
-    def _get_bucket_logging(self, bucket_name: str) -> Optional[dict[str, Any]]:
+    def _get_bucket_logging(self, bucket_name: str) -> dict[str, Any] | None:
         """Get bucket logging configuration."""
         try:
             response = self.s3.get_bucket_logging(Bucket=bucket_name)
