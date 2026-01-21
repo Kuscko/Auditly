@@ -143,9 +143,11 @@ class EvidenceLifecycleManager:
                 changes[key] = {
                     "old": val1,
                     "new": val2,
-                    "change_type": "added"
-                    if key not in data1
-                    else ("removed" if key not in data2 else "modified"),
+                    "change_type": (
+                        "added"
+                        if key not in data1
+                        else ("removed" if key not in data2 else "modified")
+                    ),
                 }
 
         return {

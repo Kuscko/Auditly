@@ -102,9 +102,11 @@ class KMSCollector:
                 "key_usage": key_metadata.get("KeyUsage"),
                 "key_spec": key_metadata.get("KeySpec"),
                 "multi_region": key_metadata.get("MultiRegion", False),
-                "creation_date": key_metadata.get("CreationDate", "").isoformat()
-                if key_metadata.get("CreationDate")
-                else None,
+                "creation_date": (
+                    key_metadata.get("CreationDate", "").isoformat()
+                    if key_metadata.get("CreationDate")
+                    else None
+                ),
                 "customer_master_key_spec": key_metadata.get("CustomerMasterKeySpec"),
                 "encryption_algorithms": key_metadata.get("EncryptionAlgorithms", []),
                 "signing_algorithms": key_metadata.get("SigningAlgorithms", []),
@@ -129,9 +131,11 @@ class KMSCollector:
                             "grant_id": grant.get("GrantId"),
                             "grantee_principal": grant.get("GranteePrincipal"),
                             "operations": grant.get("Operations", []),
-                            "creation_date": grant.get("CreationDate", "").isoformat()
-                            if grant.get("CreationDate")
-                            else None,
+                            "creation_date": (
+                                grant.get("CreationDate", "").isoformat()
+                                if grant.get("CreationDate")
+                                else None
+                            ),
                             "retiring_principal": grant.get("RetiringPrincipal"),
                             "constraints": grant.get("Constraints", {}),
                         }

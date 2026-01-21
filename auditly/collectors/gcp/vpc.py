@@ -90,9 +90,9 @@ class VPCCollector:
                     "id": network.id,
                     "description": network.description,
                     "auto_create_subnetworks": network.auto_create_subnetworks,
-                    "routing_mode": network.routing_config.routing_mode
-                    if network.routing_config
-                    else None,
+                    "routing_mode": (
+                        network.routing_config.routing_mode if network.routing_config else None
+                    ),
                     "mtu": network.mtu,
                     "creation_timestamp": network.creation_timestamp,
                 }
@@ -129,28 +129,36 @@ class VPCCollector:
                         "name": subnetwork.name,
                         "id": subnetwork.id,
                         "region": region,
-                        "network": subnetwork.network.split("/")[-1]
-                        if subnetwork.network
-                        else None,
+                        "network": (
+                            subnetwork.network.split("/")[-1] if subnetwork.network else None
+                        ),
                         "ip_cidr_range": subnetwork.ip_cidr_range,
                         "gateway_address": subnetwork.gateway_address,
                         "private_ip_google_access": subnetwork.private_ip_google_access,
-                        "enable_flow_logs": subnetwork.enable_flow_logs
-                        if hasattr(subnetwork, "enable_flow_logs")
-                        else False,
-                        "log_config": {
-                            "enable": subnetwork.log_config.enable
+                        "enable_flow_logs": (
+                            subnetwork.enable_flow_logs
+                            if hasattr(subnetwork, "enable_flow_logs")
+                            else False
+                        ),
+                        "log_config": (
+                            {
+                                "enable": (
+                                    subnetwork.log_config.enable if subnetwork.log_config else False
+                                ),
+                                "flow_sampling": (
+                                    subnetwork.log_config.flow_sampling
+                                    if subnetwork.log_config
+                                    else None
+                                ),
+                                "aggregation_interval": (
+                                    subnetwork.log_config.aggregation_interval
+                                    if subnetwork.log_config
+                                    else None
+                                ),
+                            }
                             if subnetwork.log_config
-                            else False,
-                            "flow_sampling": subnetwork.log_config.flow_sampling
-                            if subnetwork.log_config
-                            else None,
-                            "aggregation_interval": subnetwork.log_config.aggregation_interval
-                            if subnetwork.log_config
-                            else None,
-                        }
-                        if subnetwork.log_config
-                        else {},
+                            else {}
+                        ),
                         "purpose": subnetwork.purpose if hasattr(subnetwork, "purpose") else None,
                     }
                     subnetworks.append(subnetwork_dict)
@@ -189,12 +197,14 @@ class VPCCollector:
                         "peer_ip": tunnel.peer_ip,
                         "ike_version": tunnel.ike_version,
                         "shared_secret_hash": tunnel.shared_secret_hash,
-                        "target_vpn_gateway": tunnel.target_vpn_gateway.split("/")[-1]
-                        if tunnel.target_vpn_gateway
-                        else None,
-                        "vpn_gateway": tunnel.vpn_gateway.split("/")[-1]
-                        if tunnel.vpn_gateway
-                        else None,
+                        "target_vpn_gateway": (
+                            tunnel.target_vpn_gateway.split("/")[-1]
+                            if tunnel.target_vpn_gateway
+                            else None
+                        ),
+                        "vpn_gateway": (
+                            tunnel.vpn_gateway.split("/")[-1] if tunnel.vpn_gateway else None
+                        ),
                         "creation_timestamp": tunnel.creation_timestamp,
                     }
                     vpn_tunnels.append(tunnel_dict)
@@ -230,12 +240,14 @@ class VPCCollector:
                         "region": region,
                         "description": router.description,
                         "network": router.network.split("/")[-1] if router.network else None,
-                        "bgp": {
-                            "asn": router.bgp.asn if router.bgp else None,
-                            "advertise_mode": router.bgp.advertise_mode if router.bgp else None,
-                        }
-                        if router.bgp
-                        else {},
+                        "bgp": (
+                            {
+                                "asn": router.bgp.asn if router.bgp else None,
+                                "advertise_mode": router.bgp.advertise_mode if router.bgp else None,
+                            }
+                            if router.bgp
+                            else {}
+                        ),
                         "creation_timestamp": router.creation_timestamp,
                     }
                     routers.append(router_dict)

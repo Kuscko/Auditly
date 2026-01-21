@@ -158,9 +158,11 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
                 "evidence_count": len(evidence),
                 "status": status_str,
                 "message": result.message,
-                "suggestions": result.suggestions
-                if hasattr(result, "suggestions") and result.suggestions
-                else [],
+                "suggestions": (
+                    result.suggestions
+                    if hasattr(result, "suggestions") and result.suggestions
+                    else []
+                ),
                 "metadata": result.metadata,
             }
 

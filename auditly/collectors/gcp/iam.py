@@ -207,12 +207,12 @@ class IAMCollector:
                             "key_name": key.name,
                             "key_algorithm": key.key_algorithm.name if key.key_algorithm else None,
                             "key_type": key.key_type.name if key.key_type else None,
-                            "valid_after_time": key.valid_after_time.isoformat()
-                            if key.valid_after_time
-                            else None,
-                            "valid_before_time": key.valid_before_time.isoformat()
-                            if key.valid_before_time
-                            else None,
+                            "valid_after_time": (
+                                key.valid_after_time.isoformat() if key.valid_after_time else None
+                            ),
+                            "valid_before_time": (
+                                key.valid_before_time.isoformat() if key.valid_before_time else None
+                            ),
                         }
 
                         # Calculate key age if valid_after_time exists

@@ -91,9 +91,9 @@ class KMSCollector:
                         key_ring_dict = {
                             "name": key_ring.name,
                             "location": location,
-                            "create_time": key_ring.create_time.isoformat()
-                            if key_ring.create_time
-                            else None,
+                            "create_time": (
+                                key_ring.create_time.isoformat() if key_ring.create_time else None
+                            ),
                         }
                         key_rings.append(key_ring_dict)
 
@@ -135,38 +135,58 @@ class KMSCollector:
                                 key_dict = {
                                     "name": crypto_key.name,
                                     "key_ring": key_ring.name,
-                                    "purpose": crypto_key.purpose.name
-                                    if crypto_key.purpose
-                                    else None,
-                                    "create_time": crypto_key.create_time.isoformat()
-                                    if crypto_key.create_time
-                                    else None,
-                                    "next_rotation_time": crypto_key.next_rotation_time.isoformat()
-                                    if crypto_key.next_rotation_time
-                                    else None,
-                                    "rotation_period": crypto_key.rotation_period.seconds
-                                    if crypto_key.rotation_period
-                                    else None,
-                                    "primary_version": {
-                                        "name": crypto_key.primary.name
+                                    "purpose": (
+                                        crypto_key.purpose.name if crypto_key.purpose else None
+                                    ),
+                                    "create_time": (
+                                        crypto_key.create_time.isoformat()
+                                        if crypto_key.create_time
+                                        else None
+                                    ),
+                                    "next_rotation_time": (
+                                        crypto_key.next_rotation_time.isoformat()
+                                        if crypto_key.next_rotation_time
+                                        else None
+                                    ),
+                                    "rotation_period": (
+                                        crypto_key.rotation_period.seconds
+                                        if crypto_key.rotation_period
+                                        else None
+                                    ),
+                                    "primary_version": (
+                                        {
+                                            "name": (
+                                                crypto_key.primary.name
+                                                if crypto_key.primary
+                                                else None
+                                            ),
+                                            "state": (
+                                                crypto_key.primary.state.name
+                                                if crypto_key.primary and crypto_key.primary.state
+                                                else None
+                                            ),
+                                            "protection_level": (
+                                                crypto_key.primary.protection_level.name
+                                                if crypto_key.primary
+                                                and crypto_key.primary.protection_level
+                                                else None
+                                            ),
+                                            "algorithm": (
+                                                crypto_key.primary.algorithm.name
+                                                if crypto_key.primary
+                                                and crypto_key.primary.algorithm
+                                                else None
+                                            ),
+                                            "create_time": (
+                                                crypto_key.primary.create_time.isoformat()
+                                                if crypto_key.primary
+                                                and crypto_key.primary.create_time
+                                                else None
+                                            ),
+                                        }
                                         if crypto_key.primary
-                                        else None,
-                                        "state": crypto_key.primary.state.name
-                                        if crypto_key.primary and crypto_key.primary.state
-                                        else None,
-                                        "protection_level": crypto_key.primary.protection_level.name
-                                        if crypto_key.primary
-                                        and crypto_key.primary.protection_level
-                                        else None,
-                                        "algorithm": crypto_key.primary.algorithm.name
-                                        if crypto_key.primary and crypto_key.primary.algorithm
-                                        else None,
-                                        "create_time": crypto_key.primary.create_time.isoformat()
-                                        if crypto_key.primary and crypto_key.primary.create_time
-                                        else None,
-                                    }
-                                    if crypto_key.primary
-                                    else None,
+                                        else None
+                                    ),
                                     "labels": dict(crypto_key.labels) if crypto_key.labels else {},
                                 }
 
@@ -182,18 +202,24 @@ class KMSCollector:
                                         versions.append(
                                             {
                                                 "name": version.name,
-                                                "state": version.state.name
-                                                if version.state
-                                                else None,
-                                                "protection_level": version.protection_level.name
-                                                if version.protection_level
-                                                else None,
-                                                "algorithm": version.algorithm.name
-                                                if version.algorithm
-                                                else None,
-                                                "create_time": version.create_time.isoformat()
-                                                if version.create_time
-                                                else None,
+                                                "state": (
+                                                    version.state.name if version.state else None
+                                                ),
+                                                "protection_level": (
+                                                    version.protection_level.name
+                                                    if version.protection_level
+                                                    else None
+                                                ),
+                                                "algorithm": (
+                                                    version.algorithm.name
+                                                    if version.algorithm
+                                                    else None
+                                                ),
+                                                "create_time": (
+                                                    version.create_time.isoformat()
+                                                    if version.create_time
+                                                    else None
+                                                ),
                                             }
                                         )
                                     key_dict["versions"] = versions

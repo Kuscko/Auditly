@@ -112,9 +112,11 @@ class CloudTrailCollector:
                         {
                             "event_id": event.get("EventId"),
                             "event_name": event.get("EventName"),
-                            "event_time": event.get("EventTime", "").isoformat()
-                            if event.get("EventTime")
-                            else None,
+                            "event_time": (
+                                event.get("EventTime", "").isoformat()
+                                if event.get("EventTime")
+                                else None
+                            ),
                             "username": event.get("Username"),
                             "resources": [
                                 {

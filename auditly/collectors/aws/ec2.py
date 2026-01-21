@@ -231,9 +231,9 @@ class EC2Collector:
                         "key_name": kp["KeyName"],
                         "key_fingerprint": kp.get("KeyFingerprint"),
                         "key_type": kp.get("KeyType"),
-                        "create_time": kp.get("CreateTime", "").isoformat()
-                        if kp.get("CreateTime")
-                        else None,
+                        "create_time": (
+                            kp.get("CreateTime", "").isoformat() if kp.get("CreateTime") else None
+                        ),
                         "tags": {t["Key"]: t["Value"] for t in kp.get("Tags", [])},
                     }
                 )
