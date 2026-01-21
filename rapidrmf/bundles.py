@@ -4,7 +4,7 @@ import base64
 import json
 import tarfile
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -47,7 +47,9 @@ def generate_ed25519_keypair() -> Tuple[bytes, bytes]:
     return bytes(sk), bytes(pk)
 
 
-def save_keypair(private_bytes: bytes, public_bytes: bytes, priv_path: Path, pub_path: Path) -> None:
+def save_keypair(
+    private_bytes: bytes, public_bytes: bytes, priv_path: Path, pub_path: Path
+) -> None:
     priv_path.write_bytes(private_bytes)
     pub_path.write_bytes(public_bytes)
 
@@ -71,7 +73,9 @@ def create_bundle(
     for src, key in files:
         items.append(BundleItem(key=key, size=src.stat().st_size, sha256=_sha256_file(src)))
 
-    manifest = BundleManifest(version="0.1", environment=environment, created_at=time.time(), items=items, note=note)
+    manifest = BundleManifest(
+        version="0.1", environment=environment, created_at=time.time(), items=items, note=note
+    )
     manifest_bytes = manifest.to_json_bytes()
     sig = private_key.sign(manifest_bytes, encoder=RawEncoder).signature
 

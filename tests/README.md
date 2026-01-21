@@ -2,13 +2,59 @@
 
 This directory contains validation and integration suites for RapidRMF.
 
-## Suites
-- Comprehensive validation: [README_VALIDATION.md](README_VALIDATION.md) and [comprehensive_validation_test.py](comprehensive_validation_test.py)
-- Smoke/integration: [smoke_test.py](smoke_test.py)
-- Evidence mapping verification: [verify_evidence_mappings.py](verify_evidence_mappings.py)
-- Azure validation pipeline: [terraform/azure/README.md](terraform/azure/README.md)
+## Directory Structure
 
-## Running key tests
+```
+tests/
+├── integration/          # Database integration tests
+│   ├── docker-compose.test.yml    # PostgreSQL test container
+│   ├── config.postgres-test.yaml  # Test configuration
+│   └── test_postgres_e2e.py       # End-to-end database test
+├── terraform/           # Azure validation pipeline
+├── comprehensive_validation_test.py
+├── smoke_test.py
+├── verify_evidence_mappings.py
+└── README.md           # This file
+```
+
+## Test Suites
+
+### Database Integration Tests (NEW in v0.2)
+
+Located in `integration/` - validates PostgreSQL persistence and query operations.
+
+**Setup:**
+```powershell
+# Start PostgreSQL container
+cd tests/integration
+docker-compose -f docker-compose.test.yml up -d
+
+# Apply migrations
+$env:RAPIDRMF_DATABASE_URL = "postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test"
+rapidrmf db upgrade
+
+# Run test
+python test_postgres_e2e.py
+```
+
+**Test Coverage:**
+- Catalog/control management (upsert operations)
+- System and evidence creation
+- Evidence manifest with entries
+- Control validation with 3 outcomes (pass, fail, insufficient_evidence)
+- Validation result persistence
+- Query operations (latest results, filter by status, control history)
+
+See [integration/README.md](integration/README.md) for detailed documentation.
+
+### Validation Suites
+
+- **Comprehensive validation**: [README_VALIDATION.md](README_VALIDATION.md) and [comprehensive_validation_test.py](comprehensive_validation_test.py)
+- **Smoke/integration**: [smoke_test.py](smoke_test.py)
+- **Evidence mapping verification**: [verify_evidence_mappings.py](verify_evidence_mappings.py)
+- **Azure validation pipeline**: [terraform/azure/README.md](terraform/azure/README.md)
+
+## Running Tests
 ```powershell
 # Comprehensive validation (loads all catalogs and evidence types)
 $env:PYTHONPATH = "."

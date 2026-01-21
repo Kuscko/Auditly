@@ -7,11 +7,15 @@ from typing import Any, Dict
 
 class EvidenceVault(ABC):
     @abstractmethod
-    def put_file(self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_file(
+        self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
-    def put_json(self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_json(
+        self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
@@ -24,4 +28,14 @@ class EvidenceVault(ABC):
 
     @abstractmethod
     def fetch(self, key: str, out_path: Path | str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_json(self, key: str) -> Dict[str, Any]:
+        """Fetch JSON evidence and return as dict."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_metadata(self, key: str) -> Dict[str, Any]:
+        """Get metadata for an evidence artifact."""
         raise NotImplementedError

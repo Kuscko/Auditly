@@ -69,13 +69,13 @@ class OscalProfile:
                 # with-ids section lists specific controls
                 for with_id in include.get("with-ids", []):
                     control_ids.append(with_id)
-                
+
                 # matching section can specify controls by criteria
                 matching = include.get("matching", [])
                 if matching:
                     # These would need catalog resolution to expand
                     pass
-        
+
         return control_ids
 
     def import_hrefs(self) -> list[str]:
@@ -123,10 +123,10 @@ def load_oscal(path: Path | str) -> Optional[OscalCatalog | OscalProfile]:
     if not p.exists():
         return None
     data = json.loads(p.read_text(encoding="utf-8"))
-    
+
     if "catalog" in data:
         return OscalCatalog(data)
     elif "profile" in data:
         return OscalProfile(data)
-    
+
     return None
