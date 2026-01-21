@@ -95,7 +95,10 @@ pytest tests/ -q
 
 ### Submitting Code
 1) **Fork and Branch**
+All development and new features should branch from the `dev` branch, not `main`.
 ```bash
+git checkout dev
+git pull origin dev
 git checkout -b feature/your-feature-name   # new feature
 git checkout -b fix/issue-123               # bug fix
 git checkout -b docs/update-readme          # docs change
@@ -126,7 +129,7 @@ black auditly tests
 
 4) **Push and Open a PR**
 - Push your branch to your fork
-- Open a PR against main
+- Open a PR against the `dev` branch
 - Fill out the PR template and link related issues
 
 ---
