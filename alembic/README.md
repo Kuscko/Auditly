@@ -23,7 +23,7 @@ alembic/
 Configures the migration environment.
 
 - Loads SQLAlchemy models from `rapidrmf.db.models`
-- Supports both async (asyncpg) and sync (psycopg2) connections
+- Supports both async (asyncpg) and sync (psycopg) connections
 - Configures target metadata for autogeneration
 - Sets up transaction context for migrations
 
@@ -42,7 +42,7 @@ Alembic configuration is in `alembic.ini` at the project root. The database URL 
 ### 1. Command-Line Override (Highest Priority)
 
 ```bash
-alembic -x dbUrl=postgresql+psycopg2://user:pass@localhost:5432/rapidrmf upgrade head
+alembic -x dbUrl=postgresql+psycopg://user:pass@localhost:5432/rapidrmf upgrade head
 ```
 
 Use this for one-off migrations or when you need to target a specific database.
@@ -77,7 +77,7 @@ Used when no override is provided. Default is SQLite for local development and m
 postgresql+asyncpg://user:password@localhost:5432/rapidrmf
 
 # Sync driver (for Alembic migrations)
-postgresql+psycopg2://user:password@localhost:5432/rapidrmf
+postgresql+psycopg://user:password@localhost:5432/rapidrmf
 ```
 
 **SQLite** (local development only):
@@ -93,13 +93,13 @@ sqlite:///./rapidrmf.db
 
 ```bash
 # Set database URL
-export RAPIDRMF_DATABASE_URL="postgresql+psycopg2://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod"
+export RAPIDRMF_DATABASE_URL="postgresql+psycopg://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod"
 
 # Run migrations
 alembic upgrade head
 
 # Or use CLI override
-alembic -x dbUrl="postgresql+psycopg2://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod" upgrade head
+alembic -x dbUrl="postgresql+psycopg://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod" upgrade head
 ```
 
 ## Common Operations
@@ -187,7 +187,7 @@ The initial migration (`b297497b0925_*`) creates the foundational schema:
 
 ## Database Support
 
-- **PostgreSQL**: Production recommended (use `postgresql+asyncpg://` or `postgresql+psycopg2://`)
+- **PostgreSQL**: Production recommended (use `postgresql+asyncpg://` or `postgresql+psycopg://`)
 - **SQLite**: Local development (use `sqlite+aiosqlite://` for async, `sqlite://` for sync)
 
 Both dialects supported via Alembic's environment configuration.
