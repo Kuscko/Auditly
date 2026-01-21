@@ -42,7 +42,7 @@ repos:
     additional_dependencies: [types-all]
     args: [--ignore-missing-imports]
     exclude: ^(tests/terraform/|examples/)
-    stages: [manual]      # Run manually only: pre-commit run --hook-stage manual
+    # stages removed: now runs automatically on commit and CI
 
   # YAML formatting
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
@@ -58,7 +58,7 @@ repos:
   hooks:
   - id: pydocstyle
     exclude: ^(tests/|examples/|alembic/)
-    stages: [manual]      # Run manually if desired
+    # stages removed: now runs automatically on commit and CI
 
 # Configuration for all hooks
 default_language_version:
