@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: rapidrmf-postgres-test
+    environment:
+      POSTGRES_DB: rapidrmf_test
+      POSTGRES_USER: rapidrmf
+      POSTGRES_PASSWORD: rapidrmf_local_pass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+    - 5433:5432      # Map to 5433 to avoid conflicts with existing Postgres
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U rapidrmf]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

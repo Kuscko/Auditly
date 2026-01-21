@@ -1,7 +1,7 @@
 # Example RapidRMF config (annotated)
 # Define enclaves/environments and their evidence storage backends.
 
-version: "0.1"
+version: '0.1'
 organization: ExampleOrg
 
 catalogs:
@@ -49,9 +49,9 @@ ci:
 policy:
   # Rego bundles or compiled WASM (future). For now, paths are placeholders.
   rego_bundles:
-    - ./policy/iac
+  - ./policy/iac
   wasm_bundles:
-    - ./policy/compiled/iac.wasm
+  - ./policy/compiled/iac.wasm
 
 # Where to stage local files before upload (optional)
 staging_dir: ./.rapidrmf_staging

@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -52,9 +52,11 @@ class EvidenceManifest:
         return json.dumps(asdict(self), indent=2, sort_keys=False)
 
     @staticmethod
-    def create(environment: str, artifacts: List[ArtifactRecord], notes: Optional[str] = None) -> "EvidenceManifest":
+    def create(
+        environment: str, artifacts: List[ArtifactRecord], notes: Optional[str] = None
+    ) -> EvidenceManifest:
         m = EvidenceManifest(
-            version="0.1",
+            version="1.0",
             environment=environment,
             created_at=time.time(),
             artifacts=artifacts,

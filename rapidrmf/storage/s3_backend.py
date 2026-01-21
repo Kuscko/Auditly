@@ -21,16 +21,22 @@ class S3EvidenceVault(EvidenceVault):
             self.s3.head_bucket(Bucket=self.bucket)
         except Exception:
             try:
-                self.s3.create_bucket(Bucket=self.bucket, CreateBucketConfiguration={"LocationConstraint": region})
+                self.s3.create_bucket(
+                    Bucket=self.bucket, CreateBucketConfiguration={"LocationConstraint": region}
+                )
             except Exception:
                 pass
 
-    def put_file(self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_file(
+        self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         p = Path(src_path)
         self.s3.upload_file(str(p), self.bucket, dest_key, ExtraArgs={"Metadata": metadata or {}})
         return {"bucket": self.bucket, "key": dest_key, "size": p.stat().st_size}
 
-    def put_json(self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def put_json(
+        self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         b = data.encode()
         self.s3.put_object(
             Bucket=self.bucket,
@@ -60,3 +66,23 @@ class S3EvidenceVault(EvidenceVault):
         p = Path(out_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         self.s3.download_file(self.bucket, key, str(p))
+
+    def get_json(self, key: str) -> Dict[str, Any]:
+        import json
+
+        response = self.s3.get_object(Bucket=self.bucket, Key=key)
+        data = response["Body"].read()
+        return json.loads(data.decode())
+
+    def get_metadata(self, key: str) -> Dict[str, Any]:
+        try:
+            response = self.s3.head_object(Bucket=self.bucket, Key=key)
+            return {
+                "size": response.get("ContentLength"),
+                "last_modified": response.get("LastModified"),
+                "etag": response.get("ETag"),
+                "content_type": response.get("ContentType"),
+                "metadata": response.get("Metadata", {}),
+            }
+        except Exception:
+            return {}

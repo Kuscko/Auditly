@@ -21,7 +21,9 @@ def conftest_available() -> bool:
     return shutil.which("conftest") is not None
 
 
-def run_conftest(target_dir: Path | str, policy_dir: Optional[Path | str] = None) -> List[ConftestResult]:
+def run_conftest(
+    target_dir: Path | str, policy_dir: Optional[Path | str] = None
+) -> List[ConftestResult]:
     if not conftest_available():
         raise RuntimeError("conftest binary not found in PATH")
 
@@ -44,7 +46,9 @@ def run_conftest(target_dir: Path | str, policy_dir: Optional[Path | str] = None
     for entry in data:
         # Each entry corresponds to a file/test target
         warnings = sum(1 for r in entry.get("results", []) if r.get("severity") == "warning")
-        failures = sum(1 for r in entry.get("failures", [])) + sum(1 for r in entry.get("results", []) if r.get("fail") is True)
+        failures = sum(1 for r in entry.get("failures", [])) + sum(
+            1 for r in entry.get("results", []) if r.get("fail") is True
+        )
         passes = sum(1 for r in entry.get("successes", []))
         results.append(
             ConftestResult(
