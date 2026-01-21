@@ -94,7 +94,9 @@ jobs:
         pytest tests/ \
           -v \
           --cov=auditly \
-          --junitxml=junit.xml -o junit_family=legacy
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing
       env:
         DATABASE_URL: ${{ env.DATABASE_URL }}
     
@@ -106,6 +108,16 @@ jobs:
         flags: unittests
         name: codecov-py${{ matrix.python-version }}
         fail_ci_if_error: false
+
+    - name: Run coverage test anyltyics
+      run: |
+        pytest --cov --junitxml=junit.xml -o junit_family=legacy
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
     
     - name: Upload HTML coverage report
       uses: actions/upload-artifact@v4
