@@ -1,3 +1,5 @@
+[![Security Scan](https://github.com/Kuscko/Auditly/actions/workflows/security.yml/badge.svg)](https://github.com/Kuscko/Auditly/actions/workflows/security.yml)
+[![Tests & Coverage](https://github.com/Kuscko/Auditly/actions/workflows/tests.yml/badge.svg)](https://github.com/Kuscko/Auditly/actions/workflows/tests.yml)
 # Auditly
 
 Auditly automates compliance evidence collection, validation, and reporting for regulated environments. It runs offline on edge networks, writes tamper-evident manifests, and scales to GovCloud with MinIO or S3 vaults.
