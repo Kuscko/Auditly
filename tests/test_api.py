@@ -1,4 +1,4 @@
-"""Quick test/demo of RapidRMF API endpoints."""
+"""Quick test/demo of auditly API endpoints."""
 
 import json
 
@@ -106,19 +106,19 @@ def test_report():
 
 def main():
     """Run all tests."""
-    print("RapidRMF API Test Suite")
+    print("auditly API Test Suite")
     print("=" * 50)
     print("\nMake sure the API server is running:")
-    print("  python -m rapidrmf.api")
+    print("  python -m auditly.api")
     print("\nOr:")
-    print("  uvicorn rapidrmf.api.app:app --reload")
+    print("  uvicorn auditly.api.app:app --reload")
     print("\n" + "=" * 50)
 
     try:
         # Test health first
         if not test_health():
             print("\n❌ API server not responding. Start it first:")
-            print("   python -m rapidrmf.api")
+            print("   python -m auditly.api")
             return
 
         print("\n✅ API server is running!")
@@ -137,7 +137,7 @@ def main():
 
     except requests.exceptions.ConnectionError:
         print("\n❌ Cannot connect to API server.")
-        print("Start the server with: python -m rapidrmf.api")
+        print("Start the server with: python -m auditly.api")
 
 
 if __name__ == "__main__":

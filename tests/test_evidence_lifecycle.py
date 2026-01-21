@@ -6,9 +6,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from rapidrmf.db import Base
-from rapidrmf.db.models import Evidence, EvidenceVersion, System
-from rapidrmf.evidence_lifecycle import EvidenceLifecycleManager
+from auditly.db import Base
+from auditly.db.models import Evidence, EvidenceVersion, System
+from auditly.evidence_lifecycle import EvidenceLifecycleManager
 
 
 @pytest.fixture

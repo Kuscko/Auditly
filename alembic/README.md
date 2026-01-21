@@ -1,6 +1,6 @@
 # Alembic Database Migrations
 
-Database schema versioning and migration management for RapidRMF using Alembic.
+Database schema versioning and migration management for auditly using Alembic.
 
 ## Overview
 
@@ -22,7 +22,7 @@ alembic/
 ### `env.py`
 Configures the migration environment.
 
-- Loads SQLAlchemy models from `rapidrmf.db.models`
+- Loads SQLAlchemy models from `auditly.db.models`
 - Supports both async (asyncpg) and sync (psycopg) connections
 - Configures target metadata for autogeneration
 - Sets up transaction context for migrations
@@ -42,7 +42,7 @@ Alembic configuration is in `alembic.ini` at the project root. The database URL 
 ### 1. Command-Line Override (Highest Priority)
 
 ```bash
-alembic -x dbUrl=postgresql+psycopg://user:pass@localhost:5432/rapidrmf upgrade head
+alembic -x dbUrl=postgresql+psycopg://user:pass@localhost:5432/auditly upgrade head
 ```
 
 Use this for one-off migrations or when you need to target a specific database.
@@ -51,7 +51,7 @@ Use this for one-off migrations or when you need to target a specific database.
 
 ```bash
 # Set environment variable
-export RAPIDRMF_DATABASE_URL="postgresql+asyncpg://user:pass@localhost:5432/rapidrmf"
+export auditly_DATABASE_URL="postgresql+asyncpg://user:pass@localhost:5432/auditly"
 
 # Then run migrations
 alembic upgrade head
@@ -74,32 +74,32 @@ Used when no override is provided. Default is SQLite for local development and m
 **PostgreSQL** (recommended for production):
 ```bash
 # Async driver (for async operations)
-postgresql+asyncpg://user:password@localhost:5432/rapidrmf
+postgresql+asyncpg://user:password@localhost:5432/auditly
 
 # Sync driver (for Alembic migrations)
-postgresql+psycopg://user:password@localhost:5432/rapidrmf
+postgresql+psycopg://user:password@localhost:5432/auditly
 ```
 
 **SQLite** (local development only):
 ```bash
 # Async
-sqlite+aiosqlite:///./rapidrmf.db
+sqlite+aiosqlite:///./auditly.db
 
 # Sync
-sqlite:///./rapidrmf.db
+sqlite:///./auditly.db
 ```
 
 ### Example: Production Migration
 
 ```bash
 # Set database URL
-export RAPIDRMF_DATABASE_URL="postgresql+psycopg://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod"
+export auditly_DATABASE_URL="postgresql+psycopg://rmf_user:secure_pass@db.example.com:5432/auditly_prod"
 
 # Run migrations
 alembic upgrade head
 
 # Or use CLI override
-alembic -x dbUrl="postgresql+psycopg://rmf_user:secure_pass@db.example.com:5432/rapidrmf_prod" upgrade head
+alembic -x dbUrl="postgresql+psycopg://rmf_user:secure_pass@db.example.com:5432/auditly_prod" upgrade head
 ```
 
 ## Common Operations
@@ -113,8 +113,8 @@ alembic upgrade head
 # Upgrade one version forward
 alembic upgrade +1
 
-# Via RapidRMF CLI (recommended)
-rapidrmf db upgrade
+# Via auditly CLI (recommended)
+auditly db upgrade
 ```
 
 ### Rollback Migrations
@@ -139,7 +139,7 @@ alembic history
 
 ### Generate New Migration
 
-When you modify SQLAlchemy models in `rapidrmf/db/models.py`:
+When you modify SQLAlchemy models in `auditly/db/models.py`:
 
 ```bash
 # Auto-generate migration from model changes
@@ -164,7 +164,7 @@ The initial migration (`b297497b0925_*`) creates the foundational schema:
 
 ## Development Workflow
 
-1. **Modify models** in `rapidrmf/db/models.py`
+1. **Modify models** in `auditly/db/models.py`
 2. **Generate migration**: `alembic revision --autogenerate -m "description"`
 3. **Review migration** in `alembic/versions/`
 4. **Test migration**:
@@ -229,16 +229,16 @@ alembic history
 alembic upgrade head --sql
 ```
 
-## Integration with RapidRMF
+## Integration with auditly
 
-The RapidRMF CLI provides convenience commands:
+The auditly CLI provides convenience commands:
 
 ```bash
 # Run migrations
-rapidrmf db upgrade
+auditly db upgrade
 
 # Migrate file-based manifests to database
-rapidrmf db migrate-from-files --system-id prod-app-01 --manifest-dir ./vault/manifests/
+auditly db migrate-from-files --system-id prod-app-01 --manifest-dir ./vault/manifests/
 ```
 
-These commands use `rapidrmf/db/migrate.py` which wraps Alembic programmatically.
+These commands use `auditly/db/migrate.py` which wraps Alembic programmatically.

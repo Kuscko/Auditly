@@ -9,17 +9,17 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from rapidrmf.db import get_async_session, init_db_async
-from rapidrmf.db.models import System, ValidationStatus
-from rapidrmf.db.repository import Repository
-from rapidrmf.validators import validate_controls
+from auditly.db import get_async_session, init_db_async
+from auditly.db.models import System, ValidationStatus
+from auditly.db.repository import Repository
+from auditly.validators import validate_controls
 
 
 async def main():
     """Test database operations end-to-end."""
 
     # Connection string
-    db_url = "postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test"
+    db_url = "postgresql+asyncpg://auditly:auditly_local_pass@localhost:5433/auditly_test"
 
     print(f"Connecting to: {db_url}")
 

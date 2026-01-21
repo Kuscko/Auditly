@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test the DRY refactor of common finalize_evidence."""
 
-from rapidrmf.collectors.common import finalize_evidence
+from auditly.collectors.common import finalize_evidence
 
 # Test the shared finalize_evidence helper
 test_data = {"users": [{"name": "alice"}, {"name": "bob"}]}

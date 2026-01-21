@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from rapidrmf.performance import (
+from auditly.performance import (
     EvidenceDependencyGraph,
     IncrementalValidator,
     ParallelCollector,

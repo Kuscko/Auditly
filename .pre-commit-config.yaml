@@ -1,4 +1,4 @@
-# RapidRMF Pre-commit Configuration
+# auditly Pre-commit Configuration
 # Install: pip install pre-commit
 # Setup: pre-commit install
 # Run: pre-commit run --all-files

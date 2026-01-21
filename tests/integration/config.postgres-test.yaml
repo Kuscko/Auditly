@@ -1,11 +1,11 @@
 environments:
   postgres-test:
     description: Local Postgres test environment
-    database_url: postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test
+    database_url: postgresql+asyncpg://auditly:auditly_local_pass@localhost:5433/auditly_test
     storage:
       type: minio
       endpoint: localhost:9000
-      bucket: rapidrmf-test
+      bucket: auditly-test
       access_key: minioadmin
       secret_key: minioadmin
       secure: false

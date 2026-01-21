@@ -1,16 +1,16 @@
-# RapidRMF Code Owners
+# auditly Code Owners
 # Require review from these owners for PRs touching these files
 
 # Core engine - requires maintainer review
-/rapidrmf/validators.py @Kuscko-Productions/maintainers
-/rapidrmf/validators_advanced.py @Kuscko-Productions/maintainers
-/rapidrmf/performance.py @Kuscko-Productions/maintainers
+/auditly/validators.py @Kuscko-Productions/maintainers
+/auditly/validators_advanced.py @Kuscko-Productions/maintainers
+/auditly/performance.py @Kuscko-Productions/maintainers
 
 # Database layer - requires maintainer review
-/rapidrmf/db/ @Kuscko-Productions/maintainers
+/auditly/db/ @Kuscko-Productions/maintainers
 
 # Collectors - can have community PRs but needs review
-/rapidrmf/collectors/ @Kuscko-Productions/maintainers
+/auditly/collectors/ @Kuscko-Productions/maintainers
 
 # Tests - requires review
 /tests/ @Kuscko-Productions/maintainers

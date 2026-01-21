@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from rapidrmf.api.app import app
+from auditly.api.app import app
 
 
 @pytest.fixture()
@@ -23,7 +23,7 @@ def test_collect_batch_happy_path(client, monkeypatch):
         )
 
     # Patch the operations.collect_evidence used by batch helper
-    import rapidrmf.api.operations as ops
+    import auditly.api.operations as ops
 
     monkeypatch.setattr(ops, "collect_evidence", fake_collect_evidence)
 
@@ -67,7 +67,7 @@ def test_collect_batch_mixed_success(client, monkeypatch):
             raise Exception("github provider failed")
         return (1, f"manifests/x/{provider}-manifest.json", f"ok {provider}")
 
-    import rapidrmf.api.operations as ops
+    import auditly.api.operations as ops
 
     monkeypatch.setattr(ops, "collect_evidence", fake_collect_evidence)
 

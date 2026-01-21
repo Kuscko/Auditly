@@ -20,7 +20,7 @@ ignore = [
 ]
 
 [tool.ruff.isort]
-known-first-party = ["rapidrmf"]
+known-first-party = ["auditly"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -38,4 +38,4 @@ markers = [
   "smoke: smoke tests",
 ]
 # Database URL for tests - set via environment
-# DATABASE_URL=postgresql://test_user:test_password@localhost:5432/rapidrmf_test
+# DATABASE_URL=postgresql://test_user:test_password@localhost:5432/auditly_test

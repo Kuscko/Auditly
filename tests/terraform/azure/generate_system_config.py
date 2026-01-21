@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate RapidRMF system-config.json from Terraform outputs.
+Generate auditly system-config.json from Terraform outputs.
 This automates the creation of system configuration for scanning Azure resources.
 
 Usage:
@@ -40,7 +40,7 @@ def get_terraform_outputs(terraform_dir: Path) -> Dict[str, Any]:
 
 
 def generate_system_config(tf_outputs: Dict[str, Any]) -> Dict[str, Any]:
-    """Transform Terraform outputs into RapidRMF system-config format."""
+    """Transform Terraform outputs into auditly system-config format."""
     
     # Extract Azure resource details
     resource_group = tf_outputs.get("resource_group", "")
@@ -55,7 +55,7 @@ def generate_system_config(tf_outputs: Dict[str, Any]) -> Dict[str, Any]:
         "metadata": {
             "generated_by": "terraform",
             "resource_group": resource_group,
-            "description": "Azure test environment for RapidRMF validation",
+            "description": "Azure test environment for auditly validation",
         },
         
         # IAM Scanner inputs
@@ -119,7 +119,7 @@ def generate_system_config(tf_outputs: Dict[str, Any]) -> Dict[str, Any]:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate RapidRMF system-config.json from Terraform outputs"
+        description="Generate auditly system-config.json from Terraform outputs"
     )
     parser.add_argument(
         "--terraform-dir",
@@ -155,8 +155,8 @@ def main():
     print(f"Generated {args.output}")
     print(f"\nNext steps:")
     print(f"  1. Review and customize {args.output} (update IAM policies, MFA status, etc.)")
-    print(f"  2. Run scan: python -m rapidrmf scan system --config-file {args.output} --out-json scan-results.json")
-    print(f"  3. Validate: python -m rapidrmf policy validate --system-state-file {args.output}")
+    print(f"  2. Run scan: python -m auditly scan system --config-file {args.output} --out-json scan-results.json")
+    print(f"  3. Validate: python -m auditly policy validate --system-state-file {args.output}")
 
 
 if __name__ == "__main__":

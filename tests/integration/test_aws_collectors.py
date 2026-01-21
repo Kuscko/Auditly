@@ -8,7 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from rapidrmf.collectors.aws import (
+from auditly.collectors.aws import (
     AWSClient,
     CloudTrailCollector,
     EC2Collector,
@@ -129,7 +129,7 @@ class TestCLIIntegration:
     def test_cli_can_access_all_collectors(self):
         """Verify CLI can access all collector classes."""
         try:
-            from rapidrmf.collectors.aws import (
+            from auditly.collectors.aws import (
                 CloudTrailCollector,
                 EC2Collector,
                 IAMCollector,
@@ -157,7 +157,7 @@ class TestEvidenceFormat:
 
     def test_evidence_manifest_can_be_created(self):
         """Test that evidence manifests can be created with AWS evidence."""
-        from rapidrmf.evidence import ArtifactRecord, EvidenceManifest
+        from auditly.evidence import ArtifactRecord, EvidenceManifest
 
         # Create sample AWS artifacts
         artifacts = [

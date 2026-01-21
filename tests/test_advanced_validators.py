@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from rapidrmf.performance import (
+from auditly.performance import (
     EvidenceDependencyGraph,
     IncrementalValidator,
     ParallelCollector,
@@ -15,8 +15,8 @@ from rapidrmf.performance import (
     performance_metrics,
     validation_cache,
 )
-from rapidrmf.validators import ValidationResult, ValidationStatus
-from rapidrmf.validators_advanced import (
+from auditly.validators import ValidationResult, ValidationStatus
+from auditly.validators_advanced import (
     ControlDependency,
     ControlDependencyGraph,
     ControlDependencyType,

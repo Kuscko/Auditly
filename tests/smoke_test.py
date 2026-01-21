@@ -1,5 +1,5 @@
 """
-End-to-end smoke test for RapidRMF.
+End-to-end smoke test for auditly.
 Tests evidence collection, validation, and reporting across all control families.
 """
 
@@ -9,11 +9,11 @@ from typing import Dict, Set
 
 import pytest
 
-from rapidrmf.config import AppConfig
-from rapidrmf.evidence import ArtifactRecord, EvidenceManifest
-from rapidrmf.oscal import OscalCatalog, OscalProfile, load_oscal
-from rapidrmf.reporting.report import readiness_summary
-from rapidrmf.validators import FAMILY_PATTERNS, get_control_requirement, validate_controls
+from auditly.config import AppConfig
+from auditly.evidence import ArtifactRecord, EvidenceManifest
+from auditly.oscal import OscalCatalog, OscalProfile, load_oscal
+from auditly.reporting.report import readiness_summary
+from auditly.validators import FAMILY_PATTERNS, get_control_requirement, validate_controls
 
 
 def load_test_evidence_data():
@@ -280,7 +280,7 @@ def test_config_validation():
 def run_smoke_test():
     """Run complete end-to-end smoke test."""
     print("=" * 60)
-    print("RapidRMF End-to-End Smoke Test")
+    print("auditly End-to-End Smoke Test")
     print("=" * 60)
 
     tests = [

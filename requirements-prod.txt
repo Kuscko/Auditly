@@ -1,4 +1,4 @@
-# RapidRMF Production Dependencies
+# auditly Production Dependencies
 # Core CLI framework
 typer==0.12.3
 

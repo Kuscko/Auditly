@@ -1,10 +1,10 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    End-to-end automation script for RapidRMF Azure testing
+    End-to-end automation script for auditly Azure testing
     
 .DESCRIPTION
-    This script automates the complete RapidRMF workflow:
+    This script automates the complete auditly workflow:
     1. Apply Terraform infrastructure
     2. Generate system-config.json from Terraform outputs
     3. Collect evidence (Terraform plan as evidence artifact)
@@ -42,7 +42,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Python executable (use repo venv)
-$PythonExe = "C:/Users/Patrick Kelly/Desktop/Personal Work/Development/RapidRMF/.venv/Scripts/python.exe"
+$PythonExe = "C:/Users/Patrick Kelly/Desktop/Personal Work/Development/auditly/.venv/Scripts/python.exe"
 
 # Color output helpers
 function Write-Success { param($Message) Write-Host "[OK] $Message" -ForegroundColor Green }
@@ -57,7 +57,7 @@ if (-not $OutputPath) {
     $OutputPath = Resolve-Path $OutputDir
 }
 
-Write-Info "RapidRMF Azure Validation Pipeline"
+Write-Info "auditly Azure Validation Pipeline"
 Write-Info "===================================="
 Write-Info "Terraform Dir: $TerraformDir"
 Write-Info "Output Dir: $OutputPath"
@@ -128,7 +128,7 @@ try {
             "success" = $true
         }
         "storage-account-encrypted" = @{
-            "resource" = "rapidrmfstore"
+            "resource" = "auditlystore"
             "encryption_enabled" = $true
             "https_only" = $true
             "min_tls_version" = "TLS1_2"
@@ -153,7 +153,7 @@ Write-Info "Step 4: Running compliance scanners..."
 try {
     $ScanResultsPath = Join-Path $OutputPath "scan-results.json"
     
-    & $PythonExe -m rapidrmf scan system `
+    & $PythonExe -m auditly scan system `
         --config-file $SystemConfigPath `
         --out-json $ScanResultsPath
     
@@ -179,7 +179,7 @@ Write-Info "Step 5: Validating policies..."
 try {
     $ValidationResultsPath = Join-Path $OutputPath "validation-results.json"
     
-    & $PythonExe -m rapidrmf policy validate `
+    & $PythonExe -m auditly policy validate `
         --evidence-file $EvidencePath `
         --system-state-file $SystemConfigPath `
         --out-json $ValidationResultsPath
@@ -204,7 +204,7 @@ try {
     $ReportPath = Join-Path $OutputPath "azure-validation-report.md"
     
     $Report = @"
-# RapidRMF Azure Validation Report
+# auditly Azure Validation Report
 Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 
 ## Infrastructure
@@ -244,7 +244,7 @@ $(if (Test-Path $ValidationResultsPath) {
 2. Collect additional evidence for insufficient controls
 3. Update IAM policies and MFA configuration in system-config.json
 4. Re-run validation after remediation
-5. Generate HTML readiness report: ``python -m rapidrmf report readiness --config config.yaml --env edge --out report.html``
+5. Generate HTML readiness report: ``python -m auditly report readiness --config config.yaml --env edge --out report.html``
 "@
 
     $Report | Out-File -FilePath $ReportPath -Encoding utf8

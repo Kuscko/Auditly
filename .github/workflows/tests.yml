@@ -8,10 +8,10 @@ on:
 
 env:
   # Set at workflow level - available to all jobs
-  DATABASE_URL: postgresql://test_user:test_password@localhost:5432/rapidrmf_test
+  DATABASE_URL: postgresql://test_user:test_password@localhost:5432/auditly_test
   POSTGRES_USER: test_user
   POSTGRES_PASSWORD: test_password
-  POSTGRES_DB: rapidrmf_test
+  POSTGRES_DB: auditly_test
 
 jobs:
   test:
@@ -93,7 +93,7 @@ jobs:
       run: |
         pytest tests/ \
           -v \
-          --cov=rapidrmf \
+          --cov=auditly \
           --cov-report=xml \
           --cov-report=html \
           --cov-report=term-missing
