@@ -93,10 +93,8 @@ jobs:
       run: |
         pytest tests/ \
           -v \
-          --cov=rapidrmf \
-          --cov-report=xml \
-          --cov-report=html \
-          --cov-report=term-missing
+          --cov=auditly \
+          --junitxml=junit.xml -o junit_family=legacy
       env:
         DATABASE_URL: ${{ env.DATABASE_URL }}
     
