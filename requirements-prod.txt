@@ -28,7 +28,7 @@ wasmtime==25.0.0
 sqlalchemy==2.0.25
 alembic==1.13.1
 asyncpg==0.29.0; python_version < "3.14"
-psycopg2-binary==2.9.9; python_version < "3.14"
+psycopg>=3.1.18
 psycopg[binary]>=3.2.0; python_version >= "3.14"
 aiosqlite==0.20.0
 

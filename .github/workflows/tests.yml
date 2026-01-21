@@ -16,9 +16,10 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # asyncpg is not compatible with Python 3.13+ as of Jan 2026
     strategy:
       matrix:
-        python-version: ['3.13', '3.14']
+        python-version: ['3.12']
     
     services:
       postgres:
@@ -60,12 +61,12 @@ jobs:
     - name: Wait for PostgreSQL to be ready
       run: |
         python -c "
-        import psycopg2
+        import psycopg
         import time
         
         for i in range(30):
           try:
-            conn = psycopg2.connect(
+            conn = psycopg.connect(
               host='localhost',
               user='${{ env.POSTGRES_USER }}',
               password='${{ env.POSTGRES_PASSWORD }}',

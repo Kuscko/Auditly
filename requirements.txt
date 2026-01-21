@@ -12,7 +12,7 @@ click==8.1.7
 sqlalchemy==2.0.36
 alembic==1.13.1
 asyncpg==0.29.0; python_version < "3.14"
-psycopg2-binary==2.9.9; python_version < "3.14"
+psycopg>=3.1.18
 psycopg[binary]>=3.2.0; python_version >= "3.14"
 aiosqlite==0.20.0
 apscheduler==3.10.4

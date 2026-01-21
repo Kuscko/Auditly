@@ -169,7 +169,7 @@ await init_db_async("postgresql+asyncpg://user:pass@localhost:5432/rapidrmf")
 **Database URL Formats**:
 
 - PostgreSQL (async): `postgresql+asyncpg://user:pass@host:5432/dbname`
-- PostgreSQL (sync): `postgresql+psycopg2://user:pass@host:5432/dbname`
+- PostgreSQL (sync): `postgresql+psycopg://user:pass@host:5432/dbname`
 - SQLite (async): `sqlite+aiosqlite:///./rapidrmf.db`
 - SQLite (sync): `sqlite:///./rapidrmf.db`
 
