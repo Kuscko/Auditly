@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Dict, Set
 
-from rapidrmf.validators import CONTROL_REQUIREMENTS, FAMILY_PATTERNS
+from auditly.validators import CONTROL_REQUIREMENTS, FAMILY_PATTERNS
 
 
 def load_test_evidence_data():

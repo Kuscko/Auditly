@@ -6,11 +6,11 @@
 
 ## Summary
 
-Successfully implemented comprehensive AWS evidence collection for RapidRMF compliance automation platform. All 7 major AWS services now have production-ready collectors with CLI integration and testing.
+Successfully implemented comprehensive AWS evidence collection for auditly compliance automation platform. All 7 major AWS services now have production-ready collectors with CLI integration and testing.
 
 ## What Was Completed
 
-### 1. AWS Collectors Package (`rapidrmf/collectors/aws/`)
+### 1. AWS Collectors Package (`auditly/collectors/aws/`)
 
 Created a complete AWS evidence collection framework with 7 service-specific collectors:
 
@@ -83,7 +83,7 @@ Production-ready boto3 session management:
 
 ### 3. CLI Integration (`cli_collect.py`)
 
-Enhanced `rapidrmf collect aws` command:
+Enhanced `auditly collect aws` command:
 - **Service Selection**: Comma-separated list or all services (iam,ec2,s3,cloudtrail,vpc,rds,kms)
 - **Validation**: Input validation with helpful error messages
 - **Error Recovery**: Per-service error handling with continuation
@@ -93,7 +93,7 @@ Enhanced `rapidrmf collect aws` command:
 
 Example usage:
 ```bash
-rapidrmf collect aws --config config.yaml --env production --region us-east-1 --services iam,ec2,s3
+auditly collect aws --config config.yaml --env production --region us-east-1 --services iam,ec2,s3
 ```
 
 ### 4. Integration Tests (`tests/integration/test_aws_collectors.py`)
@@ -109,7 +109,7 @@ Comprehensive test suite (8 tests, all passing):
 
 Test focuses on structure/interface rather than complex mocking, ensuring maintainability.
 
-### 5. Documentation (`rapidrmf/collectors/aws/README.md`)
+### 5. Documentation (`auditly/collectors/aws/README.md`)
 
 Complete AWS collectors documentation:
 - **Usage Examples**: Code samples for each collector
@@ -214,7 +214,7 @@ All commits include comprehensive commit messages with detailed descriptions.
    - Implement parallel collectors for GCP:
      - IAM, Compute Engine, Cloud Storage, Cloud SQL, VPC, KMS
    - Follow same pattern as AWS collectors
-   - Add CLI integration for `rapidrmf collect gcp`
+   - Add CLI integration for `auditly collect gcp`
 
 ### Short Term
 4. ⏳ **GCP Integration Testing** - After GCP collectors
@@ -263,4 +263,4 @@ The implementation follows best practices for:
 
 **Report Generated**: 2025-01-14
 **Author**: GitHub Copilot
-**Project**: RapidRMF v0.3-core
+**Project**: auditly v0.3-core

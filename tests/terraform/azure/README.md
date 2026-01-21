@@ -1,6 +1,6 @@
 # Azure Validation Testing
 
-This directory contains automation for validating RapidRMF against Azure infrastructure.
+This directory contains automation for validating auditly against Azure infrastructure.
 
 ## Files
 
@@ -45,10 +45,10 @@ If you prefer manual control:
 python generate_system_config.py --terraform-dir . --output system-config.json --pretty
 
 # Run scanners
-python -m rapidrmf scan system --config-file system-config.json --out-json scan-results.json
+python -m auditly scan system --config-file system-config.json --out-json scan-results.json
 
 # Validate policies (requires evidence.json)
-python -m rapidrmf policy validate `
+python -m auditly policy validate `
   --evidence-file evidence.json `
   --system-state-file system-config.json `
   --out-json validation-results.json
@@ -56,7 +56,7 @@ python -m rapidrmf policy validate `
 
 ## System Config Generation
 
-The `generate_system_config.py` script reads Terraform outputs and creates a JSON file compatible with RapidRMF scanners:
+The `generate_system_config.py` script reads Terraform outputs and creates a JSON file compatible with auditly scanners:
 
 ```json
 {
@@ -68,7 +68,7 @@ The `generate_system_config.py` script reads Terraform outputs and creates a JSO
   "iam_policies": [...],
   "storage_accounts": [
     {
-      "name": "rapidrmfstore",
+      "name": "auditlystore",
       "storage_encrypted": true,
       "https_only": true,
       "min_tls_version": "TLS1_2"
@@ -76,7 +76,7 @@ The `generate_system_config.py` script reads Terraform outputs and creates a JSO
   ],
   "key_vaults": [
     {
-      "name": "rapidrmf-kv",
+      "name": "auditly-kv",
       "soft_delete_enabled": true,
       "purge_protection_enabled": true,
       "rbac_authorization_enabled": true
@@ -112,11 +112,11 @@ The automation script creates a minimal `evidence.json`:
 }
 ```
 
-For production use, collect evidence using RapidRMF commands:
+For production use, collect evidence using auditly commands:
 
 ```powershell
-python -m rapidrmf collect terraform --config config.yaml --env edge --plan terraform.plan
-python -m rapidrmf collect github --config config.yaml --env edge --repo org/repo
+python -m auditly collect terraform --config config.yaml --env edge --plan terraform.plan
+python -m auditly collect github --config config.yaml --env edge --repo org/repo
 ```
 
 ## Expected Results
@@ -168,7 +168,7 @@ Add to GitHub Actions:
     terraform init
     terraform apply -auto-approve
     python generate_system_config.py --output system-config.json
-    python -m rapidrmf scan system --config-file system-config.json --out-json scan-results.json
+    python -m auditly scan system --config-file system-config.json --out-json scan-results.json
 ```
 
 ## Troubleshooting
@@ -177,7 +177,7 @@ Add to GitHub Actions:
 - Add Terraform to your PATH or use full path to `terraform.exe`
 
 **Python module errors:**
-- Ensure RapidRMF is installed: `pip install -e .` from repo root
+- Ensure auditly is installed: `pip install -e .` from repo root
 - Activate virtual environment if using one
 
 **Azure authentication:**
@@ -194,4 +194,4 @@ To fully automate the workflow:
 4. **Alert Integration** - Send scan findings to Azure Monitor/Log Analytics
 5. **Evidence Auto-Upload** - Automatically upload Terraform state to evidence vault
 
-See main [README.md](../../../README.md) for complete RapidRMF workflow details.
+See main [README.md](../../../README.md) for complete auditly workflow details.

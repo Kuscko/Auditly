@@ -25,14 +25,14 @@ variable "location" {
 variable "name_prefix" {
   type        = string
   description = "Prefix for resource names"
-  default     = "rapidrmf"
+  default     = "auditly"
 }
 
 variable "tags" {
   type        = map(string)
   description = "Common tags"
   default = {
-    owner = "rapidrmf-test"
+    owner = "auditly-test"
     env   = "azure-test"
   }
 }
@@ -161,7 +161,7 @@ resource "azurerm_log_analytics_workspace" "law" {
 # }
 
 # -----------------------------------------------------------------------------
-# Outputs useful for RapidRMF evidence/system state
+# Outputs useful for auditly evidence/system state
 # -----------------------------------------------------------------------------
 output "resource_group" {
   value = data.azurerm_resource_group.rg.name

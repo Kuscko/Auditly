@@ -39,15 +39,15 @@ def main():
     env = "edge"
     subscription_id = "86318f84-6dee-4c4e-8c09-1d0a2b1b6b6d"
     resource_group = "kuscko-rg"
-    storage_account = "rapidrmfstore"
-    key_vault = "rapidrmf-kv"
+    storage_account = "auditlystore"
+    key_vault = "auditly-kv"
     output_dir = Path("./azure-evidence")
     report_file = Path("compliance-report.html")
 
     # Step 0: Verify config exists
     if not config_file.exists():
         print(f"❌ Config file not found: {config_file}")
-        print("   Create one with: python -m rapidrmf init-config --out config.yaml")
+        print("   Create one with: python -m auditly init-config --out config.yaml")
         return False
 
     # Step 1: Collect Azure Evidence
@@ -58,7 +58,7 @@ def main():
     cmd = [
         "python",
         "-m",
-        "rapidrmf",
+        "auditly",
         "collect",
         "azure",
         "--config",
@@ -119,7 +119,7 @@ def main():
     cmd = [
         "python",
         "-m",
-        "rapidrmf",
+        "auditly",
         "policy",
         "validate",
         "--evidence",
@@ -137,7 +137,7 @@ def main():
     cmd = [
         "python",
         "-m",
-        "rapidrmf",
+        "auditly",
         "report",
         "readiness",
         "--config",

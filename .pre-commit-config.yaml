@@ -1,4 +1,4 @@
-# RapidRMF Pre-commit Configuration
+# auditly Pre-commit Configuration
 # Install: pip install pre-commit
 # Setup: pre-commit install
 # Run: pre-commit run --all-files
@@ -39,7 +39,7 @@ repos:
   rev: v1.8.0
   hooks:
   - id: mypy
-    additional_dependencies: [types-all]
+    # additional_dependencies: [types-all]  # Removed to fix CI/CD errors
     args: [--ignore-missing-imports]
     exclude: ^(tests/terraform/|examples/)
     # stages removed: now runs automatically on commit and CI

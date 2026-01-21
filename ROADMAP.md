@@ -1,6 +1,6 @@
-# RapidRMF Development Roadmap
+# auditly Development Roadmap
 
-A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation platform for multi-cloud, on-prem, government cloud, and air-gapped systems.
+A comprehensive TODO list to make auditly a complete enterprise ATO automation platform for multi-cloud, on-prem, government cloud, and air-gapped systems.
 
 **Current Version**: v0.3 (Core Engine Complete)
 **Test Coverage**: 103 passing, 4 skipped
@@ -217,7 +217,7 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 - [ ] **Import from Compliance.ai**: Migration tool for existing compliance data
 - [ ] **Import from Archer/AuditBoard**: Findings and POA&M migration
 - [ ] **Data Export**: Export all evidence/findings for system migration
-- [ ] **Version Migration**: Safe upgrade paths between RapidRMF versions
+- [ ] **Version Migration**: Safe upgrade paths between auditly versions
 
 ### Infrastructure as Code
 - [ ] **Terraform Modules**: Azure, AWS, GCP providers
@@ -284,7 +284,7 @@ A comprehensive TODO list to make RapidRMF a complete enterprise ATO automation 
 - [ ] **Discussion Forum**: Q&A and best practices sharing
 - [ ] **Contribution Guidelines**: How to submit PRs, report issues, suggest features
 - [ ] **Public Roadmap**: Transparent feature planning and progress
-- [ ] **Certifications**: RapidRMF Administrator, Developer certifications
+- [ ] **Certifications**: auditly Administrator, Developer certifications
 
 ---
 

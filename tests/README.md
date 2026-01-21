@@ -1,6 +1,6 @@
 # Tests
 
-This directory contains validation and integration suites for RapidRMF.
+This directory contains validation and integration suites for auditly.
 
 ## Directory Structure
 
@@ -30,8 +30,8 @@ cd tests/integration
 docker-compose -f docker-compose.test.yml up -d
 
 # Apply migrations
-$env:RAPIDRMF_DATABASE_URL = "postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test"
-rapidrmf db upgrade
+$env:auditly_DATABASE_URL = "postgresql+asyncpg://auditly:auditly_local_pass@localhost:5433/auditly_test"
+auditly db upgrade
 
 # Run test
 python test_postgres_e2e.py

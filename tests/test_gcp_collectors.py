@@ -14,9 +14,9 @@ import pytest
 def test_gcp_package_import():
     """Verify GCP collectors package can be imported."""
     try:
-        import rapidrmf.collectors.gcp
+        import auditly.collectors.gcp
 
-        assert hasattr(rapidrmf.collectors.gcp, "GCPClient")
+        assert hasattr(auditly.collectors.gcp, "GCPClient")
     except ImportError as e:
         pytest.skip(f"GCP collectors not available: {e}")
 
@@ -24,7 +24,7 @@ def test_gcp_package_import():
 def test_gcp_client_import():
     """Verify GCPClient can be imported."""
     try:
-        from rapidrmf.collectors.gcp import GCPClient
+        from auditly.collectors.gcp import GCPClient
 
         assert GCPClient is not None
     except ImportError as e:
@@ -34,7 +34,7 @@ def test_gcp_client_import():
 def test_iam_collector_import():
     """Verify IAM collector can be imported."""
     try:
-        from rapidrmf.collectors.gcp import IAMCollector
+        from auditly.collectors.gcp import IAMCollector
 
         assert IAMCollector is not None
     except ImportError as e:
@@ -44,7 +44,7 @@ def test_iam_collector_import():
 def test_compute_collector_import():
     """Verify Compute Engine collector can be imported."""
     try:
-        from rapidrmf.collectors.gcp import ComputeCollector
+        from auditly.collectors.gcp import ComputeCollector
 
         assert ComputeCollector is not None
     except ImportError as e:
@@ -54,7 +54,7 @@ def test_compute_collector_import():
 def test_storage_collector_import():
     """Verify Cloud Storage collector can be imported."""
     try:
-        from rapidrmf.collectors.gcp import StorageCollector
+        from auditly.collectors.gcp import StorageCollector
 
         assert StorageCollector is not None
     except ImportError as e:
@@ -64,7 +64,7 @@ def test_storage_collector_import():
 def test_sql_collector_import():
     """Verify Cloud SQL collector can be imported."""
     try:
-        from rapidrmf.collectors.gcp import CloudSQLCollector
+        from auditly.collectors.gcp import CloudSQLCollector
 
         assert CloudSQLCollector is not None
     except ImportError as e:
@@ -74,7 +74,7 @@ def test_sql_collector_import():
 def test_vpc_collector_import():
     """Verify VPC collector can be imported."""
     try:
-        from rapidrmf.collectors.gcp import VPCCollector
+        from auditly.collectors.gcp import VPCCollector
 
         assert VPCCollector is not None
     except ImportError as e:
@@ -84,7 +84,7 @@ def test_vpc_collector_import():
 def test_kms_collector_import():
     """Verify Cloud KMS collector can be imported."""
     try:
-        from rapidrmf.collectors.gcp import KMSCollector
+        from auditly.collectors.gcp import KMSCollector
 
         assert KMSCollector is not None
     except ImportError as e:
@@ -94,7 +94,7 @@ def test_kms_collector_import():
 def test_logging_collector_import():
     """Verify Cloud Logging collector can be imported."""
     try:
-        from rapidrmf.collectors.gcp import LoggingCollector
+        from auditly.collectors.gcp import LoggingCollector
 
         assert LoggingCollector is not None
     except ImportError as e:
@@ -104,7 +104,7 @@ def test_logging_collector_import():
 def test_collector_interface():
     """Verify all GCP collectors have collect_all method."""
     try:
-        from rapidrmf.collectors.gcp import (
+        from auditly.collectors.gcp import (
             CloudSQLCollector,
             ComputeCollector,
             IAMCollector,
@@ -136,7 +136,7 @@ def test_collector_interface():
 def test_collector_naming_conventions():
     """Verify GCP collectors follow naming conventions."""
     try:
-        from rapidrmf.collectors.gcp import (
+        from auditly.collectors.gcp import (
             CloudSQLCollector,
             ComputeCollector,
             IAMCollector,
@@ -174,7 +174,7 @@ def test_collector_naming_conventions():
 def test_gcp_client_instantiation():
     """Verify GCPClient can be instantiated with minimal config."""
     try:
-        from rapidrmf.collectors.gcp import GCPClient
+        from auditly.collectors.gcp import GCPClient
 
         # Should work with no arguments (uses application default credentials)
         client = GCPClient()
@@ -194,7 +194,7 @@ def test_gcp_client_instantiation():
 def test_evidence_structure():
     """Verify evidence structure has required fields."""
     try:
-        from rapidrmf.collectors.gcp import GCPClient, IAMCollector
+        from auditly.collectors.gcp import GCPClient, IAMCollector
 
         client = GCPClient()
         collector = IAMCollector(client)

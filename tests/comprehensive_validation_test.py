@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Validation Test for RapidRMF
+Comprehensive Validation Test for auditly
 
 Tests ALL controls from ALL catalogs with complete evidence coverage.
 Generates detailed HTML and JSON reports showing:
@@ -17,9 +17,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
-from rapidrmf.config import AppConfig
-from rapidrmf.oscal import OscalCatalog, OscalProfile, load_oscal
-from rapidrmf.validators import ComplianceValidator, ValidationResult, get_control_requirement
+from auditly.config import AppConfig
+from auditly.oscal import OscalCatalog, OscalProfile, load_oscal
+from auditly.validators import ComplianceValidator, ValidationResult, get_control_requirement
 
 
 def load_test_evidence() -> Dict[str, Any]:
@@ -55,7 +55,7 @@ def create_evidence_for_control(control_id: str, test_data: Dict[str, Any]) -> D
 def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[str, Any]:
     """Validate all controls from all catalogs"""
     print("=" * 80)
-    print("RapidRMF Comprehensive Validation Test")
+    print("auditly Comprehensive Validation Test")
     print("=" * 80)
     print()
 
@@ -186,7 +186,7 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RapidRMF Comprehensive Validation Report</title>
+    <title>auditly Comprehensive Validation Report</title>
     <style>
         body {{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -342,7 +342,7 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
 </head>
 <body>
     <div class="container">
-        <h1>🛡️ RapidRMF Comprehensive Validation Report</h1>
+        <h1>🛡️ auditly Comprehensive Validation Report</h1>
 
         <div class="metadata">
             <p><strong>Test Timestamp:</strong> {results['metadata']['test_timestamp']}</p>

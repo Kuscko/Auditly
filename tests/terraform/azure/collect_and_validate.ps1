@@ -2,12 +2,12 @@ param(
     [Parameter(Mandatory=$true)] [string]$SubscriptionId,
     [Parameter(Mandatory=$false)] [string]$TenantId = "",
     [Parameter(Mandatory=$false)] [string]$ResourceGroup = "kuscko-rg",
-    [Parameter(Mandatory=$false)] [string]$StorageAccount = "rapidrmfstore",
-    [Parameter(Mandatory=$false)] [string]$KeyVault = "rapidrmf-kv",
+    [Parameter(Mandatory=$false)] [string]$StorageAccount = "auditlystore",
+    [Parameter(Mandatory=$false)] [string]$KeyVault = "auditly-kv",
     [Parameter(Mandatory=$false)] [string]$TerraformPlanPath = "plan.out",
     [Parameter(Mandatory=$false)] [string]$TerraformPlanJson = "plan.json",
     [Parameter(Mandatory=$false)] [string]$OutputDir = "./output",
-    [Parameter(Mandatory=$false)] [string]$PythonExe = "C:/Users/Patrick Kelly/Desktop/Personal Work/Development/RapidRMF/.venv/Scripts/python.exe"
+    [Parameter(Mandatory=$false)] [string]$PythonExe = "C:/Users/Patrick Kelly/Desktop/Personal Work/Development/auditly/.venv/Scripts/python.exe"
 )
 
 $ErrorActionPreference = "Stop"
@@ -192,7 +192,7 @@ $evidence = @{
 Write-JsonNoBom $evidence $evidencePath
 
 # Run scan and validate
-$env:PYTHONPATH = "C:/Users/Patrick Kelly/Desktop/Personal Work/Development/RapidRMF"
+$env:PYTHONPATH = "C:/Users/Patrick Kelly/Desktop/Personal Work/Development/auditly"
 $systemConfig = Join-Path $OutputPath "system-config.json"
 if (-not (Test-Path $systemConfig) -and (Test-Path "system-config.json")) {
     Copy-Item "system-config.json" $systemConfig
@@ -201,12 +201,12 @@ if (-not (Test-Path $systemConfig) -and (Test-Path "system-config.json")) {
 if (-not (Test-Path $systemConfig)) { Write-Error "system-config.json not found (generate with generate_system_config.py)" }
 
 $scanOut = Join-Path $OutputPath "scan-results.json"
-& $PythonExe -m rapidrmf scan system --config-file $systemConfig --out-json $scanOut
+& $PythonExe -m auditly scan system --config-file $systemConfig --out-json $scanOut
 
 $validateOut = Join-Path $OutputPath "validation-results.json"
 $engineerReport = Join-Path $OutputPath "validation-report-engineer.html"
 $auditorReport = Join-Path $OutputPath "validation-report-auditor.html"
-& $PythonExe -m rapidrmf policy validate --evidence-file $evidencePath --system-state-file $systemConfig --out-json $validateOut --out-engineer $engineerReport --out-auditor $auditorReport
+& $PythonExe -m auditly policy validate --evidence-file $evidencePath --system-state-file $systemConfig --out-json $validateOut --out-engineer $engineerReport --out-auditor $auditorReport
 
 Write-Host "Scan results: $scanOut" -ForegroundColor Green
 Write-Host "Validation results: $validateOut" -ForegroundColor Green

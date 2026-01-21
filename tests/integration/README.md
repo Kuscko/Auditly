@@ -1,6 +1,6 @@
 # Database Integration Tests
 
-This directory contains integration tests for RapidRMF's PostgreSQL database layer.
+This directory contains integration tests for auditly's PostgreSQL database layer.
 
 ## Quick Start
 
@@ -10,14 +10,14 @@ This directory contains integration tests for RapidRMF's PostgreSQL database lay
 docker-compose -f docker-compose.test.yml up -d
 ```
 
-This starts PostgreSQL 15 on port 5433 with database `rapidrmf_test`.
+This starts PostgreSQL 15 on port 5433 with database `auditly_test`.
 
 ### 2. Apply Migrations
 
 ```bash
 # From project root
-$env:RAPIDRMF_DATABASE_URL = "postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test"
-rapidrmf db upgrade
+$env:auditly_DATABASE_URL = "postgresql+asyncpg://auditly:auditly_local_pass@localhost:5433/auditly_test"
+auditly db upgrade
 ```
 
 ### 3. Run Test
@@ -74,19 +74,19 @@ The end-to-end test validates all database operations:
 
 **Connection String:**
 ```
-postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test
+postgresql+asyncpg://auditly:auditly_local_pass@localhost:5433/auditly_test
 ```
 
 **Test Config File:** `config.postgres-test.yaml`
 
 ```yaml
 database:
-  url: postgresql+asyncpg://rapidrmf:rapidrmf_local_pass@localhost:5433/rapidrmf_test
+  url: postgresql+asyncpg://auditly:auditly_local_pass@localhost:5433/auditly_test
 
 storage:
   type: minio
   endpoint: localhost:9000
-  bucket: rapidrmf-evidence-test
+  bucket: auditly-evidence-test
 ```
 
 ## Schema
@@ -116,7 +116,7 @@ docker-compose -f docker-compose.test.yml down -v
 ## Troubleshooting
 
 **Connection refused:**
-- Wait for PostgreSQL to start: `docker exec rapidrmf-postgres-test pg_isready -U rapidrmf`
+- Wait for PostgreSQL to start: `docker exec auditly-postgres-test pg_isready -U auditly`
 
 **Import errors:**
 - Run from project root or tests/integration directory
@@ -133,7 +133,7 @@ docker-compose -f docker-compose.test.yml down -v
 ## Expected Output
 
 ```
-Connecting to: postgresql+asyncpg://rapidrmf:...
+Connecting to: postgresql+asyncpg://auditly:...
 
 [TEST 0] Creating catalog...
   Created catalog: nist-800-53-rev5-test (ID: 1)

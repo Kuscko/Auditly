@@ -1,6 +1,6 @@
-# Contributing to RapidRMF
+# Contributing to auditly
 
-Thanks for your interest in contributing to RapidRMF! This guide follows a streamlined, contributor-first flow while keeping RapidRMF specifics.
+Thanks for your interest in contributing to auditly! This guide follows a streamlined, contributor-first flow while keeping auditly specifics.
 
 ## Table of Contents
 - [Code of Conduct](#code-of-conduct)
@@ -18,20 +18,20 @@ Thanks for your interest in contributing to RapidRMF! This guide follows a strea
 ---
 
 ## Code of Conduct
-Be respectful, inclusive, and constructive. We are building something important together—keep interactions positive and focused on making RapidRMF better.
+Be respectful, inclusive, and constructive. We are building something important together—keep interactions positive and focused on making auditly better.
 
 ---
 
 ## Contributor Agreement & Ownership
-This project is licensed under Apache-2.0. By submitting a contribution to RapidRMF, you agree your contribution is provided under the Apache-2.0 license and assign the project the rights below:
+This project is licensed under Apache-2.0. By submitting a contribution to auditly, you agree your contribution is provided under the Apache-2.0 license and assign the project the rights below:
 
 1) **Project Ownership**
-- All contributions become the property of RapidRMF and its maintaining organization
+- All contributions become the property of auditly and its maintaining organization
 - The project retains exclusive rights to use, modify, distribute, and sublicense contributions
 
 2) **License Grant**
-- You grant RapidRMF a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, reproduce, modify, and distribute your contributions
-- Contributions are licensed under the same license as RapidRMF
+- You grant auditly a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, reproduce, modify, and distribute your contributions
+- Contributions are licensed under the same license as auditly
 
 3) **Intellectual Property Warranty**
 - You own or have authority to grant the rights to your contribution
@@ -60,8 +60,8 @@ This project is licensed under Apache-2.0. By submitting a contribution to Rapid
 ### Development Setup
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/RapidRMF.git
-cd RapidRMF
+git clone https://github.com/your-org/auditly.git
+cd auditly
 
 # Create virtual environment
 python -m venv .venv
@@ -72,7 +72,7 @@ pip install -r requirements-prod.txt
 pip install -r requirements-dev.txt
 
 # Run the CLI (example)
-python -m rapidrmf --help
+python -m auditly --help
 
 # Run tests
 pytest tests/ -q
@@ -85,7 +85,7 @@ pytest tests/ -q
 ### Reporting Bugs
 - Check existing issues to avoid duplicates
 - Use the bug report template
-- Include: RapidRMF version, Python version, OS, steps to reproduce, expected vs actual behavior, relevant logs/screenshots
+- Include: auditly version, Python version, OS, steps to reproduce, expected vs actual behavior, relevant logs/screenshots
 
 ### Suggesting Features
 - Check existing issues/discussions first
@@ -114,14 +114,14 @@ git checkout -b test/add-storage-coverage   # tests
 pytest tests/ -q
 
 # Run with coverage
-pytest tests/ --cov=rapidrmf --cov-report=term-missing -q
+pytest tests/ --cov=auditly --cov-report=term-missing -q
 
 # Run specific tests
 pytest tests/test_gcp_collectors.py -v
 
 # Lint and format
-ruff check rapidrmf tests
-black rapidrmf tests
+ruff check auditly tests
+black auditly tests
 ```
 
 4) **Push and Open a PR**
@@ -159,10 +159,10 @@ def collect_evidence(service: str, config: dict[str, object]) -> dict[str, objec
 - Avoid blocking calls in async contexts; use asyncio.sleep() instead of time.sleep()
 
 ### Logging
-- Use rapidrmf.logging_utils.configure_logging() and per-module loggers
+- Use auditly.logging_utils.configure_logging() and per-module loggers
 - Prefer structured messages with context
 
-### Domain Conventions (RapidRMF)
+### Domain Conventions (auditly)
 - Collectors should use finalize_evidence() for consistent metadata/checksums
 - Keep collect_* functions small and deterministic
 - Validation should surface actionable messages and link to manifests
@@ -185,7 +185,7 @@ pytest tests/ -q
 pytest tests/integration/ -q
 
 # With coverage
-pytest tests/ --cov=rapidrmf --cov-report=term-missing -q
+pytest tests/ --cov=auditly --cov-report=term-missing -q
 ```
 
 ### Fixtures
@@ -253,4 +253,4 @@ Examples:
 
 ---
 
-Thank you for contributing to RapidRMF!
+Thank you for contributing to auditly!
