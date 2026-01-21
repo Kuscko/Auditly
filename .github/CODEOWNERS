@@ -1,0 +1,30 @@
+# RapidRMF Code Owners
+# Require review from these owners for PRs touching these files
+
+# Core engine - requires maintainer review
+/rapidrmf/validators.py @Kuscko-Productions/maintainers
+/rapidrmf/validators_advanced.py @Kuscko-Productions/maintainers
+/rapidrmf/performance.py @Kuscko-Productions/maintainers
+
+# Database layer - requires maintainer review
+/rapidrmf/db/ @Kuscko-Productions/maintainers
+
+# Collectors - can have community PRs but needs review
+/rapidrmf/collectors/ @Kuscko-Productions/maintainers
+
+# Tests - requires review
+/tests/ @Kuscko-Productions/maintainers
+
+# Configuration & CI/CD - strict review required
+/.github/ @Kuscko-Productions/maintainers
+/pyproject.toml @Kuscko-Productions/maintainers
+/setup.py @Kuscko-Productions/maintainers
+/setup.cfg @Kuscko-Productions/maintainers
+
+# Documentation
+/README.md @Kuscko-Productions/maintainers
+/ROADMAP.md @Kuscko-Productions/maintainers
+/CONTRIBUTING.md @Kuscko-Productions/maintainers
+
+# Everything else
+* @Kuscko-Productions/maintainers
