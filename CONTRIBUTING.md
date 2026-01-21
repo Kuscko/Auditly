@@ -52,7 +52,7 @@ This project is licensed under Apache-2.0. By submitting a contribution to audit
 ## Getting Started
 
 ### Prerequisites
-- Python 3.14+
+- Python 3.14+ (3.12+ if using psycopg2/asyncpg)
 - Git
 - Virtual environment (recommended)
 - Pip (for installing dependencies)
