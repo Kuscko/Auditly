@@ -1,0 +1,52 @@
+name: Code Quality
+
+on:
+  pull_request:
+    paths:
+      - '**.py'
+      - '.github/workflows/lint.yml'
+      - '.pre-commit-config.yaml'
+      - 'pyproject.toml'
+
+jobs:
+  lint:
+    name: Lint with pre-commit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.14'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-lint-${{ hashFiles('.pre-commit-config.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-lint-
+    
+    - name: Install pre-commit
+      run: pip install pre-commit
+    
+    - name: Cache pre-commit environments
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pre-commit-
+    
+    - name: Run pre-commit hooks on all files
+      run: pre-commit run --all-files --verbose
+      
+    - name: Show formatting diff (if applicable)
+      if: failure()
+      run: |
+        git diff --color=always || true
+        echo "Run 'pre-commit run --all-files' locally to fix"

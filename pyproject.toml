@@ -23,8 +23,19 @@ ignore = [
 known-first-party = ["rapidrmf"]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+testpaths = ["tests"]
+asyncio_mode = "auto"
 pythonpath = ["."]
+addopts = "-v --strict-markers --tb=short"
 filterwarnings = [
   "ignore::DeprecationWarning",
+  "ignore::PendingDeprecationWarning",
 ]
+markers = [
+  "integration: integration tests requiring database",
+  "unit: unit tests without database",
+  "slow: slow running tests",
+  "smoke: smoke tests",
+]
+# Database URL for tests - set via environment
+# DATABASE_URL=postgresql://test_user:test_password@localhost:5432/rapidrmf_test
