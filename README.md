@@ -1,6 +1,6 @@
-# RapidRMF
+# Auditly
 
-RapidRMF automates compliance evidence collection, validation, and reporting for regulated environments. It runs offline on edge networks, writes tamper-evident manifests, and scales to GovCloud with MinIO or S3 vaults.
+Auditly automates compliance evidence collection, validation, and reporting for regulated environments. It runs offline on edge networks, writes tamper-evident manifests, and scales to GovCloud with MinIO or S3 vaults.
 
 ## What it does
 - Collects evidence from Terraform, CI/CD (GitHub, GitLab, Argo), and Azure infrastructure with checksums and manifests
@@ -20,16 +20,16 @@ pip install -r requirements.txt
 docker run -d -p 9000:9000 -p 9001:9001 ^
   -e MINIO_ROOT_USER=minioadmin ^
   -e MINIO_ROOT_PASSWORD=minioadmin ^
-  --name rapidrmf-minio minio/minio server /data --console-address ":9001"
+  --name Auditly-minio minio/minio server /data --console-address ":9001"
 ```
 3) Initialize configuration and point the edge environment at http://localhost:9000:
 ```powershell
-python -m rapidrmf init-config --out config.yaml
+python -m Auditly init-config --out config.yaml
 ```
 4) Collect Azure evidence and generate a report:
 ```powershell
-python -m rapidrmf collect azure --config config.yaml --env edge --output-dir ./evidence
-python -m rapidrmf report readiness --config config.yaml --env edge --out report.html
+python -m Auditly collect azure --config config.yaml --env edge --output-dir ./evidence
+python -m Auditly report readiness --config config.yaml --env edge --out report.html
 ```
 Open report.html to review coverage and findings.
 
@@ -38,18 +38,18 @@ Open report.html to review coverage and findings.
 ### Evidence Collection
 ```bash
 # Collect evidence with database persistence
-rapidrmf collect <terraform|github|gitlab|argo|azure> \
+Auditly collect <terraform|github|gitlab|argo|azure> \
   --config config.yaml \
   --env <env>
 
 # Example: Azure with database
-rapidrmf collect azure \
+Auditly collect azure \
   --config config.yaml \
   --env edge \
   --output-dir ./evidence
 
 # Run multiple collections concurrently from a JSON list
-rapidrmf collect batch \
+Auditly collect batch \
   --requests-file requests.json \
   --timeout 120
 ```
@@ -65,26 +65,26 @@ Where `requests.json` contains:
 ### Validation & Database
 ```bash
 # Validate controls and persist results to database
-rapidrmf policy validate \
+Auditly policy validate \
   --evidence-file evidence.json \
   --config config.yaml \
   --env production
 
 # Run database migrations
-rapidrmf db upgrade
-rapidrmf db downgrade
-rapidrmf db current
+Auditly db upgrade
+Auditly db downgrade
+Auditly db current
 ```
 
 ### Scanning & Reporting
 ```bash
 # Run security scanners
-rapidrmf scan system \
+Auditly scan system \
   --config-file system-config.json \
   --out-json scan-results.json
 
 # Generate readiness report
-rapidrmf report readiness \
+Auditly report readiness \
   --config config.yaml \
   --env <env> \
   --out report.html
@@ -93,7 +93,7 @@ rapidrmf report readiness \
 ### Air-Gap Transfer
 ```bash
 # Create signed bundle
-rapidrmf bundle create \
+Auditly bundle create \
   --config config.yaml \
   --env edge \
   --out-path evidence-bundle.tar.gz
@@ -164,11 +164,11 @@ Test coverage: 103 passing, 4 skipped (all core features validated).
 Full feature list: [ROADMAP.md](ROADMAP.md)
 
 ## Learn more
-- Architecture and modules: [rapidrmf/README.md](rapidrmf/README.md)
-- **Database layer**: [rapidrmf/db/README.md](rapidrmf/db/README.md) - PostgreSQL persistence, migrations, repository pattern
-- Collectors (Terraform, CI/CD, Azure): [rapidrmf/collectors/README.md](rapidrmf/collectors/README.md)
-- Storage backends: [rapidrmf/storage/README.md](rapidrmf/storage/README.md)
-- Policy engines: [rapidrmf/policy/README.md](rapidrmf/policy/README.md)
-- Reporting: [rapidrmf/reporting/README.md](rapidrmf/reporting/README.md)
+- Architecture and modules: [Auditly/README.md](Auditly/README.md)
+- **Database layer**: [Auditly/db/README.md](Auditly/db/README.md) - PostgreSQL persistence, migrations, repository pattern
+- Collectors (Terraform, CI/CD, Azure): [Auditly/collectors/README.md](Auditly/collectors/README.md)
+- Storage backends: [Auditly/storage/README.md](Auditly/storage/README.md)
+- Policy engines: [Auditly/policy/README.md](Auditly/policy/README.md)
+- Reporting: [Auditly/reporting/README.md](Auditly/reporting/README.md)
 - **Tests and validation**: [tests/README.md](tests/README.md) - Integration tests with PostgreSQL
 - Development roadmap: [ROADMAP.md](ROADMAP.md)
