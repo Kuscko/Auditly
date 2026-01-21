@@ -85,7 +85,6 @@ jobs:
     
     - name: Run Alembic migrations
       run: |
-        cd rapidrmf/db/migrations
         alembic upgrade head
       env:
         DATABASE_URL: ${{ env.DATABASE_URL }}
