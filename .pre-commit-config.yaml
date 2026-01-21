@@ -9,7 +9,7 @@ repos:
   rev: 24.10.0
   hooks:
   - id: black
-    language_version: python3.13
+    language_version: python3
     args: [--line-length=100]
     exclude: ^(tests/terraform/|docs/|examples/)
 
@@ -62,7 +62,7 @@ repos:
 
 # Configuration for all hooks
 default_language_version:
-  python: python3.13
+  python: python3
 
 # Exclude files
 exclude: |
