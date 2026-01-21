@@ -101,7 +101,21 @@ rapidrmf bundle create \
 
 ## What's included
 
-### v0.2 (Current - Database Persistence)
+### v0.3 (Current - Core Engine Complete)
+
+| Feature | Status |
+|---------|--------|
+| **Python 3.14 Support** | ✓ Full Python 3.14 compatibility with SQLAlchemy 2.0.36 |
+| **AWS Evidence Collector** | ✓ IAM, EC2, S3, CloudTrail, VPC, RDS, KMS, Secrets Manager |
+| **GCP Evidence Collector** | ✓ Compute, Storage, IAM, Cloud SQL, Cloud Logging |
+| **Evidence Lifecycle** | ✓ Versioning, staleness detection, deduplication, correlation |
+| **Advanced Validation** | ✓ Control dependencies, custom validators, findings lifecycle |
+| **Performance Optimization** | ✓ Caching, parallel collection (async), incremental validation |
+| **Batch API & CLI** | ✓ Concurrent collection via /batch endpoint and CLI commands |
+| **PostgreSQL Backend** | ✓ SQLAlchemy 2.x with async/sync, Alembic migrations |
+| **Code Quality** | ✓ Black/Ruff/mypy configured, pre-commit hooks, 103 passing tests |
+
+### v0.2 (Released - Database Persistence)
 
 | Feature | Status |
 |---------|--------|
@@ -128,24 +142,25 @@ rapidrmf bundle create \
 | **Multi-Enclave** | ✓ Edge/IL2/IL4/IL5/IL6 isolation |
 | **Offline Operation** | ✓ Policy engines (Conftest + OPA WASM) |
 
-## v0.3 Core Engine Focus
+## v0.4 Roadmap: REST API & Integration
 
-**Philosophy**: Build rock-solid core functionality before user interfaces
+**Next Phase** (starting now):
+- [ ] **REST API Tier 1**: Evidence CRUD, validation endpoints, control status queries
+- [ ] **Report APIs**: Generate readiness reports (HTML/JSON), export findings
+- [ ] **CI/CD Integration**: GitHub/GitLab pre-deployment compliance checks
+- [ ] **Webhook Support**: Auto-trigger validation on system/evidence changes
+- [ ] **API Documentation**: OpenAPI specs, interactive Swagger UI
 
-**Current Focus**:
-- [x] AWS evidence collector (IAM, EC2, S3, CloudTrail, VPC, RDS, KMS)
-- [x] GCP evidence collector (Compute, Storage, IAM, Cloud SQL, Logging)
-- [x] Evidence lifecycle (versioning, staleness detection, correlation)
-- [ ] Advanced validation (control dependencies, custom validators, findings management)
-- [ ] Performance optimization (caching, parallel collection, incremental validation)
+**Deferred to v0.5+** (after APIs stable):
+- Web dashboard UI for visual compliance monitoring
+- Interactive reports with dashboards and drilling-down
+- Advanced framework support (HIPAA, PCI, ISO 27001)
+- Multi-tenancy and RBAC UI
+- AI-powered recommendations
 
-**Deferred to v0.4+** (after core is stable):
-- REST API endpoints (code exists but not prioritized)
-- Web dashboard and UI
-- CI/CD webhook integrations
-- Interactive reports
+**Philosophy**: Build functional APIs first, then UI layers on top.
+Test coverage: 103 passing, 4 skipped (all core features validated).
 
-See [V0.3_CORE_ROADMAP.md](V0.3_CORE_ROADMAP.md) for detailed implementation plan
 Full feature list: [ROADMAP.md](ROADMAP.md)
 
 ## Learn more
