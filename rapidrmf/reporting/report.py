@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 from typing import List
 
@@ -37,8 +36,8 @@ def readiness_summary(manifests: List[EvidenceManifest]) -> dict:
 
 def write_html(summary: dict, out_path: Path | str) -> None:
     p = Path(out_path)
-    controls = summary.get('controls', {})
-    
+    controls = summary.get("controls", {})
+
     # Build control coverage table
     coverage_html = ""
     if "covered_ids" in controls and "uncovered_ids" in controls:
@@ -47,13 +46,13 @@ def write_html(summary: dict, out_path: Path | str) -> None:
       <p>Total Controls: {controls.get('total', 0)}</p>
       <p>Covered: {controls.get('covered', 0)} ({controls.get('coverage_percent', 0)}%)</p>
       <p>Uncovered: {controls.get('uncovered', 0)}</p>
-      
+
       <h3>Covered Controls</h3>
       <table border="1" cellpadding="5" style="border-collapse: collapse;">
         <tr><th>Control ID</th><th>Evidence Count</th></tr>
         {''.join(f'<tr><td>{cid}</td><td>{len(controls.get("control_evidence", {}).get(cid, []))}</td></tr>' for cid in controls.get('covered_ids', [])[:20])}
       </table>
-      
+
       <h3>Uncovered Controls (first 20)</h3>
       <ul>
         {''.join(f'<li>{cid}</li>' for cid in controls.get('uncovered_ids', [])[:20])}
@@ -68,7 +67,7 @@ def write_html(summary: dict, out_path: Path | str) -> None:
       <p>Controls Unknown: {controls.get('controls_unknown', 'N/A')}</p>
       <p>Evidence Kinds Seen: {', '.join(controls.get('evidence_kinds', []))}</p>
       """
-    
+
     html = f"""
     <html><head><title>Readiness Report</title></head>
     <body>

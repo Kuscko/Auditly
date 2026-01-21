@@ -30,6 +30,7 @@ StorageConfig = MinioStorageConfig | S3StorageConfig
 class EnvironmentConfig(BaseModel):
     description: Optional[str] = None
     storage: StorageConfig
+    database_url: Optional[str] = None  # e.g., postgresql+asyncpg://user:pass@host:5432/dbname
 
 
 class PolicyConfig(BaseModel):
@@ -61,30 +62,30 @@ class CatalogsConfig(BaseModel):
         """Validate that catalog file exists if path is provided."""
         if v is None:
             return v
-        
+
         path = Path(v)
         if not path.exists():
             raise ValueError(f"Catalog file not found: {v}")
-        
+
         if not path.is_file():
             raise ValueError(f"Catalog path is not a file: {v}")
-        
+
         if path.suffix.lower() not in [".json", ".xml", ".yaml", ".yml"]:
             raise ValueError(f"Catalog file must be JSON, XML, or YAML: {v}")
-        
+
         return str(path.resolve())
 
     @model_validator(mode="after")
-    def validate_oscal_structure(self) -> "CatalogsConfig":
+    def validate_oscal_structure(self) -> CatalogsConfig:
         """Validate that provided catalog files contain valid OSCAL structure."""
         for field_name, file_path in self.model_dump().items():
             if file_path is None:
                 continue
-            
+
             path = Path(file_path)
             if not path.exists():
                 continue
-            
+
             try:
                 if path.suffix.lower() == ".json":
                     data = json.loads(path.read_text(encoding="utf-8"))
@@ -98,7 +99,7 @@ class CatalogsConfig(BaseModel):
                 raise ValueError(f"Invalid JSON in catalog file '{file_path}': {e}")
             except Exception as e:
                 raise ValueError(f"Error validating catalog '{file_path}': {e}")
-        
+
         return self
 
     def get_all_catalogs(self) -> Dict[str, Path]:
@@ -125,7 +126,7 @@ class AppConfig(BaseModel):
     staging_dir: Optional[str] = None
 
     @staticmethod
-    def load(path: Path | str) -> "AppConfig":
+    def load(path: Path | str) -> AppConfig:
         p = Path(path)
         data = yaml.safe_load(p.read_text())
         return AppConfig.model_validate(data)

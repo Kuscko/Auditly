@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import json
+
 import yaml
 
 
 @dataclass
 class Waiver:
     """Represents an approved exception to a control."""
+
     control_id: str
     reason: str
     compensating_controls: List[str] = field(default_factory=list)
@@ -40,7 +41,7 @@ class WaiverRegistry:
         self.waivers: Dict[str, Waiver] = {}
 
     @staticmethod
-    def from_yaml(path: Path | str) -> "WaiverRegistry":
+    def from_yaml(path: Path | str) -> WaiverRegistry:
         """Load waivers from YAML file."""
         reg = WaiverRegistry()
         p = Path(path)
@@ -96,7 +97,8 @@ class WaiverRegistry:
         active = {k: w for k, w in self.waivers.items() if not w.is_expired()}
         expired = {k: w for k, w in self.waivers.items() if w.is_expired()}
         expiring_soon = {
-            k: w for k, w in active.items()
+            k: w
+            for k, w in active.items()
             if w.days_until_expiry() is not None and w.days_until_expiry() < 30
         }
 

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-import json
+from typing import Any, Dict, List
 
 
 class ScannerType(Enum):
@@ -25,13 +24,15 @@ class ScanResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> str:
-        return json.dumps({
-            "scanner_type": self.scanner_type.value,
-            "timestamp": self.timestamp,
-            "status": self.status,
-            "findings": self.findings,
-            "metadata": self.metadata,
-        })
+        return json.dumps(
+            {
+                "scanner_type": self.scanner_type.value,
+                "timestamp": self.timestamp,
+                "status": self.status,
+                "findings": self.findings,
+                "metadata": self.metadata,
+            }
+        )
 
 
 class ComplianceScanner:
@@ -53,6 +54,7 @@ class IAMScanner(ComplianceScanner):
 
     def scan(self, config: Dict[str, Any]) -> ScanResult:
         import time
+
         result = ScanResult(
             scanner_type=self.scanner_type,
             timestamp=time.time(),
@@ -65,33 +67,45 @@ class IAMScanner(ComplianceScanner):
         for policy in policies:
             actions = policy.get("actions", [])
             if "*" in actions:
-                findings.append({
-                    "severity": "high",
-                    "issue": "Overly permissive policy (wildcard actions)",
-                    "policy": policy.get("name"),
-                    "recommendation": "Restrict to specific actions (least privilege)",
-                })
+                findings.append(
+                    {
+                        "severity": "high",
+                        "issue": "Overly permissive policy (wildcard actions)",
+                        "policy": policy.get("name"),
+                        "recommendation": "Restrict to specific actions (least privilege)",
+                    }
+                )
 
             resources = policy.get("resources", [])
             if "*" in resources:
-                findings.append({
-                    "severity": "high",
-                    "issue": "Overly permissive policy (wildcard resources)",
-                    "policy": policy.get("name"),
-                    "recommendation": "Restrict to specific resources",
-                })
+                findings.append(
+                    {
+                        "severity": "high",
+                        "issue": "Overly permissive policy (wildcard resources)",
+                        "policy": policy.get("name"),
+                        "recommendation": "Restrict to specific resources",
+                    }
+                )
 
         # Check for MFA enforcement
         mfa_enforced = config.get("mfa_enforced", False)
         if not mfa_enforced:
-            findings.append({
-                "severity": "high",
-                "issue": "MFA not enforced for console access",
-                "recommendation": "Enable MFA requirement for all users",
-            })
+            findings.append(
+                {
+                    "severity": "high",
+                    "issue": "MFA not enforced for console access",
+                    "recommendation": "Enable MFA requirement for all users",
+                }
+            )
 
         result.findings = findings
-        result.status = "pass" if len(findings) == 0 else "fail" if any(f["severity"] == "high" for f in findings) else "warning"
+        result.status = (
+            "pass"
+            if len(findings) == 0
+            else "fail"
+            if any(f["severity"] == "high" for f in findings)
+            else "warning"
+        )
         result.metadata = {"policies_scanned": len(policies), "mfa_enforced": mfa_enforced}
 
         return result
@@ -105,6 +119,7 @@ class EncryptionScanner(ComplianceScanner):
 
     def scan(self, config: Dict[str, Any]) -> ScanResult:
         import time
+
         result = ScanResult(
             scanner_type=self.scanner_type,
             timestamp=time.time(),
@@ -116,46 +131,60 @@ class EncryptionScanner(ComplianceScanner):
         rds = config.get("rds", [])
         for db in rds:
             if not db.get("storage_encrypted", False):
-                findings.append({
-                    "severity": "high",
-                    "issue": "RDS database not encrypted at rest",
-                    "resource": db.get("name"),
-                    "recommendation": "Enable storage_encrypted = true",
-                })
+                findings.append(
+                    {
+                        "severity": "high",
+                        "issue": "RDS database not encrypted at rest",
+                        "resource": db.get("name"),
+                        "recommendation": "Enable storage_encrypted = true",
+                    }
+                )
 
             if not db.get("backup_encrypted", False):
-                findings.append({
-                    "severity": "medium",
-                    "issue": "RDS backups not encrypted",
-                    "resource": db.get("name"),
-                })
+                findings.append(
+                    {
+                        "severity": "medium",
+                        "issue": "RDS backups not encrypted",
+                        "resource": db.get("name"),
+                    }
+                )
 
         # Check EBS encryption
         ebs = config.get("ebs", [])
         for volume in ebs:
             if not volume.get("encrypted", False):
-                findings.append({
-                    "severity": "high",
-                    "issue": "EBS volume not encrypted",
-                    "resource": volume.get("name"),
-                    "recommendation": "Enable encrypted = true",
-                })
+                findings.append(
+                    {
+                        "severity": "high",
+                        "issue": "EBS volume not encrypted",
+                        "resource": volume.get("name"),
+                        "recommendation": "Enable encrypted = true",
+                    }
+                )
 
         # Check TLS/SSL on load balancers
         lbs = config.get("load_balancers", [])
         for lb in lbs:
             for listener in lb.get("listeners", []):
                 if listener.get("protocol") != "HTTPS":
-                    findings.append({
-                        "severity": "high",
-                        "issue": "Load balancer listener not using HTTPS",
-                        "resource": lb.get("name"),
-                        "listener": listener.get("port"),
-                        "recommendation": "Use HTTPS protocol",
-                    })
+                    findings.append(
+                        {
+                            "severity": "high",
+                            "issue": "Load balancer listener not using HTTPS",
+                            "resource": lb.get("name"),
+                            "listener": listener.get("port"),
+                            "recommendation": "Use HTTPS protocol",
+                        }
+                    )
 
         result.findings = findings
-        result.status = "pass" if len(findings) == 0 else "fail" if any(f["severity"] == "high" for f in findings) else "warning"
+        result.status = (
+            "pass"
+            if len(findings) == 0
+            else "fail"
+            if any(f["severity"] == "high" for f in findings)
+            else "warning"
+        )
         result.metadata = {
             "rds_checked": len(rds),
             "ebs_checked": len(ebs),
@@ -173,6 +202,7 @@ class BackupScanner(ComplianceScanner):
 
     def scan(self, config: Dict[str, Any]) -> ScanResult:
         import time
+
         result = ScanResult(
             scanner_type=self.scanner_type,
             timestamp=time.time(),
@@ -187,29 +217,35 @@ class BackupScanner(ComplianceScanner):
         backup_frequency_minutes = backup_policy.get("frequency_minutes", 1440)
 
         if rpo_minutes > 0 and backup_frequency_minutes > rpo_minutes:
-            findings.append({
-                "severity": "high",
-                "issue": f"Backup frequency ({backup_frequency_minutes}m) exceeds RPO ({rpo_minutes}m)",
-                "recommendation": f"Increase backup frequency to <= {rpo_minutes} minutes",
-            })
+            findings.append(
+                {
+                    "severity": "high",
+                    "issue": f"Backup frequency ({backup_frequency_minutes}m) exceeds RPO ({rpo_minutes}m)",
+                    "recommendation": f"Increase backup frequency to <= {rpo_minutes} minutes",
+                }
+            )
 
         # Check retention
         retention_days = backup_policy.get("retention_days", 0)
         if retention_days < 30:
-            findings.append({
-                "severity": "medium",
-                "issue": f"Backup retention ({retention_days}d) below 30-day recommendation",
-                "recommendation": "Extend retention to >= 30 days",
-            })
+            findings.append(
+                {
+                    "severity": "medium",
+                    "issue": f"Backup retention ({retention_days}d) below 30-day recommendation",
+                    "recommendation": "Extend retention to >= 30 days",
+                }
+            )
 
         # Check if backups are tested
         tested = backup_policy.get("tested", False)
         if not tested:
-            findings.append({
-                "severity": "high",
-                "issue": "Backups not regularly tested for recovery",
-                "recommendation": "Implement monthly backup restore tests",
-            })
+            findings.append(
+                {
+                    "severity": "high",
+                    "issue": "Backups not regularly tested for recovery",
+                    "recommendation": "Implement monthly backup restore tests",
+                }
+            )
 
         result.findings = findings
         result.status = "pass" if len(findings) == 0 else "fail"
