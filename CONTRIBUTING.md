@@ -1,6 +1,6 @@
 # Contributing to RapidRMF
 
-Thanks for your interest in contributing to RapidRMF! This guide follows a streamlined, contributor-first flow (inspired by the Null Terminal style) while keeping RapidRMF specifics.
+Thanks for your interest in contributing to RapidRMF! This guide follows a streamlined, contributor-first flow while keeping RapidRMF specifics.
 
 ## Table of Contents
 - [Code of Conduct](#code-of-conduct)
