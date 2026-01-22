@@ -13,7 +13,6 @@ All evidence is audit-trail ready with checksums and metadata.
 import json
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 
 def run_command(cmd: list[str], description: str) -> bool:
@@ -103,7 +102,7 @@ def main():
     # Show evidence manifest
     manifest_file = output_dir / "evidence.json"
     if manifest_file.exists():
-        print(f"\n✓ Evidence manifest:")
+        print("\n✓ Evidence manifest:")
         with open(manifest_file) as f:
             manifest = json.load(f)
         for evidence_type, details in manifest.items():
@@ -155,7 +154,7 @@ def main():
     if report_file.exists():
         size = report_file.stat().st_size
         print(f"\n✓ Report generated: {report_file} ({size} bytes)")
-        print(f"  Open in browser to view engineer and auditor compliance views")
+        print("  Open in browser to view engineer and auditor compliance views")
 
     # Summary
     print("\n" + "=" * 70)

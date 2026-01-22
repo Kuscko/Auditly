@@ -81,9 +81,11 @@ class VPCCollector:
                             "log_destination_type": log.get("LogDestinationType"),
                             "log_group_name": log.get("LogGroupName"),
                             "delivery_status": log.get("DeliveryStatus"),
-                            "creation_time": log.get("CreationTime", "").isoformat()
-                            if log.get("CreationTime")
-                            else None,
+                            "creation_time": (
+                                log.get("CreationTime", "").isoformat()
+                                if log.get("CreationTime")
+                                else None
+                            ),
                             "tags": {t.get("Key"): t.get("Value") for t in log.get("Tags", [])},
                         }
                     )
@@ -155,9 +157,11 @@ class VPCCollector:
                                 "AllocationId"
                             ),
                             "public_ip": nat.get("NatGatewayAddresses", [{}])[0].get("PublicIp"),
-                            "create_time": nat.get("CreateTime", "").isoformat()
-                            if nat.get("CreateTime")
-                            else None,
+                            "create_time": (
+                                nat.get("CreateTime", "").isoformat()
+                                if nat.get("CreateTime")
+                                else None
+                            ),
                             "tags": {t.get("Key"): t.get("Value") for t in nat.get("Tags", [])},
                         }
                     )

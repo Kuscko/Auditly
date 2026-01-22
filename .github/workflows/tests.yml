@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.12']
-    
+
     services:
       postgres:
         image: postgres:16-alpine
@@ -28,23 +28,23 @@ jobs:
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-          POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+          POSTGRES_INITDB_ARGS: --encoding=UTF8
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
-    
+        - 5432:5432
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Cache pip packages
       uses: actions/cache@v3
       with:
@@ -52,18 +52,18 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-dev.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
-    
+
     - name: Wait for PostgreSQL to be ready
       run: |
         python -c "
         import psycopg
         import time
-        
+
         for i in range(30):
           try:
             conn = psycopg.connect(
@@ -82,13 +82,13 @@ jobs:
             print(f'Waiting for PostgreSQL... ({i+1}/30)')
             time.sleep(1)
         "
-    
+
     - name: Run Alembic migrations
       run: |
         alembic upgrade head
       env:
         DATABASE_URL: ${{ env.DATABASE_URL }}
-    
+
     - name: Run pytest with coverage
       run: |
         pytest tests/ \
@@ -99,7 +99,7 @@ jobs:
           --cov-report=term-missing
       env:
         DATABASE_URL: ${{ env.DATABASE_URL }}
-    
+
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       with:
@@ -118,7 +118,7 @@ jobs:
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-    
+
     - name: Upload HTML coverage report
       uses: actions/upload-artifact@v4
       if: always()

@@ -118,38 +118,44 @@ class ComputeCollector:
                             "network_interfaces": [
                                 {
                                     "network": ni.network.split("/")[-1] if ni.network else None,
-                                    "subnet": ni.subnetwork.split("/")[-1]
-                                    if ni.subnetwork
-                                    else None,
-                                    "internal_ip": ni.network_i_p
-                                    if hasattr(ni, "network_i_p")
-                                    else None,
-                                    "access_configs": [
-                                        {
-                                            "name": ac.name,
-                                            "nat_ip": ac.nat_i_p
-                                            if hasattr(ac, "nat_i_p")
-                                            else None,
-                                        }
-                                        for ac in ni.access_configs
-                                    ]
-                                    if ni.access_configs
-                                    else [],
+                                    "subnet": (
+                                        ni.subnetwork.split("/")[-1] if ni.subnetwork else None
+                                    ),
+                                    "internal_ip": (
+                                        ni.network_i_p if hasattr(ni, "network_i_p") else None
+                                    ),
+                                    "access_configs": (
+                                        [
+                                            {
+                                                "name": ac.name,
+                                                "nat_ip": (
+                                                    ac.nat_i_p if hasattr(ac, "nat_i_p") else None
+                                                ),
+                                            }
+                                            for ac in ni.access_configs
+                                        ]
+                                        if ni.access_configs
+                                        else []
+                                    ),
                                 }
                                 for ni in instance.network_interfaces
                             ],
-                            "metadata": {item.key: item.value for item in instance.metadata.items}
-                            if instance.metadata and instance.metadata.items
-                            else {},
-                            "service_accounts": [
-                                {
-                                    "email": sa.email,
-                                    "scopes": list(sa.scopes),
-                                }
-                                for sa in instance.service_accounts
-                            ]
-                            if instance.service_accounts
-                            else [],
+                            "metadata": (
+                                {item.key: item.value for item in instance.metadata.items}
+                                if instance.metadata and instance.metadata.items
+                                else {}
+                            ),
+                            "service_accounts": (
+                                [
+                                    {
+                                        "email": sa.email,
+                                        "scopes": list(sa.scopes),
+                                    }
+                                    for sa in instance.service_accounts
+                                ]
+                                if instance.service_accounts
+                                else []
+                            ),
                             "labels": dict(instance.labels) if instance.labels else {},
                             "deletion_protection": instance.deletion_protection,
                         }
@@ -195,23 +201,29 @@ class ComputeCollector:
                             "type": disk.type_.split("/")[-1] if disk.type_ else None,
                             "status": disk.status,
                             "creation_timestamp": disk.creation_timestamp,
-                            "source_image": disk.source_image.split("/")[-1]
-                            if disk.source_image
-                            else None,
-                            "source_snapshot": disk.source_snapshot.split("/")[-1]
-                            if disk.source_snapshot
-                            else None,
-                            "users": [user.split("/")[-1] for user in disk.users]
-                            if disk.users
-                            else [],
+                            "source_image": (
+                                disk.source_image.split("/")[-1] if disk.source_image else None
+                            ),
+                            "source_snapshot": (
+                                disk.source_snapshot.split("/")[-1]
+                                if disk.source_snapshot
+                                else None
+                            ),
+                            "users": (
+                                [user.split("/")[-1] for user in disk.users] if disk.users else []
+                            ),
                             "labels": dict(disk.labels) if disk.labels else {},
-                            "disk_encryption_key": {
-                                "kms_key_name": disk.disk_encryption_key.kms_key_name
+                            "disk_encryption_key": (
+                                {
+                                    "kms_key_name": (
+                                        disk.disk_encryption_key.kms_key_name
+                                        if disk.disk_encryption_key
+                                        else None
+                                    ),
+                                }
                                 if disk.disk_encryption_key
-                                else None,
-                            }
-                            if disk.disk_encryption_key
-                            else None,
+                                else None
+                            ),
                         }
                         disks.append(disk_dict)
 
@@ -247,29 +259,33 @@ class ComputeCollector:
                     "direction": firewall.direction,
                     "disabled": firewall.disabled,
                     "source_ranges": list(firewall.source_ranges) if firewall.source_ranges else [],
-                    "destination_ranges": list(firewall.destination_ranges)
-                    if firewall.destination_ranges
-                    else [],
+                    "destination_ranges": (
+                        list(firewall.destination_ranges) if firewall.destination_ranges else []
+                    ),
                     "source_tags": list(firewall.source_tags) if firewall.source_tags else [],
                     "target_tags": list(firewall.target_tags) if firewall.target_tags else [],
-                    "allowed": [
-                        {
-                            "ip_protocol": rule.i_p_protocol,
-                            "ports": list(rule.ports) if rule.ports else [],
-                        }
-                        for rule in firewall.allowed
-                    ]
-                    if firewall.allowed
-                    else [],
-                    "denied": [
-                        {
-                            "ip_protocol": rule.i_p_protocol,
-                            "ports": list(rule.ports) if rule.ports else [],
-                        }
-                        for rule in firewall.denied
-                    ]
-                    if firewall.denied
-                    else [],
+                    "allowed": (
+                        [
+                            {
+                                "ip_protocol": rule.i_p_protocol,
+                                "ports": list(rule.ports) if rule.ports else [],
+                            }
+                            for rule in firewall.allowed
+                        ]
+                        if firewall.allowed
+                        else []
+                    ),
+                    "denied": (
+                        [
+                            {
+                                "ip_protocol": rule.i_p_protocol,
+                                "ports": list(rule.ports) if rule.ports else [],
+                            }
+                            for rule in firewall.denied
+                        ]
+                        if firewall.denied
+                        else []
+                    ),
                 }
                 firewalls.append(firewall_dict)
 
@@ -299,17 +315,21 @@ class ComputeCollector:
                     "creation_timestamp": snapshot.creation_timestamp,
                     "disk_size_gb": snapshot.disk_size_gb,
                     "storage_bytes": snapshot.storage_bytes,
-                    "source_disk": snapshot.source_disk.split("/")[-1]
-                    if snapshot.source_disk
-                    else None,
+                    "source_disk": (
+                        snapshot.source_disk.split("/")[-1] if snapshot.source_disk else None
+                    ),
                     "status": snapshot.status,
-                    "snapshot_encryption_key": {
-                        "kms_key_name": snapshot.snapshot_encryption_key.kms_key_name
+                    "snapshot_encryption_key": (
+                        {
+                            "kms_key_name": (
+                                snapshot.snapshot_encryption_key.kms_key_name
+                                if snapshot.snapshot_encryption_key
+                                else None
+                            ),
+                        }
                         if snapshot.snapshot_encryption_key
-                        else None,
-                    }
-                    if snapshot.snapshot_encryption_key
-                    else None,
+                        else None
+                    ),
                     "labels": dict(snapshot.labels) if snapshot.labels else {},
                     "auto_created": snapshot.auto_created,
                 }

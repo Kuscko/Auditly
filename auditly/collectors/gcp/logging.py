@@ -95,9 +95,9 @@ class LoggingCollector:
                     "filter": sink.filter,
                     "description": sink.description,
                     "disabled": sink.disabled,
-                    "output_version_format": sink.output_version_format.name
-                    if sink.output_version_format
-                    else None,
+                    "output_version_format": (
+                        sink.output_version_format.name if sink.output_version_format else None
+                    ),
                     "writer_identity": sink.writer_identity,
                     "include_children": sink.include_children,
                 }
@@ -126,20 +126,28 @@ class LoggingCollector:
                     "name": metric.name,
                     "description": metric.description,
                     "filter": metric.filter,
-                    "metric_descriptor": {
-                        "metric_kind": metric.metric_descriptor.metric_kind.name
-                        if metric.metric_descriptor and metric.metric_descriptor.metric_kind
-                        else None,
-                        "value_type": metric.metric_descriptor.value_type.name
-                        if metric.metric_descriptor and metric.metric_descriptor.value_type
-                        else None,
-                        "unit": metric.metric_descriptor.unit if metric.metric_descriptor else None,
-                    }
-                    if metric.metric_descriptor
-                    else {},
-                    "label_extractors": dict(metric.label_extractors)
-                    if metric.label_extractors
-                    else {},
+                    "metric_descriptor": (
+                        {
+                            "metric_kind": (
+                                metric.metric_descriptor.metric_kind.name
+                                if metric.metric_descriptor and metric.metric_descriptor.metric_kind
+                                else None
+                            ),
+                            "value_type": (
+                                metric.metric_descriptor.value_type.name
+                                if metric.metric_descriptor and metric.metric_descriptor.value_type
+                                else None
+                            ),
+                            "unit": (
+                                metric.metric_descriptor.unit if metric.metric_descriptor else None
+                            ),
+                        }
+                        if metric.metric_descriptor
+                        else {}
+                    ),
+                    "label_extractors": (
+                        dict(metric.label_extractors) if metric.label_extractors else {}
+                    ),
                 }
                 metrics.append(metric_dict)
 

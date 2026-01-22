@@ -144,7 +144,7 @@ def main():
     print(f"Reading Terraform outputs from: {args.terraform_dir}")
     tf_outputs = get_terraform_outputs(args.terraform_dir)
     
-    print(f"Generating system configuration...")
+    print("Generating system configuration...")
     system_config = generate_system_config(tf_outputs)
     
     # Write output
@@ -153,7 +153,7 @@ def main():
     args.output.write_text(output_json)
     
     print(f"Generated {args.output}")
-    print(f"\nNext steps:")
+    print("\nNext steps:")
     print(f"  1. Review and customize {args.output} (update IAM policies, MFA status, etc.)")
     print(f"  2. Run scan: python -m auditly scan system --config-file {args.output} --out-json scan-results.json")
     print(f"  3. Validate: python -m auditly policy validate --system-state-file {args.output}")

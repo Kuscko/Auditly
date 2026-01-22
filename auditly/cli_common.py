@@ -61,9 +61,9 @@ def persist_manifest_and_artifacts(
         cleaned_metadata = {k: v for k, v in metadata.items() if k != "_local_path"}
         ev = Evidence(
             system=system,
-            evidence_type=metadata.get("kind", "unknown")
-            if isinstance(metadata, dict)
-            else "unknown",
+            evidence_type=(
+                metadata.get("kind", "unknown") if isinstance(metadata, dict) else "unknown"
+            ),
             key=a.key,
             vault_path=None,
             filename=a.filename,

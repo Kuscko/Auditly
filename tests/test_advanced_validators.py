@@ -145,9 +145,9 @@ class TestCustomValidatorRegistry:
         def sample_validator(evidence: dict, system_state=None):
             return ValidationResult(
                 control_id="AC-2",
-                status=ValidationStatus.PASS
-                if "required_field" in evidence
-                else ValidationStatus.FAIL,
+                status=(
+                    ValidationStatus.PASS if "required_field" in evidence else ValidationStatus.FAIL
+                ),
                 message="Custom validation result",
                 evidence_keys=[],
                 metadata={},

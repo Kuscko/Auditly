@@ -92,40 +92,57 @@ class StorageCollector:
                     "location": bucket.location,
                     "location_type": bucket.location_type,
                     "storage_class": bucket.storage_class,
-                    "time_created": bucket.time_created.isoformat()
-                    if bucket.time_created
-                    else None,
+                    "time_created": (
+                        bucket.time_created.isoformat() if bucket.time_created else None
+                    ),
                     "versioning_enabled": bucket.versioning_enabled,
                     "labels": dict(bucket.labels) if bucket.labels else {},
                     "default_event_based_hold": bucket.default_event_based_hold,
-                    "retention_policy": {
-                        "retention_period": bucket.retention_policy.retention_period
+                    "retention_policy": (
+                        {
+                            "retention_period": (
+                                bucket.retention_policy.retention_period
+                                if bucket.retention_policy
+                                else None
+                            ),
+                            "effective_time": (
+                                bucket.retention_policy.effective_time.isoformat()
+                                if bucket.retention_policy
+                                and bucket.retention_policy.effective_time
+                                else None
+                            ),
+                            "is_locked": (
+                                bucket.retention_policy.is_locked
+                                if bucket.retention_policy
+                                else None
+                            ),
+                        }
                         if bucket.retention_policy
-                        else None,
-                        "effective_time": bucket.retention_policy.effective_time.isoformat()
-                        if bucket.retention_policy and bucket.retention_policy.effective_time
-                        else None,
-                        "is_locked": bucket.retention_policy.is_locked
-                        if bucket.retention_policy
-                        else None,
-                    }
-                    if bucket.retention_policy
-                    else None,
+                        else None
+                    ),
                     "default_kms_key_name": bucket.default_kms_key_name,
-                    "iam_configuration": {
-                        "uniform_bucket_level_access_enabled": bucket.iam_configuration.uniform_bucket_level_access_enabled
+                    "iam_configuration": (
+                        {
+                            "uniform_bucket_level_access_enabled": (
+                                bucket.iam_configuration.uniform_bucket_level_access_enabled
+                                if bucket.iam_configuration
+                                else False
+                            ),
+                            "uniform_bucket_level_access_locked_time": (
+                                bucket.iam_configuration.uniform_bucket_level_access_locked_time.isoformat()
+                                if bucket.iam_configuration
+                                and bucket.iam_configuration.uniform_bucket_level_access_locked_time
+                                else None
+                            ),
+                            "public_access_prevention": (
+                                bucket.iam_configuration.public_access_prevention
+                                if bucket.iam_configuration
+                                else None
+                            ),
+                        }
                         if bucket.iam_configuration
-                        else False,
-                        "uniform_bucket_level_access_locked_time": bucket.iam_configuration.uniform_bucket_level_access_locked_time.isoformat()
-                        if bucket.iam_configuration
-                        and bucket.iam_configuration.uniform_bucket_level_access_locked_time
-                        else None,
-                        "public_access_prevention": bucket.iam_configuration.public_access_prevention
-                        if bucket.iam_configuration
-                        else None,
-                    }
-                    if bucket.iam_configuration
-                    else {},
+                        else {}
+                    ),
                 }
 
                 # Get IAM policy

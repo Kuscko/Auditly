@@ -113,9 +113,11 @@ class IAMCollector:
                             "user_id": user["UserId"],
                             "arn": user["Arn"],
                             "create_date": user["CreateDate"].isoformat(),
-                            "password_last_used": user.get("PasswordLastUsed", "").isoformat()
-                            if user.get("PasswordLastUsed")
-                            else None,
+                            "password_last_used": (
+                                user.get("PasswordLastUsed", "").isoformat()
+                                if user.get("PasswordLastUsed")
+                                else None
+                            ),
                             "mfa_enabled": len(mfa_devices) > 0,
                             "mfa_devices": mfa_devices,
                             "access_keys": access_keys,
