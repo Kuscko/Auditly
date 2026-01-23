@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from ..validators import ValidationResult, ValidationStatus
 
@@ -16,7 +16,7 @@ def _write_html(path: Path | str, html: str) -> None:
         f.write(html)
 
 
-def _get_evidence_guidance() -> Dict[str, str]:
+def _get_evidence_guidance() -> dict[str, str]:
     """Get collection guidance for each evidence type."""
     return {
         "terraform-plan": "<strong>Terraform Plan:</strong> Run <code>terraform plan -out=plan.tfplan && terraform show -json plan.tfplan</code> to export your infrastructure configuration and changes.",
@@ -33,8 +33,8 @@ def _get_evidence_guidance() -> Dict[str, str]:
 
 
 def generate_engineer_report(
-    results: Dict[str, ValidationResult],
-    evidence: Dict[str, Any],
+    results: dict[str, ValidationResult],
+    evidence: dict[str, Any],
     output_path: Path | str,
 ) -> None:
     """
@@ -382,8 +382,8 @@ def generate_engineer_report(
 
 
 def generate_auditor_report(
-    results: Dict[str, ValidationResult],
-    evidence: Dict[str, Any],
+    results: dict[str, ValidationResult],
+    evidence: dict[str, Any],
     output_path: Path | str,
 ) -> None:
     """

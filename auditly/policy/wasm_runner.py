@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     import wasmtime
@@ -20,8 +20,8 @@ class WasmPolicyResult:
     """Result of evaluating a WASM policy."""
 
     allowed: bool
-    violations: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
+    violations: list[dict[str, Any]]
+    metadata: dict[str, Any]
     raw: Any
 
 
@@ -32,7 +32,7 @@ def wasm_available() -> bool:
 
 def evaluate_wasm_policy(
     wasm_path: Path | str,
-    input_data: Dict[str, Any],
+    input_data: dict[str, Any],
     entrypoint: str = "policy/main",
 ) -> WasmPolicyResult:
     """
@@ -83,9 +83,9 @@ def evaluate_wasm_policy(
 
 def evaluate_wasm_policies_bulk(
     wasm_dir: Path | str,
-    targets: List[Path],
+    targets: list[Path],
     input_key: str = "input",
-) -> List[WasmPolicyResult]:
+) -> list[WasmPolicyResult]:
     """
     Evaluate multiple targets against WASM policies in a directory.
 

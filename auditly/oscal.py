@@ -59,7 +59,7 @@ class OscalCatalog:
 class OscalProfile:
     """Represents an OSCAL profile (baseline) that imports and tailors controls from catalogs."""
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         """Initialize an OscalProfile from a data dictionary."""
         self.data = data
         self.profile = data.get("profile", {})
@@ -90,7 +90,7 @@ class OscalProfile:
                 hrefs.append(href)
         return hrefs
 
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """Get profile metadata."""
         return self.profile.get("metadata", {})
 
@@ -136,4 +136,4 @@ def load_oscal(path: Path | str) -> OscalCatalog | OscalProfile | None:
     return None
 
 
-from typing import Any, Dict
+from typing import Any

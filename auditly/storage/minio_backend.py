@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from minio import Minio
 from minio.error import S3Error
@@ -33,16 +33,16 @@ class MinioEvidenceVault(EvidenceVault):
             self.client.make_bucket(self.bucket)
 
     def put_file(
-        self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+        self, src_path: Path | str, dest_key: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Upload a file to the Minio bucket."""
         p = Path(src_path)
         self.client.fput_object(self.bucket, dest_key, str(p), metadata=metadata or {})
         return {"bucket": self.bucket, "key": dest_key, "size": p.stat().st_size}
 
     def put_json(
-        self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+        self, dest_key: str, data: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Upload a JSON string as an object to the Minio bucket."""
         import io
 
@@ -79,7 +79,7 @@ class MinioEvidenceVault(EvidenceVault):
         p.parent.mkdir(parents=True, exist_ok=True)
         self.client.fget_object(self.bucket, key, str(p))
 
-    def get_json(self, key: str) -> Dict[str, Any]:
+    def get_json(self, key: str) -> dict[str, Any]:
         """Retrieve and decode a JSON object from the Minio bucket."""
         import json
 
@@ -89,7 +89,7 @@ class MinioEvidenceVault(EvidenceVault):
         response.release_conn()
         return json.loads(data.decode())
 
-    def get_metadata(self, key: str) -> Dict[str, Any]:
+    def get_metadata(self, key: str) -> dict[str, Any]:
         """Get metadata for an object in the Minio bucket."""
         try:
             stat = self.client.stat_object(self.bucket, key)

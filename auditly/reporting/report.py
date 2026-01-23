@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import List
 
 from ..evidence import EvidenceManifest
 
@@ -25,7 +24,7 @@ def control_coverage_placeholder(control_ids: list[str], manifests: list[Evidenc
     }
 
 
-def readiness_summary(manifests: List[EvidenceManifest]) -> dict:
+def readiness_summary(manifests: list[EvidenceManifest]) -> dict:
     """Summarize readiness based on evidence manifests."""
     total_artifacts = sum(len(m.artifacts) for m in manifests)
     envs = sorted({m.environment for m in manifests})

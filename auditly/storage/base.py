@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
 class EvidenceVault(ABC):
@@ -12,15 +12,15 @@ class EvidenceVault(ABC):
 
     @abstractmethod
     def put_file(
-        self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+        self, src_path: Path | str, dest_key: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Upload a file to the evidence vault."""
         raise NotImplementedError
 
     @abstractmethod
     def put_json(
-        self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+        self, dest_key: str, data: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Upload a JSON string as an object to the evidence vault."""
         raise NotImplementedError
 
@@ -40,11 +40,11 @@ class EvidenceVault(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_json(self, key: str) -> Dict[str, Any]:
+    def get_json(self, key: str) -> dict[str, Any]:
         """Fetch JSON evidence and return as dict."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_metadata(self, key: str) -> Dict[str, Any]:
+    def get_metadata(self, key: str) -> dict[str, Any]:
         """Get metadata for an evidence artifact."""
         raise NotImplementedError

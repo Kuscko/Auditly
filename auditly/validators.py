@@ -7,7 +7,6 @@ import json
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict
 
 from .db import get_sync_session, init_db_sync
 from .db.models import Evidence as DBEvidence
@@ -474,7 +473,7 @@ def validate_controls(
         Dict of control_id -> ValidationResult
     """
     evidence_keys = set(evidence.keys())
-    results: Dict[str, ValidationResult] = {}
+    results: dict[str, ValidationResult] = {}
 
     # Lazy import to avoid circular import with validators_advanced
     from .validators_advanced import custom_validators, dependency_graph

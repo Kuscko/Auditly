@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 
 @dataclass
@@ -28,7 +28,7 @@ def conftest_available() -> bool:
 
 def run_conftest(
     target_dir: Path | str, policy_dir: Path | str | None = None
-) -> List[ConftestResult]:
+) -> list[ConftestResult]:
     """Run conftest policy validation and return results."""
     if not conftest_available():
         raise RuntimeError("conftest binary not found in PATH")
@@ -48,7 +48,7 @@ def run_conftest(
     except json.JSONDecodeError:
         data = []
 
-    results: List[ConftestResult] = []
+    results: list[ConftestResult] = []
     for entry in data:
         # Each entry corresponds to a file/test target
         warnings = sum(1 for r in entry.get("results", []) if r.get("severity") == "warning")

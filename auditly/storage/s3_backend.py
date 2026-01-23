@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import boto3
 
@@ -34,16 +34,16 @@ class S3EvidenceVault(EvidenceVault):
                 pass
 
     def put_file(
-        self, src_path: Path | str, dest_key: str, metadata: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+        self, src_path: Path | str, dest_key: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Upload a file to the S3 bucket."""
         p = Path(src_path)
         self.s3.upload_file(str(p), self.bucket, dest_key, ExtraArgs={"Metadata": metadata or {}})
         return {"bucket": self.bucket, "key": dest_key, "size": p.stat().st_size}
 
     def put_json(
-        self, dest_key: str, data: str, metadata: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+        self, dest_key: str, data: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Upload a JSON string as an object to the S3 bucket."""
         b = data.encode()
         self.s3.put_object(
@@ -78,7 +78,7 @@ class S3EvidenceVault(EvidenceVault):
         p.parent.mkdir(parents=True, exist_ok=True)
         self.s3.download_file(self.bucket, key, str(p))
 
-    def get_json(self, key: str) -> Dict[str, Any]:
+    def get_json(self, key: str) -> dict[str, Any]:
         """Retrieve and decode a JSON object from the S3 bucket."""
         import json
 
@@ -86,7 +86,7 @@ class S3EvidenceVault(EvidenceVault):
         data = response["Body"].read()
         return json.loads(data.decode())
 
-    def get_metadata(self, key: str) -> Dict[str, Any]:
+    def get_metadata(self, key: str) -> dict[str, Any]:
         """Get metadata for an object in the S3 bucket."""
         try:
             response = self.s3.head_object(Bucket=self.bucket, Key=key)
