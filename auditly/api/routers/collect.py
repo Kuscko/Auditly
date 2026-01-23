@@ -96,13 +96,13 @@ def collect(request: CollectRequest):
         elif request.provider == "github":
             provider_params["github_repo"] = request.github_repo
             provider_params["github_token"] = request.github_token
-            provider_params["github_run_id"] = request.github_run_id
+            provider_params["github_run_id"] = str(request.github_run_id) if request.github_run_id is not None else None
             provider_params["github_branch"] = request.github_branch
         elif request.provider == "gitlab":
             provider_params["gitlab_base_url"] = request.gitlab_base_url
-            provider_params["gitlab_project_id"] = request.gitlab_project_id
+            provider_params["gitlab_project_id"] = str(request.gitlab_project_id) if request.gitlab_project_id is not None else None
             provider_params["gitlab_token"] = request.gitlab_token
-            provider_params["gitlab_pipeline_id"] = request.gitlab_pipeline_id
+            provider_params["gitlab_pipeline_id"] = str(request.gitlab_pipeline_id) if request.gitlab_pipeline_id is not None else None
             provider_params["gitlab_ref"] = request.gitlab_ref
         elif request.provider == "argo":
             provider_params["argo_base_url"] = request.argo_base_url
