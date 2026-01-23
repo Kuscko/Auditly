@@ -103,7 +103,7 @@ def report_readiness(
 @report_app.command("engineer", help="Generate engineer-focused validation report")
 def report_engineer(
     evidence_file: Path = typer.Option(..., exists=True, help="JSON file with evidence dict"),
-    control_ids: Optional[str] = typer.Option(
+    control_ids: str | None = typer.Option(
         None, help="Comma-separated control IDs (default: sample)"
     ),
     out: Path = typer.Option(Path("engineer-report.html"), help="Output HTML path"),
@@ -129,7 +129,7 @@ def report_engineer(
 @report_app.command("auditor", help="Generate auditor-focused validation report")
 def report_auditor(
     evidence_file: Path = typer.Option(..., exists=True, help="JSON file with evidence dict"),
-    control_ids: Optional[str] = typer.Option(
+    control_ids: str | None = typer.Option(
         None, help="Comma-separated control IDs (default: sample)"
     ),
     out: Path = typer.Option(Path("auditor-report.html"), help="Output HTML path"),

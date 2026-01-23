@@ -18,10 +18,10 @@ class GitLabPipeline:
     """Represents a GitLab pipeline with basic metadata."""
 
     id: int
-    ref: Optional[str]
+    ref: str | None
     status: str
     created_at: str
-    web_url: Optional[str]
+    web_url: str | None
 
 
 def _gitlab_headers(token: str) -> dict[str, str]:
@@ -33,7 +33,7 @@ def _gitlab_headers(token: str) -> dict[str, str]:
 
 
 def get_latest_pipeline(
-    base_url: str, project_id: str, token: str, ref: Optional[str] = None
+    base_url: str, project_id: str, token: str, ref: str | None = None
 ) -> GitLabPipeline:
     """Get the latest pipeline for a project, optionally filtered by ref."""
     url = f"{base_url}/api/v4/projects/{project_id}/pipelines"

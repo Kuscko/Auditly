@@ -11,8 +11,8 @@ from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
 def collect_terraform(
     environment: str,
     plan_path: Path | str,
-    apply_log_path: Optional[Path | str] = None,
-    extra_metadata: Optional[dict[str, Any]] = None,
+    apply_log_path: Path | str | None = None,
+    extra_metadata: dict[str, Any] | None = None,
     key_prefix: str = "terraform",
 ) -> tuple[list[ArtifactRecord], EvidenceManifest]:
     """Collect Terraform plan and apply log artifacts and return records and manifest."""

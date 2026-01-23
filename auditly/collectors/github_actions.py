@@ -18,11 +18,11 @@ class GitHubRun:
     """Represents a GitHub Actions workflow run."""
 
     id: int
-    head_branch: Optional[str]
+    head_branch: str | None
     status: str
-    conclusion: Optional[str]
+    conclusion: str | None
     created_at: str
-    name: Optional[str]
+    name: str | None
 
 
 def _gh_headers(token: str) -> dict[str, str]:
@@ -33,7 +33,7 @@ def _gh_headers(token: str) -> dict[str, str]:
     }
 
 
-def get_latest_run(repo: str, token: str, branch: Optional[str] = None) -> GitHubRun:
+def get_latest_run(repo: str, token: str, branch: str | None = None) -> GitHubRun:
     """Get the latest workflow run for a repository and optional branch."""
     url = f"https://api.github.com/repos/{repo}/actions/runs"
     params = {"per_page": 10}

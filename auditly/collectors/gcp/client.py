@@ -31,9 +31,9 @@ class GCPClient:
 
     def __init__(
         self,
-        project_id: Optional[str] = None,
-        credentials_path: Optional[str] = None,
-        organization_id: Optional[str] = None,
+        project_id: str | None = None,
+        credentials_path: str | None = None,
+        organization_id: str | None = None,
     ):
         """Initialize GCP client.
 
