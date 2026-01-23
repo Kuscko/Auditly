@@ -32,8 +32,7 @@ repos:
   rev: v1.8.0
   hooks:
   - id: mypy
-    # additional_dependencies: [types-all]  # Removed to fix CI/CD errors
-    args: [--ignore-missing-imports]
+    additional_dependencies: [types-PyYAML==6.0.12.20250915, types-requests==2.32.4.20260107]
     exclude: ^(tests/terraform/|examples/)
     # stages removed: now runs automatically on commit and CI
 
