@@ -151,9 +151,9 @@ def verify_bundle(bundle_path: Path, public_key: signing.VerifyKey) -> BundleMan
             h = sha256()
 
             # Defensive: type checker and runtime safe
-            def _read_chunk():
-                assert f is not None
-                return f.read(8192)
+            def _read_chunk(_f=f):
+                assert _f is not None
+                return _f.read(8192)
 
             for chunk in iter(_read_chunk, b""):
                 h.update(chunk)
