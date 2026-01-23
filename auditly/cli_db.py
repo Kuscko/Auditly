@@ -17,7 +17,7 @@ def db_upgrade(
     alembic_cfg: Path = typer.Option(Path("alembic.ini"), exists=True, help="Path to alembic.ini"),
 ):
     """Run database migrations (alembic upgrade head)."""
-    db_upgrade_fn(alembic_cfg)
+    db_upgrade_fn(str(alembic_cfg))
     print("[green]Database upgrade complete")
 
 
@@ -29,7 +29,11 @@ def db_migrate_from_files(
     database_url: str = typer.Option(..., help="Database URL for connection"),
 ):
     """Import existing file-based manifests and artifacts into the database."""
-    from .db.file_migration import migrate_manifests_to_db
+    from .db.file_migration import migrate_manifests
 
-    count = migrate_manifests_to_db(manifest_dir, database_url)
+    # The migrate_manifests function requires env and env_description, which are not provided here.
+    # We'll use a default env name and pass None for env_description.
+    count = migrate_manifests(
+        manifest_dir, env="default", database_url=database_url, env_description=None
+    )
     print(f"[green]Migrated {count} manifests to database")
