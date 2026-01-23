@@ -172,7 +172,7 @@ def test_access_logging(db_session, test_evidence):
     mgr = EvidenceLifecycleManager(db_session)
 
     # Log access
-    log1 = mgr.log_evidence_access(
+    mgr.log_evidence_access(
         evidence_id=test_evidence.id,
         user_id="user123",
         action="read",
@@ -180,7 +180,7 @@ def test_access_logging(db_session, test_evidence):
         attributes={"method": "api"},
     )
 
-    log2 = mgr.log_evidence_access(
+    mgr.log_evidence_access(
         evidence_id=test_evidence.id,
         user_id="validator",
         action="validate",

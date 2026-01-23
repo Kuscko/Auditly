@@ -116,11 +116,7 @@ def collect_argo(
             except Exception:
                 pass
 
-        manifest = EvidenceManifest.create(
-            environment=environment,
-            artifacts=records,
-            notes=f"argo workflow {wf.name}",
-        )
+        # Removed unused assignment to 'manifest' (F841)
 
 
 def list_workflows(

@@ -6,6 +6,7 @@ Collects evidence about:
 - Log-based metrics
 - Retention policies
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -13,7 +14,6 @@ import json
 import logging
 from datetime import datetime
 from typing import Any
-
 
 logger = logging.getLogger(__name__)
 

@@ -27,7 +27,7 @@ def get_evidence_for_families(families: Set[str], test_data: Dict) -> Dict[str, 
     """Get evidence relevant to specific control families."""
     evidence = {}
 
-    for category, artifacts_dict in test_data["evidence_artifacts"].items():
+    for _category, artifacts_dict in test_data["evidence_artifacts"].items():
         for evidence_type, evidence_info in artifacts_dict.items():
             satisfies_families = set(evidence_info.get("satisfies_families", []))
             # Add evidence if it satisfies any of the requested families
@@ -152,7 +152,7 @@ def test_evidence_validation():
         if family not in sample_families:
             # Get evidence for this family
             family_evidence = get_evidence_for_families({family}, test_data)
-            req = get_control_requirement(cid)
+            # Removed unused assignment to 'req' (F841)
             status = results[cid].status.value
             print(f"  {cid.upper()} ({family}): {len(family_evidence)} evidence types → {status}")
             sample_families[family] = family_evidence

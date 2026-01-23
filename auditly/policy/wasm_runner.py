@@ -64,7 +64,7 @@ def evaluate_wasm_policy(
     # For simplicity, we'll create a minimal wrapper. Production needs full ABI.
 
     # Instantiate module
-    instance = linker.instantiate(store, module)
+    linker.instantiate(store, module)
 
     # Simplified: call policy entrypoint if exported
     # OPA WASM ABI is complex; this is a placeholder structure
