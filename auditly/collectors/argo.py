@@ -117,6 +117,7 @@ def collect_argo(
                 pass
 
         # Removed unused assignment to 'manifest' (F841)
+        return records, EvidenceManifest(), wf
 
 
 def list_workflows(

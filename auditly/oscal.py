@@ -133,3 +133,4 @@ def load_oscal(path: Path | str) -> OscalCatalog | OscalProfile | None:
         return OscalCatalog(data)
     elif "profile" in data:
         return OscalProfile(data)
+    return None
