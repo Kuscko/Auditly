@@ -126,7 +126,7 @@ def collect_terraform_cmd(
     envcfg = cfg.environments[env]
     vault = vault_from_envcfg(envcfg)
 
-    md = {}
+    md: dict[str, Any] = {}
     artifacts, manifest = collect_terraform(
         environment=env, plan_path=plan, apply_log_path=apply, extra_metadata=md
     )

@@ -67,7 +67,7 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
 
     # Load all catalogs and profiles
     print("Loading OSCAL catalogs and profiles...")
-    all_controls = {}  # control_id -> catalog_name
+    all_controls: Dict[str, list[str]] = {}  # control_id -> catalog_name
     catalog_stats = {}
 
     for catalog_name, catalog_path in config.catalogs.get_all_catalogs().items():

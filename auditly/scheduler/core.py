@@ -70,7 +70,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
 
         for sys in systems:
             evidence_rows = await repo.list_evidence_for_system(sys)
-            evidence_dict = {}
+            evidence_dict: dict[str, list[dict]] = {}
 
             for ev in evidence_rows:
                 payload = {

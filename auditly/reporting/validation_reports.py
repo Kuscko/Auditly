@@ -67,7 +67,7 @@ def generate_engineer_report(
         options = metadata.get("options", [])
 
         # Build list of required evidence with guidance
-        needed_evidence = []
+        needed_evidence: list[str] = []
         if required_all:
             needed_evidence.extend(required_all)
         if options:
