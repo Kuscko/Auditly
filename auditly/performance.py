@@ -196,7 +196,6 @@ class IncrementalValidator:
 
     def snapshot_evidence(self, evidence: dict[str, object]):
         """Store evidence snapshot for comparison next time."""
-
         # Use JSON serialization to handle complex types
         self.evidence_snapshots["last"] = json.loads(json.dumps(evidence, default=str))
 

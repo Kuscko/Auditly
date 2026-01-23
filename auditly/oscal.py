@@ -1,10 +1,10 @@
+"""OSCAL catalog and profile utilities for auditly."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
-
-"""OSCAL catalog and profile utilities for auditly."""
 
 
 class OscalCatalog:
