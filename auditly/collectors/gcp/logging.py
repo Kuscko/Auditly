@@ -17,12 +17,35 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-try:
-    from google.cloud import logging_v2
 
+# Predeclare for type checkers
+import types
+from typing import Optional
+
+logging_v2: Optional[types.ModuleType] = None
+ConfigServiceV2Client: Optional[type] = None
+MetricsServiceV2Client: Optional[type] = None
+LoggingServiceV2Client: Optional[type] = None
+GCP_AVAILABLE = False
+try:
+    import google.cloud.logging_v2 as _logging_v2
+    from google.cloud.logging_v2.services.config_service_v2 import (
+        ConfigServiceV2Client as _ConfigServiceV2Client,
+    )
+    from google.cloud.logging_v2.services.logging_service_v2 import (
+        LoggingServiceV2Client as _LoggingServiceV2Client,
+    )
+    from google.cloud.logging_v2.services.metrics_service_v2 import (
+        MetricsServiceV2Client as _MetricsServiceV2Client,
+    )
+
+    logging_v2 = _logging_v2
+    ConfigServiceV2Client = _ConfigServiceV2Client
+    MetricsServiceV2Client = _MetricsServiceV2Client
+    LoggingServiceV2Client = _LoggingServiceV2Client
     GCP_AVAILABLE = True
 except ImportError:
-    GCP_AVAILABLE = False
+    pass
 
 
 class LoggingCollector:
@@ -46,12 +69,22 @@ class LoggingCollector:
         self.client = client
         self.project_id = client.project_id
 
-        if not GCP_AVAILABLE:
+        if (
+            not GCP_AVAILABLE
+            or not logging_v2
+            or not ConfigServiceV2Client
+            or not MetricsServiceV2Client
+            or not LoggingServiceV2Client
+        ):
             raise ImportError("google-cloud-logging required for Logging collector")
 
-        self.logging_client = logging_v2.LoggingServiceV2Client(credentials=client.credentials)
-        self.sinks_client = logging_v2.ConfigServiceV2Client(credentials=client.credentials)
-        self.metrics_client = logging_v2.MetricsServiceV2Client(credentials=client.credentials)
+        # Use the high-level client for logs, ConfigServiceV2Client for sinks, MetricsServiceV2Client for metrics
+        self.logging_client = logging_v2.Client(
+            project=self.project_id, credentials=client.credentials
+        )
+        self.sinks_client = ConfigServiceV2Client(credentials=client.credentials)
+        self.metrics_client = MetricsServiceV2Client(credentials=client.credentials)
+        self.logging_service_client = LoggingServiceV2Client(credentials=client.credentials)
 
     def collect_all(self) -> dict[str, Any]:
         """Collect all Cloud Logging evidence.
@@ -77,92 +110,48 @@ class LoggingCollector:
         return evidence
 
     def collect_sinks(self) -> list[dict[str, Any]]:
-        """Collect log sinks (exports).
-
-        Returns:
-            List of log sink dictionaries
-        """
+        """Collect log sinks (exports)."""
         sinks = []
-
         try:
             parent = f"projects/{self.project_id}"
-            request = logging_v2.ListSinksRequest(parent=parent)
-
-            for sink in self.sinks_client.list_sinks(request=request):
+            for sink in self.sinks_client.list_sinks(parent=parent):
                 sink_dict = {
                     "name": sink.name,
                     "destination": sink.destination,
-                    "filter": sink.filter,
-                    "description": sink.description,
-                    "disabled": sink.disabled,
-                    "output_version_format": (
-                        sink.output_version_format.name if sink.output_version_format else None
-                    ),
-                    "writer_identity": sink.writer_identity,
-                    "include_children": sink.include_children,
+                    "filter": getattr(sink, "filter", None),
+                    "description": getattr(sink, "description", None),
+                    "disabled": getattr(sink, "disabled", None),
+                    "output_version_format": getattr(sink, "output_version_format", None),
+                    "writer_identity": getattr(sink, "writer_identity", None),
+                    "include_children": getattr(sink, "include_children", None),
                 }
                 sinks.append(sink_dict)
-
             logger.info("Collected %d log sinks", len(sinks))
         except Exception as e:
             logger.error("Error collecting log sinks: %s", e)
-
         return sinks
 
     def collect_metrics(self) -> list[dict[str, Any]]:
-        """Collect log-based metrics.
-
-        Returns:
-            List of log-based metric dictionaries
-        """
+        """Collect log-based metrics."""
         metrics = []
-
         try:
             parent = f"projects/{self.project_id}"
-            request = logging_v2.ListLogMetricsRequest(parent=parent)
-
-            for metric in self.metrics_client.list_log_metrics(request=request):
+            for metric in self.metrics_client.list_log_metrics(parent=parent):
                 metric_dict = {
                     "name": metric.name,
-                    "description": metric.description,
-                    "filter": metric.filter,
-                    "metric_descriptor": (
-                        {
-                            "metric_kind": (
-                                metric.metric_descriptor.metric_kind.name
-                                if metric.metric_descriptor and metric.metric_descriptor.metric_kind
-                                else None
-                            ),
-                            "value_type": (
-                                metric.metric_descriptor.value_type.name
-                                if metric.metric_descriptor and metric.metric_descriptor.value_type
-                                else None
-                            ),
-                            "unit": (
-                                metric.metric_descriptor.unit if metric.metric_descriptor else None
-                            ),
-                        }
-                        if metric.metric_descriptor
-                        else {}
-                    ),
-                    "label_extractors": (
-                        dict(metric.label_extractors) if metric.label_extractors else {}
-                    ),
+                    "description": getattr(metric, "description", None),
+                    "filter": getattr(metric, "filter", None),
+                    "metric_descriptor": str(getattr(metric, "metric_descriptor", None)),
+                    "label_extractors": dict(getattr(metric, "label_extractors", {})),
                 }
                 metrics.append(metric_dict)
-
             logger.info("Collected %d log-based metrics", len(metrics))
         except Exception as e:
             logger.error("Error collecting log-based metrics: %s", e)
-
         return metrics
 
     def collect_logs_summary(self) -> dict[str, Any]:
-        """Collect summary information about available logs.
-
-        Returns:
-            Dictionary with log summary information
-        """
+        """Collect summary information about available logs."""
         summary = {
             "admin_activity_logs": False,
             "data_access_logs": False,
@@ -170,17 +159,12 @@ class LoggingCollector:
             "policy_denied_logs": False,
             "log_types": [],
         }
-
         try:
             parent = f"projects/{self.project_id}"
-
-            # List logs to see what's available
-            request = logging_v2.ListLogsRequest(parent=parent)
-
             log_names = []
-            for log_name in self.logging_client.list_logs(request=request):
+            request = {"parent": parent}
+            for log_name in self.logging_service_client.list_logs(request=request):
                 log_names.append(log_name)
-
                 # Check for audit log types
                 if "cloudaudit.googleapis.com/activity" in log_name:
                     summary["admin_activity_logs"] = True
@@ -190,12 +174,9 @@ class LoggingCollector:
                     summary["system_event_logs"] = True
                 elif "cloudaudit.googleapis.com/policy" in log_name:
                     summary["policy_denied_logs"] = True
-
             summary["log_types"] = log_names[:50]  # Limit to first 50
             summary["total_log_types"] = len(log_names)
-
             logger.info("Collected logs summary: %d log types", len(log_names))
         except Exception as e:
             logger.error("Error collecting logs summary: %s", e)
-
         return summary
