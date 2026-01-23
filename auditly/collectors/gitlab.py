@@ -37,8 +37,11 @@ def get_latest_pipeline(
 ) -> GitLabPipeline:
     """Get the latest pipeline for a project, optionally filtered by ref."""
     url = f"{base_url}/api/v4/projects/{project_id}/pipelines"
-    params = {"per_page": 10, "order_by": "id", "sort": "desc"}
+    from collections.abc import Mapping
+
+    params: Mapping[str, str] = {"per_page": "10", "order_by": "id", "sort": "desc"}
     if ref:
+        params = dict(params)
         params["ref"] = ref
     r = requests.get(url, headers=_gitlab_headers(token), params=params, timeout=30)
     r.raise_for_status()

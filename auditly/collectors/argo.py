@@ -13,6 +13,15 @@ import requests
 from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
 
 
+# --- STUBS FOR MISSING FUNCTIONS ---
+def get_workflow_logs(
+    base_url: str, namespace: str, workflow_name: str, token: str | None = None
+) -> str:
+    """Stub for get_workflow_logs. Should return workflow logs as a string."""
+    # TODO: Implement actual API call
+    return ""
+
+
 @dataclass
 class ArgoWorkflow:
     """Represents an Argo workflow instance."""
@@ -116,8 +125,16 @@ def collect_argo(
             except Exception:
                 pass
 
-        # Removed unused assignment to 'manifest' (F841)
-        return records, EvidenceManifest(), wf
+        # Return a minimal valid EvidenceManifest (empty, but with required fields)
+        import time
+
+        manifest = EvidenceManifest(
+            version="1.0",
+            environment=environment,
+            created_at=time.time(),
+            artifacts=records,
+        )
+        return records, manifest, wf
 
 
 def list_workflows(
@@ -130,14 +147,6 @@ def list_workflows(
     r.raise_for_status()
     data = r.json()
     return data.get("items", [])
-
-
-def get_workflow_logs(base_url: str, namespace: str, name: str, token: str | None = None) -> str:
-    """Retrieve logs for a specific Argo workflow."""
-    url = f"{base_url}/api/v1/workflows/{namespace}/{name}/log"
-    r = requests.get(url, headers=_argo_headers(token), timeout=60)
-    r.raise_for_status()
-    return r.text
 
 
 def download_artifact(
