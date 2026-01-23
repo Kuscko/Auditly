@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 try:
     from google.cloud import iam_admin_v1
-    from google.iam.v1 import iam_policy_pb2
 
     GCP_AVAILABLE = True
 except ImportError:

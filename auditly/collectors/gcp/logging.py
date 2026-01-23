@@ -12,13 +12,11 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import types
 from datetime import datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
-# Predeclare for type checkers
-import types
 
 logging_v2: types.ModuleType | None = None
 ConfigServiceV2Client: type | None = None
