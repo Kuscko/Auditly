@@ -65,7 +65,7 @@ def validate(request: ValidateRequest):
 
     except ValueError as e:
         logger.error(f"Validation error in validate: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.exception(f"Validation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

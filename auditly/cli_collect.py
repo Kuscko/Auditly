@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -737,11 +738,3 @@ def collect_gcp_cmd(
 
     # Persist to database if configured
     persist_if_db(envcfg, env, manifest, artifacts)
-
-    typer.echo(f"\n✓ Collected {len(artifacts)} artifact(s) from GCP")
-    typer.echo(f"✓ Manifest: {manifest_key}")
-    if output_dir:
-        typer.echo(f"✓ Evidence files: {output_dir}")
-
-
-from typing import Any

@@ -5,14 +5,14 @@ import asyncio
 import sys
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 from auditly.db import get_async_session, init_db_async
 from auditly.db.models import System, ValidationStatus
 from auditly.db.repository import Repository
 from auditly.validators import validate_controls
+
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 
 async def main():

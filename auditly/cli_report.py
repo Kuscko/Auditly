@@ -52,7 +52,7 @@ def report_readiness(
     try:
         cfg = AppConfig.load(config)
         control_ids = []
-        for name, cat_path in cfg.catalogs.get_all_catalogs().items():
+        for _, cat_path in cfg.catalogs.get_all_catalogs().items():
             oscal_obj = load_oscal(cat_path)
             if isinstance(oscal_obj, OscalCatalog):
                 control_ids.extend(oscal_obj.control_ids())

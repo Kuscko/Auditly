@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import fnmatch
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
@@ -66,7 +68,6 @@ class ValidationResultCache:
             self.cache.clear()
         else:
             # Simple wildcard matching
-            import fnmatch
 
             keys_to_delete = [k for k in self.cache.keys() if fnmatch.fnmatch(k, pattern)]
             for k in keys_to_delete:
@@ -195,7 +196,6 @@ class IncrementalValidator:
 
     def snapshot_evidence(self, evidence: dict[str, object]):
         """Store evidence snapshot for comparison next time."""
-        import json
 
         # Use JSON serialization to handle complex types
         self.evidence_snapshots["last"] = json.loads(json.dumps(evidence, default=str))

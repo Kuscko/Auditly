@@ -1,9 +1,10 @@
-"""OSCAL catalog and profile utilities for auditly."""
-
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
+
+"""OSCAL catalog and profile utilities for auditly."""
 
 
 class OscalCatalog:
@@ -132,8 +133,3 @@ def load_oscal(path: Path | str) -> OscalCatalog | OscalProfile | None:
         return OscalCatalog(data)
     elif "profile" in data:
         return OscalProfile(data)
-
-    return None
-
-
-from typing import Any

@@ -17,7 +17,7 @@ def _run_az_command(cmd: list[str]) -> str:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Azure CLI command failed: {e.stderr}")
+        raise RuntimeError(f"Azure CLI command failed: {e.stderr}") from e
 
 
 def _create_json_file(data: Any, path: Path) -> Path:

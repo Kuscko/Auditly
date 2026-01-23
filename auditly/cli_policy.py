@@ -155,7 +155,7 @@ def policy_wasm(
         else:
             input_data = {"path": str(target), "content": target.read_text()}
     except Exception as e:
-        raise typer.BadParameter(f"Failed to read target: {e}")
+        raise typer.BadParameter(f"Failed to read target: {e}") from e
 
     result = evaluate_wasm_policy(wasm_file, input_data)
     print(
