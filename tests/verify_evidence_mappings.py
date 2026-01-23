@@ -22,7 +22,7 @@ def get_evidence_types_for_family(family: str, test_data: Dict) -> Set[str]:
     """Get all evidence types that satisfy a given family."""
     evidence_types = set()
 
-    for category, artifacts_dict in test_data["evidence_artifacts"].items():
+    for _category, artifacts_dict in test_data["evidence_artifacts"].items():
         for evidence_type, evidence_info in artifacts_dict.items():
             satisfies_families = set(evidence_info.get("satisfies_families", []))
             if family in satisfies_families:
@@ -143,7 +143,7 @@ def show_evidence_summary():
     family_counts = {}
     all_evidence = {}
 
-    for category, artifacts_dict in test_data["evidence_artifacts"].items():
+    for _category, artifacts_dict in test_data["evidence_artifacts"].items():
         for evidence_type, evidence_info in artifacts_dict.items():
             all_evidence[evidence_type] = evidence_info
             for family in evidence_info.get("satisfies_families", []):

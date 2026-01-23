@@ -37,7 +37,7 @@ def create_evidence_for_control(control_id: str, test_data: Dict[str, Any]) -> D
     family = control_id.split("-")[0].upper()
 
     # Map evidence types to this control based on family membership
-    for category, artifacts_dict in test_data["evidence_artifacts"].items():
+    for _category, artifacts_dict in test_data["evidence_artifacts"].items():
         for evidence_type, evidence_info in artifacts_dict.items():
             satisfies_families = evidence_info.get("satisfies_families", [])
             # Add evidence if it satisfies this control's family
