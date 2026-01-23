@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List
 
 
 @dataclass
@@ -292,7 +291,7 @@ class Metrics:
         self.parallel_collections: int = 0
         self.incremental_validations: int = 0
         self.avg_validation_time: float = 0.0
-        self.collection_times: Dict[str, List[float]] = {}
+        self.collection_times: dict[str, list[float]] = {}
         self.cache_hit_rate: float = 0.0
 
 
@@ -302,7 +301,7 @@ class PerformanceMetrics:
     def __init__(self):
         """Initialize PerformanceMetrics with default metrics and timings."""
         self.metrics = Metrics()
-        self.timings: List[float] = []
+        self.timings: list[float] = []
 
     def record_validation(self, duration: float, cached: bool = False):
         """Record a validation run."""
