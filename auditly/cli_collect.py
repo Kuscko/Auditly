@@ -97,7 +97,7 @@ def collect_batch_cmd(
     try:
         payload: list[dict[str, Any]] = json.loads(requests_file.read_text())
     except Exception as e:
-        raise typer.BadParameter(f"Unable to read requests file: {e}")
+        raise typer.BadParameter(f"Unable to read requests file: {e}") from e
 
     if not isinstance(payload, list) or not payload:
         raise typer.BadParameter("requests file must be a non-empty JSON list")
@@ -377,7 +377,7 @@ def collect_aws_cmd(
         typer.echo(f"Connected to AWS account: {account_id} (region: {region})")
     except Exception as e:
         typer.echo(f"Error connecting to AWS: {e}", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     # Collect evidence
     artifacts: list[ArtifactRecord] = []
@@ -395,7 +395,11 @@ def collect_aws_cmd(
                 else:
                     raise RuntimeError("IAMCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"users={len(evidence.get('users', []))}, roles={len(evidence.get('roles', []))}, policies={len(evidence.get('policies', []))}"
+                summary = (
+                    f"users={len(evidence.get('users', []))}, "
+                    f"roles={len(evidence.get('roles', []))}, "
+                    f"policies={len(evidence.get('policies', []))}"
+                )
 
             elif service == "ec2":
                 if EC2Collector is not None:
@@ -403,7 +407,11 @@ def collect_aws_cmd(
                 else:
                     raise RuntimeError("EC2Collector is not available")
                 evidence = collector.collect_all()
-                summary = f"instances={len(evidence.get('instances', []))}, sg={len(evidence.get('security_groups', []))}, volumes={len(evidence.get('volumes', []))}"
+                summary = (
+                    f"instances={len(evidence.get('instances', []))}, "
+                    f"sg={len(evidence.get('security_groups', []))}, "
+                    f"volumes={len(evidence.get('volumes', []))}"
+                )
 
             elif service == "s3":
                 if S3Collector is not None:
@@ -411,7 +419,10 @@ def collect_aws_cmd(
                 else:
                     raise RuntimeError("S3Collector is not available")
                 evidence = collector.collect_all()
-                summary = f"buckets={len(evidence.get('buckets', []))}, policies={len(evidence.get('policies', []))}"
+                summary = (
+                    f"buckets={len(evidence.get('buckets', []))}, "
+                    f"policies={len(evidence.get('policies', []))}"
+                )
 
             elif service == "cloudtrail":
                 if CloudTrailCollector is not None:
@@ -419,7 +430,10 @@ def collect_aws_cmd(
                 else:
                     raise RuntimeError("CloudTrailCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"trails={len(evidence.get('trails', []))}, events={len(evidence.get('events', []))}"
+                summary = (
+                    f"trails={len(evidence.get('trails', []))}, "
+                    f"events={len(evidence.get('events', []))}"
+                )
 
             elif service == "vpc":
                 if VPCCollector is not None:
@@ -427,7 +441,10 @@ def collect_aws_cmd(
                 else:
                     raise RuntimeError("VPCCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"flow_logs={len(evidence.get('flow_logs', []))}, nacls={len(evidence.get('nacls', []))}"
+                summary = (
+                    f"flow_logs={len(evidence.get('flow_logs', []))}, "
+                    f"nacls={len(evidence.get('nacls', []))}"
+                )
 
             elif service == "rds":
                 if RDSCollector is not None:
@@ -435,7 +452,10 @@ def collect_aws_cmd(
                 else:
                     raise RuntimeError("RDSCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"instances={len(evidence.get('instances', []))}, clusters={len(evidence.get('clusters', []))}"
+                summary = (
+                    f"instances={len(evidence.get('instances', []))}, "
+                    f"clusters={len(evidence.get('clusters', []))}"
+                )
 
             elif service == "kms":
                 if KMSCollector is not None:
@@ -443,7 +463,10 @@ def collect_aws_cmd(
                 else:
                     raise RuntimeError("KMSCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"keys={len(evidence.get('keys', []))}, policies={len(evidence.get('policies', []))}"
+                summary = (
+                    f"keys={len(evidence.get('keys', []))}, "
+                    f"policies={len(evidence.get('policies', []))}"
+                )
 
             if evidence is not None:
                 # Save evidence to temp file or output dir
@@ -573,7 +596,7 @@ def collect_gcp_cmd(
         typer.echo(f"Connected to GCP project: {project_id}")
     except Exception as e:
         typer.echo(f"Error connecting to GCP: {e}", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     # Collect evidence
     artifacts: list[ArtifactRecord] = []
@@ -592,7 +615,10 @@ def collect_gcp_cmd(
                 else:
                     raise RuntimeError("GCPIAMCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"service_accounts={len(evidence.get('service_accounts', []))}, roles={len(evidence.get('custom_roles', []))}"
+                summary = (
+                    f"service_accounts={len(evidence.get('service_accounts', []))}, "
+                    f"roles={len(evidence.get('custom_roles', []))}"
+                )
 
             elif service == "compute":
                 if ComputeCollector is not None:
@@ -600,7 +626,11 @@ def collect_gcp_cmd(
                 else:
                     raise RuntimeError("ComputeCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"instances={len(evidence.get('instances', []))}, disks={len(evidence.get('disks', []))}, firewalls={len(evidence.get('firewalls', []))}"
+                summary = (
+                    f"instances={len(evidence.get('instances', []))}, "
+                    f"disks={len(evidence.get('disks', []))}, "
+                    f"firewalls={len(evidence.get('firewalls', []))}"
+                )
 
             elif service == "storage":
                 if StorageCollector is not None:
@@ -624,7 +654,10 @@ def collect_gcp_cmd(
                 else:
                     raise RuntimeError("GCPVPCCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"networks={len(evidence.get('networks', []))}, subnets={len(evidence.get('subnetworks', []))}"
+                summary = (
+                    f"networks={len(evidence.get('networks', []))}, "
+                    f"subnets={len(evidence.get('subnetworks', []))}"
+                )
 
             elif service == "kms":
                 if GCPKMSCollector is not None:
@@ -632,7 +665,10 @@ def collect_gcp_cmd(
                 else:
                     raise RuntimeError("GCPKMSCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"key_rings={len(evidence.get('key_rings', []))}, keys={len(evidence.get('crypto_keys', []))}"
+                summary = (
+                    f"key_rings={len(evidence.get('key_rings', []))}, "
+                    f"keys={len(evidence.get('crypto_keys', []))}"
+                )
 
             elif service == "logging":
                 if LoggingCollector is not None:
@@ -640,7 +676,10 @@ def collect_gcp_cmd(
                 else:
                     raise RuntimeError("LoggingCollector is not available")
                 evidence = collector.collect_all()
-                summary = f"sinks={len(evidence.get('sinks', []))}, metrics={len(evidence.get('metrics', []))}"
+                summary = (
+                    f"sinks={len(evidence.get('sinks', []))}, "
+                    f"metrics={len(evidence.get('metrics', []))}"
+                )
 
             if evidence is not None:
                 # Save evidence to temp file or output dir

@@ -8,8 +8,8 @@ import tarfile
 import time
 from dataclasses import asdict, dataclass
 from hashlib import sha256
-from pathlib import Path
 from io import BytesIO
+from pathlib import Path
 
 from nacl import signing
 from nacl.encoding import RawEncoder
@@ -149,14 +149,14 @@ def verify_bundle(bundle_path: Path, public_key: signing.VerifyKey) -> BundleMan
             if f is None:
                 raise ValueError(f"missing file in bundle: {it.key}")
             h = sha256()
+
             # Defensive: type checker and runtime safe
             def _read_chunk():
                 assert f is not None
                 return f.read(8192)
+
             for chunk in iter(_read_chunk, b""):
                 h.update(chunk)
             if h.hexdigest() != it.sha256:
                 raise ValueError(f"hash mismatch for {it.key}")
         return manifest
-
-

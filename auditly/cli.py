@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich import print
@@ -229,9 +228,7 @@ def list_validators(
 @app.command()
 def check_validator_coverage(
     config: Path = typer.Option("config.yaml", exists=True, help="Path to config.yaml"),
-    profile: str | None = typer.Option(
-        None, help="Specific profile to check (e.g., fedramp_high)"
-    ),
+    profile: str | None = typer.Option(None, help="Specific profile to check (e.g., fedramp_high)"),
 ):
     """Check validator coverage across all controls in configured catalogs."""
     from .oscal import OscalCatalog, OscalProfile, load_oscal
