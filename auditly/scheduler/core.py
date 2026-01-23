@@ -82,7 +82,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
                 }
                 evidence_dict.setdefault(ev.evidence_type, []).append(payload)
 
-            results = validate_controls(control_ids, evidence_dict, system_state=None)
+            results = validate_controls(control_ids, dict(evidence_dict), system_state=None)
 
             for cid, res in results.items():
                 control = control_map.get(cid.upper())
