@@ -392,10 +392,10 @@ def collect_aws_cmd(
         try:
             if service == "iam":
                 if IAMCollector is not None:
-                    collector = IAMCollector(client)
+                    iam_collector = IAMCollector(client)
                 else:
                     raise RuntimeError("IAMCollector is not available")
-                evidence = collector.collect_all()
+                evidence = iam_collector.collect_all()
                 summary = (
                     f"users={len(evidence.get('users', []))}, "
                     f"roles={len(evidence.get('roles', []))}, "
@@ -404,10 +404,10 @@ def collect_aws_cmd(
 
             elif service == "ec2":
                 if EC2Collector is not None:
-                    collector = EC2Collector(client)
+                    ec2_collector = EC2Collector(client)
                 else:
                     raise RuntimeError("EC2Collector is not available")
-                evidence = collector.collect_all()
+                evidence = ec2_collector.collect_all()
                 summary = (
                     f"instances={len(evidence.get('instances', []))}, "
                     f"sg={len(evidence.get('security_groups', []))}, "
@@ -416,10 +416,10 @@ def collect_aws_cmd(
 
             elif service == "s3":
                 if S3Collector is not None:
-                    collector = S3Collector(client)
+                    s3_collector = S3Collector(client)
                 else:
                     raise RuntimeError("S3Collector is not available")
-                evidence = collector.collect_all()
+                evidence = s3_collector.collect_all()
                 summary = (
                     f"buckets={len(evidence.get('buckets', []))}, "
                     f"policies={len(evidence.get('policies', []))}"
@@ -427,10 +427,10 @@ def collect_aws_cmd(
 
             elif service == "cloudtrail":
                 if CloudTrailCollector is not None:
-                    collector = CloudTrailCollector(client)
+                    cloudtrail_collector = CloudTrailCollector(client)
                 else:
                     raise RuntimeError("CloudTrailCollector is not available")
-                evidence = collector.collect_all()
+                evidence = cloudtrail_collector.collect_all()
                 summary = (
                     f"trails={len(evidence.get('trails', []))}, "
                     f"events={len(evidence.get('events', []))}"
@@ -438,10 +438,10 @@ def collect_aws_cmd(
 
             elif service == "vpc":
                 if VPCCollector is not None:
-                    collector = VPCCollector(client)
+                    vpc_collector = VPCCollector(client)
                 else:
                     raise RuntimeError("VPCCollector is not available")
-                evidence = collector.collect_all()
+                evidence = vpc_collector.collect_all()
                 summary = (
                     f"flow_logs={len(evidence.get('flow_logs', []))}, "
                     f"nacls={len(evidence.get('nacls', []))}"
@@ -449,10 +449,10 @@ def collect_aws_cmd(
 
             elif service == "rds":
                 if RDSCollector is not None:
-                    collector = RDSCollector(client)
+                    rds_collector = RDSCollector(client)
                 else:
                     raise RuntimeError("RDSCollector is not available")
-                evidence = collector.collect_all()
+                evidence = rds_collector.collect_all()
                 summary = (
                     f"instances={len(evidence.get('instances', []))}, "
                     f"clusters={len(evidence.get('clusters', []))}"
@@ -460,10 +460,10 @@ def collect_aws_cmd(
 
             elif service == "kms":
                 if KMSCollector is not None:
-                    collector = KMSCollector(client)
+                    kms_collector = KMSCollector(client)
                 else:
                     raise RuntimeError("KMSCollector is not available")
-                evidence = collector.collect_all()
+                evidence = kms_collector.collect_all()
                 summary = (
                     f"keys={len(evidence.get('keys', []))}, "
                     f"policies={len(evidence.get('policies', []))}"
@@ -609,13 +609,13 @@ def collect_gcp_cmd(
         evidence = None
         summary = None
         try:
-            collector = None  # type: ignore[assignment]
+            # Use separate variables for each collector type to avoid type conflicts
             if service == "iam":
                 if GCPIAMCollector is not None:
-                    collector = GCPIAMCollector(client)
+                    gcp_iam_collector = GCPIAMCollector(client)
                 else:
                     raise RuntimeError("GCPIAMCollector is not available")
-                evidence = collector.collect_all()
+                evidence = gcp_iam_collector.collect_all()
                 summary = (
                     f"service_accounts={len(evidence.get('service_accounts', []))}, "
                     f"roles={len(evidence.get('custom_roles', []))}"
@@ -623,10 +623,10 @@ def collect_gcp_cmd(
 
             elif service == "compute":
                 if ComputeCollector is not None:
-                    collector = ComputeCollector(client)
+                    compute_collector = ComputeCollector(client)
                 else:
                     raise RuntimeError("ComputeCollector is not available")
-                evidence = collector.collect_all()
+                evidence = compute_collector.collect_all()
                 summary = (
                     f"instances={len(evidence.get('instances', []))}, "
                     f"disks={len(evidence.get('disks', []))}, "
@@ -635,26 +635,26 @@ def collect_gcp_cmd(
 
             elif service == "storage":
                 if StorageCollector is not None:
-                    collector = StorageCollector(client)
+                    storage_collector = StorageCollector(client)
                 else:
                     raise RuntimeError("StorageCollector is not available")
-                evidence = collector.collect_all()
+                evidence = storage_collector.collect_all()
                 summary = f"buckets={len(evidence.get('buckets', []))}"
 
             elif service == "sql":
                 if CloudSQLCollector is not None:
-                    collector = CloudSQLCollector(client)
+                    sql_collector = CloudSQLCollector(client)
                 else:
                     raise RuntimeError("CloudSQLCollector is not available")
-                evidence = collector.collect_all()
+                evidence = sql_collector.collect_all()
                 summary = f"instances={len(evidence.get('instances', []))}"
 
             elif service == "vpc":
                 if GCPVPCCollector is not None:
-                    collector = GCPVPCCollector(client)
+                    gcp_vpc_collector = GCPVPCCollector(client)
                 else:
                     raise RuntimeError("GCPVPCCollector is not available")
-                evidence = collector.collect_all()
+                evidence = gcp_vpc_collector.collect_all()
                 summary = (
                     f"networks={len(evidence.get('networks', []))}, "
                     f"subnets={len(evidence.get('subnetworks', []))}"
@@ -662,10 +662,10 @@ def collect_gcp_cmd(
 
             elif service == "kms":
                 if GCPKMSCollector is not None:
-                    collector = GCPKMSCollector(client)
+                    gcp_kms_collector = GCPKMSCollector(client)
                 else:
                     raise RuntimeError("GCPKMSCollector is not available")
-                evidence = collector.collect_all()
+                evidence = gcp_kms_collector.collect_all()
                 summary = (
                     f"key_rings={len(evidence.get('key_rings', []))}, "
                     f"keys={len(evidence.get('crypto_keys', []))}"
@@ -673,10 +673,10 @@ def collect_gcp_cmd(
 
             elif service == "logging":
                 if LoggingCollector is not None:
-                    collector = LoggingCollector(client)
+                    logging_collector = LoggingCollector(client)
                 else:
                     raise RuntimeError("LoggingCollector is not available")
-                evidence = collector.collect_all()
+                evidence = logging_collector.collect_all()
                 summary = (
                     f"sinks={len(evidence.get('sinks', []))}, "
                     f"metrics={len(evidence.get('metrics', []))}"
