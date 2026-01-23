@@ -344,7 +344,7 @@ def test_validator(
 
     # Run validation
     validator = ComplianceValidator(req)
-    result = validator.validate(evidence_set)
+    result = validator.validate(evidence_set, {})
 
     # Display result
     status_color = {
