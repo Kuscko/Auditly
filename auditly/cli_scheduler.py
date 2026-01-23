@@ -1,3 +1,5 @@
+"""Scheduler CLI for managing scheduled validation controls."""
+
 from __future__ import annotations
 
 import typer
@@ -44,7 +46,6 @@ def list_runs(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ):
     """Show recent scheduler job runs."""
-
     cfg = AppConfig.load(config)
     if env and env not in cfg.environments:
         print(f"[yellow]Environment '{env}' not found in config[/yellow]")

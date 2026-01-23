@@ -14,6 +14,7 @@ class CatalogRepository:
     """Repository for catalog operations."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize the CatalogRepository with a database session."""
         self.session = session
 
     async def get_catalog_by_name(self, name: str) -> Optional[Catalog]:

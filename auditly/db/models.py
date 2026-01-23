@@ -52,6 +52,7 @@ class System(Base):
     )
 
     def __repr__(self):
+        """Return string representation of System."""
         return f"<System(id={self.id}, name={self.name}, env={self.environment})>"
 
 
@@ -87,6 +88,7 @@ class Evidence(Base):
     )
 
     def __repr__(self):
+        """Return string representation of Evidence."""
         return f"<Evidence(id={self.id}, type={self.evidence_type}, system_id={self.system_id})>"
 
 
@@ -113,6 +115,7 @@ class Catalog(Base):
     controls = relationship("Control", back_populates="catalog", cascade="all, delete-orphan")
 
     def __repr__(self):
+        """Return string representation of Catalog."""
         return f"<Catalog(name={self.name}, framework={self.framework})>"
 
 
@@ -141,6 +144,7 @@ class Control(Base):
     )
 
     def __repr__(self):
+        """Return string representation of Control."""
         return f"<Control(control_id={self.control_id}, family={self.family})>"
 
 
@@ -159,6 +163,7 @@ class ControlRequirement(Base):
     control = relationship("Control", back_populates="requirements")
 
     def __repr__(self):
+        """Return string representation of ControlRequirement."""
         return f"<ControlRequirement(control_id={self.control_id})>"
 
 
@@ -182,6 +187,7 @@ class ValidationResult(Base):
     control = relationship("Control", back_populates="validation_results")
 
     def __repr__(self):
+        """Return string representation of ValidationResult."""
         return f"<ValidationResult(system={self.system_id}, control={self.control_id}, status={self.status})>"
 
 
@@ -208,6 +214,7 @@ class Finding(Base):
     control = relationship("Control")
 
     def __repr__(self):
+        """Return string representation of Finding."""
         return f"<Finding(id={self.id}, system={self.system_id}, severity={self.severity})>"
 
 
@@ -233,6 +240,7 @@ class EvidenceManifest(Base):
     )
 
     def __repr__(self):
+        """Return string representation of EvidenceManifest."""
         return f"<EvidenceManifest(id={self.id}, env={self.environment})>"
 
 
@@ -254,6 +262,7 @@ class EvidenceManifestEntry(Base):
     evidence = relationship("Evidence", back_populates="manifest_entries")
 
     def __repr__(self):
+        """Return string representation of EvidenceManifestEntry."""
         return f"<EvidenceManifestEntry(manifest={self.manifest_id}, key={self.key})>"
 
 
@@ -276,6 +285,7 @@ class EvidenceVersion(Base):
     evidence = relationship("Evidence", back_populates="versions")
 
     def __repr__(self):
+        """Return string representation of EvidenceVersion."""
         return f"<EvidenceVersion(evidence_id={self.evidence_id}, version={self.version})>"
 
 
@@ -295,6 +305,7 @@ class EvidenceAccessLog(Base):
     evidence = relationship("Evidence", back_populates="access_logs")
 
     def __repr__(self):
+        """Return string representation of EvidenceAccessLog."""
         return f"<EvidenceAccessLog(evidence_id={self.evidence_id}, action={self.action})>"
 
 
@@ -316,4 +327,5 @@ class JobRun(Base):
     attributes = Column(JSON, default=dict, nullable=False)
 
     def __repr__(self):
+        """Return string representation of JobRun."""
         return f"<JobRun(id={self.id}, type={self.job_type}, env={self.environment}, status={self.status})>"

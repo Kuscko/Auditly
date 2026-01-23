@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="auditly API",
-    description="REST API for auditly compliance automation - collection, validation, and reporting",
+    description=(
+        "REST API for auditly compliance automation - collection, validation, and " "reporting"
+    ),
     version="0.2.0",
     docs_url="/docs",
     redoc_url="/redoc",

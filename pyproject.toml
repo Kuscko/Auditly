@@ -7,7 +7,10 @@ line-length = 100
 target-version = ["py313"]
 
 [tool.ruff]
+
 line-length = 100
+
+[tool.ruff.lint]
 select = [
   "E",  # pycodestyle
   "F",  # pyflakes
@@ -17,10 +20,12 @@ select = [
 ]
 ignore = [
   "E203",  # whitespace before ':' (black-compatible)
+  "B008",  # ignore Typer option placement errors
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["auditly"]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

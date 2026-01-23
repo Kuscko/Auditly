@@ -1,7 +1,8 @@
+"""Policy CLI for validation, conftest, and wasm tools."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich import print
@@ -17,21 +18,22 @@ policy_app = typer.Typer(help="Policy evaluation tools (validate, conftest, wasm
 
 @policy_app.command("validate", help="Validate controls from evidence + system state")
 def policy_validate(
-    evidence_file: Optional[Path] = typer.Option(None, help="JSON file with evidence dict"),
-    system_state_file: Optional[Path] = typer.Option(None, help="JSON file with live system state"),
-    out_json: Optional[Path] = typer.Option(None, help="Write validation results to JSON"),
-    out_engineer: Optional[Path] = typer.Option(None, help="Write engineer-focused HTML report"),
-    out_auditor: Optional[Path] = typer.Option(
+    evidence_file: Path | None = typer.Option(None, help="JSON file with evidence dict"),
+    system_state_file: Path | None = typer.Option(None, help="JSON file with live system state"),
+    out_json: Path | None = typer.Option(None, help="Write validation results to JSON"),
+    out_engineer: Path | None = typer.Option(None, help="Write engineer-focused HTML report"),
+    out_auditor: Path | None = typer.Option(
         None, help="Write auditor-focused HTML report (with evidence)"
     ),
-    control_ids: Optional[str] = typer.Option(
+    control_ids: str | None = typer.Option(
         None, help="Comma-separated control IDs (default: all families)"
     ),
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None, help="Config file (to persist validation results to DB)"
     ),
-    env: Optional[str] = typer.Option(None, help="Environment name (required for DB persistence)"),
+    env: str | None = typer.Option(None, help="Environment name (required for DB persistence)"),
 ):
+    """Validate controls from evidence and system state, and optionally persist results."""
     import json as _json
 
     from .cli_common import persist_validation_if_db
@@ -107,11 +109,12 @@ def policy_validate(
 @policy_app.command("conftest", help="Run Conftest (OPA/Rego) on a target")
 def policy_conftest(
     target: Path = typer.Option(..., exists=True, help="Path to IaC directory or file"),
-    policy_dir: Optional[Path] = typer.Option(
+    policy_dir: Path | None = typer.Option(
         None, exists=True, help="Path to Rego policy dir (optional)"
     ),
-    out_json: Optional[Path] = typer.Option(None, help="Write raw JSON results to this path"),
+    out_json: Path | None = typer.Option(None, help="Write raw JSON results to this path"),
 ):
+    """Run Conftest (OPA/Rego) on a target directory or file."""
     from .policy.conftest_runner import conftest_available, run_conftest
 
     if not conftest_available():
@@ -135,8 +138,9 @@ def policy_conftest(
 def policy_wasm(
     wasm_file: Path = typer.Option(..., exists=True, help="Path to OPA WASM policy file"),
     target: Path = typer.Option(..., exists=True, help="Path to target file (JSON/YAML/text)"),
-    out_json: Optional[Path] = typer.Option(None, help="Write raw JSON results to this path"),
+    out_json: Path | None = typer.Option(None, help="Write raw JSON results to this path"),
 ):
+    """Evaluate a compiled OPA WASM policy against a target file."""
     import json as _json
 
     from .policy.wasm_runner import evaluate_wasm_policy, wasm_available

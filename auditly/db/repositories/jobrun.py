@@ -14,12 +14,13 @@ class JobRunRepository:
     """Repository for scheduled job runs."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize JobRunRepository with a session."""
         self.session = session
 
     async def start_job_run(
         self, job_type: str, environment: str, attributes: dict | None = None
     ) -> JobRun:
-        """Start a job run."""
+        """Start a new job run and add it to the session."""
         job = JobRun(
             job_type=job_type,
             environment=environment,
@@ -38,7 +39,7 @@ class JobRunRepository:
         metrics: dict | None = None,
         attributes_update: dict | None = None,
     ) -> JobRun:
-        """Finish a job run."""
+        """Finish a job run, update its status, and flush changes."""
         job.status = status
         job.error = error
         job.metrics = metrics or job.metrics
@@ -51,7 +52,7 @@ class JobRunRepository:
     async def get_recent_job_runs(
         self, job_type: str | None = None, environment: str | None = None, limit: int = 50
     ) -> list[JobRun]:
-        """Get recent job runs."""
+        """Retrieve recent job runs filtered by type, environment, and limit."""
         stmt = select(JobRun)
         if job_type:
             stmt = stmt.where(JobRun.job_type == job_type)

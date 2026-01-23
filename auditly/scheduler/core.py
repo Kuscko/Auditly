@@ -135,7 +135,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
 
 
 def run_validation_job_sync(config_path: str, env_name: str) -> dict:
-    """Synchronous wrapper for run_validation_job.
+    """Synchronize validation job execution using run_validation_job.
 
     Args:
         config_path: Path to environment configuration file

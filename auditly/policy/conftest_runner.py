@@ -1,3 +1,5 @@
+"""Conftest runner for policy validation results."""
+
 from __future__ import annotations
 
 import json
@@ -10,6 +12,8 @@ from typing import Any, List, Optional
 
 @dataclass
 class ConftestResult:
+    """Result of a conftest policy validation run."""
+
     target: str
     failures: int
     warnings: int
@@ -18,12 +22,14 @@ class ConftestResult:
 
 
 def conftest_available() -> bool:
+    """Check if conftest binary is available in PATH."""
     return shutil.which("conftest") is not None
 
 
 def run_conftest(
     target_dir: Path | str, policy_dir: Optional[Path | str] = None
 ) -> List[ConftestResult]:
+    """Run conftest policy validation and return results."""
     if not conftest_available():
         raise RuntimeError("conftest binary not found in PATH")
 

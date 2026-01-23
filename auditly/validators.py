@@ -1,3 +1,5 @@
+"""Validation logic, result types, and compliance requirements for auditly."""
+
 from __future__ import annotations
 
 import hashlib
@@ -5,7 +7,7 @@ import json
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict
 
 from .db import get_sync_session, init_db_sync
 from .db.models import Evidence as DBEvidence
@@ -14,6 +16,8 @@ from .performance import incremental_validator, performance_metrics, validation_
 
 
 class ValidationStatus(Enum):
+    """Validation status for compliance checks."""
+
     PASS = "pass"
     FAIL = "fail"
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"
@@ -22,12 +26,14 @@ class ValidationStatus(Enum):
 
 @dataclass
 class ValidationResult:
+    """Result of a compliance validation for a control."""
+
     control_id: str
     status: ValidationStatus
     message: str
-    evidence_keys: List[str]
-    metadata: Dict[str, Any]
-    remediation: Optional[str] = None
+    evidence_keys: list[str]
+    metadata: dict[str, object]
+    remediation: str | None = None
 
 
 @dataclass
@@ -35,8 +41,8 @@ class ControlRequirement:
     """Define what evidence types satisfy a control."""
 
     control_id: str
-    required_any: List[str]  # At least one of these evidence types
-    required_all: List[str]  # All of these evidence types
+    required_any: list[str]  # At least one of these evidence types
+    required_all: list[str]  # All of these evidence types
     description: str
     remediation: str
 
@@ -46,8 +52,8 @@ class FamilyPattern:
     """Define evidence patterns for an entire control family."""
 
     family: str
-    required_any: List[str]
-    required_all: List[str]
+    required_any: list[str]
+    required_all: list[str]
     description_template: str
     remediation_template: str
 
@@ -318,7 +324,7 @@ CONTROL_REQUIREMENTS = {
 }
 
 
-def get_control_requirement(control_id: str) -> Optional[ControlRequirement]:
+def get_control_requirement(control_id: str) -> ControlRequirement | None:
     """
     Get control requirement, falling back to family pattern if no specific requirement exists.
 
@@ -350,36 +356,14 @@ def get_control_requirement(control_id: str) -> Optional[ControlRequirement]:
 
 
 class ComplianceValidator:
-    """Base class for control validators."""
-
-    def __init__(self, control_id: str, description: str):
-        self.control_id = control_id
-        self.description = description
-
-    def validate(
-        self, evidence: Dict[str, Any], system_state: Optional[Dict[str, Any]] = None
-    ) -> ValidationResult:
-        """
-        Validate that evidence and system state satisfy the control.
-
-        Args:
-            evidence: Dict of evidence artifacts keyed by control_id
-            system_state: Live system state (IAM, encryption, network, etc.)
-
-        Returns:
-            ValidationResult with pass/fail and message
-        """
-        raise NotImplementedError
-
-
-class ComplianceValidator:
     """Simple pattern-based validator using evidence requirements."""
 
     def __init__(self, requirement: ControlRequirement):
+        """Initialize a pattern-based compliance validator with a requirement."""
         self.requirement = requirement
 
     def validate(
-        self, evidence_keys: Set[str], evidence_details: Dict[str, Any]
+        self, evidence_keys: set[str], evidence_details: dict[str, object]
     ) -> ValidationResult:
         """
         Validate that evidence satisfies the control requirement.
@@ -465,17 +449,17 @@ class ComplianceValidator:
 
 
 def validate_controls(
-    control_ids: List[str],
-    evidence: Dict[str, Any],
-    system_state: Optional[Dict[str, Any]] = None,
-    database_url: Optional[str] = None,
+    control_ids: list[str],
+    evidence: dict[str, object],
+    system_state: dict[str, object] | None = None,
+    database_url: str | None = None,
     user_id: str = "validator",
     *,
-    previous_evidence: Optional[Dict[str, Any]] = None,
+    previous_evidence: dict[str, object] | None = None,
     use_cache: bool = True,
-    cache_ttl: Optional[int] = None,
+    cache_ttl: int | None = None,
     incremental: bool = True,
-) -> Dict[str, ValidationResult]:
+) -> dict[str, ValidationResult]:
     """
     Validate multiple controls against available evidence.
 

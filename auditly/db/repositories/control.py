@@ -14,6 +14,7 @@ class ControlRepository:
     """Repository for control operations."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize the ControlRepository with a database session."""
         self.session = session
 
     async def get_control_by_id(self, catalog: Catalog, control_id: str) -> Optional[Control]:

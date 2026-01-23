@@ -1,3 +1,5 @@
+"""CLI commands for compliance scanning (system, waivers)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -17,6 +19,7 @@ def scan_system(
     config_file: Path = typer.Option(..., help="System config JSON"),
     out_json: Optional[Path] = typer.Option(None, help="Write scan results to JSON"),
 ):
+    """Run IAM/encryption/backup scanners and print summary."""
     # Default scanner types
     scanner_types = ["iam", "encryption", "backup"]
     import json as _json
@@ -49,6 +52,7 @@ def scan_system(
 def scan_waivers(
     waivers_file: Path = typer.Option(Path("waivers.yaml"), help="Waivers YAML file"),
 ):
+    """Summarize waiver exceptions and expiries from waivers file."""
     registry = WaiverRegistry.from_yaml(waivers_file)
     summary = registry.summary()
 

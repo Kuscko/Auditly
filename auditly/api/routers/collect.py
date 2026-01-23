@@ -49,17 +49,10 @@ def collect_batch(request: CollectBatchRequest):
             message="Batch collection completed",
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.exception(f"Batch collection failed: {e}")
-        return CollectBatchResponse(
-            success=False,
-            results={},
-            errors={"__batch__": str(e)},
-            succeeded=0,
-            failed=len(request.requests),
-            message="Batch collection failed",
-        )
+        raise HTTPException(status_code=500, detail=f"Batch collection failed: {e}") from e
 
 
 @router.post("", response_model=CollectResponse)
@@ -140,14 +133,7 @@ def collect(request: CollectRequest):
 
     except ValueError as e:
         logger.error(f"Validation error in collect: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.exception(f"Collection failed: {e}")
-        return CollectResponse(
-            success=False,
-            artifacts_uploaded=0,
-            manifest_key="",
-            environment=request.environment,
-            provider=request.provider,
-            error=str(e),
-        )
+        raise HTTPException(status_code=500, detail=f"Collection failed: {e}") from e

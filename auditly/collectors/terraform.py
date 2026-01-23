@@ -1,7 +1,9 @@
+"""Terraform plan/apply artifact collection utilities."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
 
@@ -10,11 +12,12 @@ def collect_terraform(
     environment: str,
     plan_path: Path | str,
     apply_log_path: Optional[Path | str] = None,
-    extra_metadata: Optional[Dict[str, Any]] = None,
+    extra_metadata: Optional[dict[str, Any]] = None,
     key_prefix: str = "terraform",
-) -> (List[ArtifactRecord], EvidenceManifest):
+) -> tuple[list[ArtifactRecord], EvidenceManifest]:
+    """Collect Terraform plan and apply log artifacts and return records and manifest."""
     plan = Path(plan_path)
-    artifacts: List[ArtifactRecord] = []
+    artifacts: list[ArtifactRecord] = []
     artifacts.append(
         ArtifactRecord(
             key=f"{key_prefix}/plan/{plan.name}",

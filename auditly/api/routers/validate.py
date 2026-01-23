@@ -32,7 +32,8 @@ def validate(request: ValidateRequest):
     """
     try:
         logger.info(
-            f"Validating: environment={request.environment}, controls={len(request.control_ids or [])}"
+            f"Validating: environment={request.environment},"
+            f" controls={len(request.control_ids or [])}"
         )
 
         results_dict, summary = validate_evidence(
@@ -48,7 +49,9 @@ def validate(request: ValidateRequest):
             results_response[cid] = ValidationResultResponse(**result)
 
         logger.info(
-            f"Validation complete: {summary['passed']} passed, {summary['failed']} failed, {summary['insufficient']} insufficient"
+            f"Validation complete: {summary['passed']} passed, "
+            f"{summary['failed']} failed, "
+            f"{summary['insufficient']} insufficient"
         )
 
         return ValidateResponse(
@@ -65,11 +68,4 @@ def validate(request: ValidateRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.exception(f"Validation failed: {e}")
-        return ValidateResponse(
-            success=False,
-            environment=request.environment,
-            controls_validated=0,
-            results={},
-            summary={"passed": 0, "failed": 0, "insufficient": 0, "unknown": 0},
-            error=str(e),
-        )
+        raise HTTPException(status_code=500, detail=str(e)) from e

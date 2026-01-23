@@ -44,6 +44,7 @@ class Repository:
     """
 
     def __init__(self, session: AsyncSession):
+        """Initialize the Repository with a database session."""
         self.session = session
         self._catalog_repo = CatalogRepository(session)
         self._control_repo = ControlRepository(session)
@@ -54,6 +55,7 @@ class Repository:
 
     # Catalogs - delegate to CatalogRepository
     async def get_catalog_by_name(self, name: str) -> Optional[Catalog]:
+        """Get a catalog by its name."""
         return await self._catalog_repo.get_catalog_by_name(name)
 
     async def upsert_catalog(
@@ -66,12 +68,14 @@ class Repository:
         oscal_path: str | None = None,
         attributes: dict | None = None,
     ) -> Catalog:
+        """Insert or update a catalog."""
         return await self._catalog_repo.upsert_catalog(
             name, title, framework, version, baseline, oscal_path, attributes
         )
 
     # Controls - delegate to ControlRepository
     async def get_control_by_id(self, catalog: Catalog, control_id: str) -> Optional[Control]:
+        """Get a control by its ID from a catalog."""
         return await self._control_repo.get_control_by_id(catalog, control_id)
 
     async def upsert_control(
@@ -85,6 +89,7 @@ class Repository:
         baseline_required: bool = False,
         attributes: dict | None = None,
     ) -> Control:
+        """Insert or update a control in a catalog."""
         return await self._control_repo.upsert_control(
             catalog,
             control_id,
@@ -97,16 +102,20 @@ class Repository:
         )
 
     async def list_controls(self) -> list[Control]:
+        """List all controls."""
         return await self._control_repo.list_controls()
 
     async def get_control_requirements(self, control_ids: list[int]) -> list[ControlRequirement]:
+        """Get requirements for a list of control IDs."""
         return await self._control_repo.get_control_requirements(control_ids)
 
     # Systems - delegate to SystemRepository
     async def get_system_by_name(self, name: str) -> Optional[System]:
+        """Get a system by its name."""
         return await self._system_repo.get_system_by_name(name)
 
     async def list_systems_by_environment(self, environment: str) -> list[System]:
+        """List all systems for a given environment."""
         return await self._system_repo.list_systems_by_environment(environment)
 
     async def upsert_system(
@@ -116,6 +125,7 @@ class Repository:
         description: str | None = None,
         attributes: dict | None = None,
     ) -> System:
+        """Insert or update a system."""
         return await self._system_repo.upsert_system(name, environment, description, attributes)
 
     # Evidence - delegate to EvidenceRepository
@@ -131,11 +141,13 @@ class Repository:
         attributes: dict | None = None,
         expires_at=None,
     ) -> Evidence:
+        """Add evidence for a system."""
         return await self._evidence_repo.add_evidence(
             system, evidence_type, key, sha256, size, vault_path, filename, attributes, expires_at
         )
 
     async def list_evidence_for_system(self, system: System) -> list[Evidence]:
+        """List all evidence for a system."""
         return await self._evidence_repo.list_evidence_for_system(system)
 
     async def create_manifest(
@@ -146,6 +158,7 @@ class Repository:
         notes: str | None = None,
         attributes: dict | None = None,
     ) -> EvidenceManifest:
+        """Create an evidence manifest for a system and environment."""
         return await self._evidence_repo.create_manifest(
             system, environment, overall_hash, notes, attributes
         )
@@ -153,6 +166,7 @@ class Repository:
     async def add_manifest_entries(
         self, manifest: EvidenceManifest, evidence_list: Iterable[Evidence]
     ):
+        """Add entries to an evidence manifest."""
         return await self._evidence_repo.add_manifest_entries(manifest, evidence_list)
 
     # Validation - delegate to ValidationRepository
@@ -166,6 +180,7 @@ class Repository:
         remediation: str | None,
         metadata: dict | None = None,
     ) -> ValidationResult:
+        """Add a validation result for a system and control."""
         return await self._validation_repo.add_validation_result(
             system, control, status, message, evidence_keys, remediation, metadata
         )
@@ -180,6 +195,7 @@ class Repository:
         status: str = "open",
         metadata: dict | None = None,
     ) -> Finding:
+        """Add a finding for a system and control."""
         return await self._validation_repo.add_finding(
             system, control, title, description, severity, status, metadata
         )
@@ -187,16 +203,19 @@ class Repository:
     async def get_latest_validation_results(
         self, system: System, limit: int = 100
     ) -> list[ValidationResult]:
+        """Get the latest validation results for a system."""
         return await self._validation_repo.get_latest_validation_results(system, limit)
 
     async def get_validation_results_by_status(
         self, system: System, status
     ) -> list[ValidationResult]:
+        """Get validation results for a system filtered by status."""
         return await self._validation_repo.get_validation_results_by_status(system, status)
 
     async def get_validation_history_for_control(
         self, system: System, control: Control, limit: int = 10
     ) -> list[ValidationResult]:
+        """Get validation history for a control in a system."""
         return await self._validation_repo.get_validation_history_for_control(
             system, control, limit
         )
@@ -205,6 +224,7 @@ class Repository:
     async def start_job_run(
         self, job_type: str, environment: str, attributes: dict | None = None
     ) -> JobRun:
+        """Start a new job run."""
         return await self._jobrun_repo.start_job_run(job_type, environment, attributes)
 
     async def finish_job_run(
@@ -215,6 +235,7 @@ class Repository:
         metrics: dict | None = None,
         attributes_update: dict | None = None,
     ) -> JobRun:
+        """Finish a job run and update its status."""
         return await self._jobrun_repo.finish_job_run(
             job, status, error, metrics, attributes_update
         )
@@ -222,4 +243,5 @@ class Repository:
     async def get_recent_job_runs(
         self, job_type: str | None = None, environment: str | None = None, limit: int = 50
     ) -> list[JobRun]:
+        """Get recent job runs, optionally filtered by type and environment."""
         return await self._jobrun_repo.get_recent_job_runs(job_type, environment, limit)

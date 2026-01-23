@@ -1,3 +1,5 @@
+"""Reporting utilities for control coverage and readiness summaries."""
+
 from __future__ import annotations
 
 import json
@@ -8,7 +10,7 @@ from ..evidence import EvidenceManifest
 
 
 def control_coverage_placeholder(control_ids: list[str], manifests: list[EvidenceManifest]) -> dict:
-    # Placeholder logic: show totals and available evidence types; coverage unknown until mapping implemented
+    """Calculate control coverage summary stats as a placeholder."""
     evidence_kinds = set()
     for m in manifests:
         for a in m.artifacts:
@@ -24,6 +26,7 @@ def control_coverage_placeholder(control_ids: list[str], manifests: list[Evidenc
 
 
 def readiness_summary(manifests: List[EvidenceManifest]) -> dict:
+    """Summarize readiness based on evidence manifests."""
     total_artifacts = sum(len(m.artifacts) for m in manifests)
     envs = sorted({m.environment for m in manifests})
     return {
@@ -35,9 +38,9 @@ def readiness_summary(manifests: List[EvidenceManifest]) -> dict:
 
 
 def write_html(summary: dict, out_path: Path | str) -> None:
+    """Write readiness summary as HTML to output path."""
     p = Path(out_path)
     controls = summary.get("controls", {})
-
     # Build control coverage table
     coverage_html = ""
     if "covered_ids" in controls and "uncovered_ids" in controls:

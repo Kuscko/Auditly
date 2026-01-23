@@ -1,12 +1,16 @@
+"""Scanner types and compliance scanner base classes for auditly."""
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class ScannerType(Enum):
+    """Enumeration of supported scanner types."""
+
     IAM = "iam"
     ENCRYPTION = "encryption"
     BACKUP = "backup"
@@ -17,13 +21,16 @@ class ScannerType(Enum):
 
 @dataclass
 class ScanResult:
+    """Result of a compliance scan, including findings and metadata."""
+
     scanner_type: ScannerType
     timestamp: float
-    findings: List[Dict[str, Any]] = field(default_factory=list)
+    findings: list[dict[str, Any]] = field(default_factory=list)
     status: str = "unknown"  # pass, fail, warning
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> str:
+        """Serialize the scan result to a JSON string."""
         return json.dumps(
             {
                 "scanner_type": self.scanner_type.value,
@@ -39,10 +46,11 @@ class ComplianceScanner:
     """Base class for compliance scanners."""
 
     def __init__(self, scanner_type: ScannerType):
+        """Initialize the compliance scanner with a scanner type."""
         self.scanner_type = scanner_type
 
-    def scan(self, config: Dict[str, Any]) -> ScanResult:
-        """Scan and return results."""
+    def scan(self, config: dict[str, Any]) -> ScanResult:
+        """Scan and return results (to be implemented by subclasses)."""
         raise NotImplementedError
 
 
@@ -50,9 +58,11 @@ class IAMScanner(ComplianceScanner):
     """Scan IAM policies for least-privilege, MFA, account management."""
 
     def __init__(self):
+        """Initialize the IAM scanner."""
         super().__init__(ScannerType.IAM)
 
-    def scan(self, config: Dict[str, Any]) -> ScanResult:
+    def scan(self, config: dict[str, Any]) -> ScanResult:
+        """Scan IAM configuration and return results."""
         import time
 
         result = ScanResult(
@@ -115,9 +125,11 @@ class EncryptionScanner(ComplianceScanner):
     """Scan for encryption at rest and in transit."""
 
     def __init__(self):
+        """Initialize the EncryptionScanner with the ENCRYPTION scanner type."""
         super().__init__(ScannerType.ENCRYPTION)
 
-    def scan(self, config: Dict[str, Any]) -> ScanResult:
+    def scan(self, config: dict[str, Any]) -> ScanResult:
+        """Scan the provided config for encryption compliance and return results."""
         import time
 
         result = ScanResult(
@@ -198,9 +210,11 @@ class BackupScanner(ComplianceScanner):
     """Scan backup and recovery configuration (RPO/RTO)."""
 
     def __init__(self):
+        """Initialize the BackupScanner with the BACKUP scanner type."""
         super().__init__(ScannerType.BACKUP)
 
-    def scan(self, config: Dict[str, Any]) -> ScanResult:
+    def scan(self, config: dict[str, Any]) -> ScanResult:
+        """Scan the provided config for backup compliance and return results."""
         import time
 
         result = ScanResult(
@@ -268,7 +282,9 @@ SCANNERS = {
 }
 
 
-def run_scanners(config: Dict[str, Any], scanner_types: List[str] = None) -> Dict[str, ScanResult]:
+def run_scanners(
+    config: dict[str, Any], scanner_types: list[str] | None = None
+) -> dict[str, ScanResult]:
     """Run all or specified scanners against system config."""
     if scanner_types is None:
         scanner_types = list(SCANNERS.keys())

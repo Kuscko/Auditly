@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..cli_common import persist_if_db, vault_from_envcfg
 from ..collectors.argo import collect_argo
@@ -25,10 +25,10 @@ from ..waivers import WaiverRegistry
 
 
 async def collect_evidence_parallel(
-    requests: List[Dict[str, Any]],
+    requests: list[dict[str, Any]],
     *,
     timeout: int = 300,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Collect evidence for multiple providers in parallel.
 
     Each request dict should contain the arguments for ``collect_evidence``.
@@ -37,7 +37,7 @@ async def collect_evidence_parallel(
     Returns the parallel collector aggregate payload containing results/errors.
     """
 
-    async def _run(req: Dict[str, Any]):
+    async def _run(req: dict[str, Any]):
         return await asyncio.to_thread(collect_evidence, **req)
 
     tasks = {req.get("name", f"request-{idx}"): _run(req) for idx, req in enumerate(requests)}
@@ -46,11 +46,11 @@ async def collect_evidence_parallel(
 
 
 def collect_evidence_batch(
-    requests: List[Dict[str, Any]],
+    requests: list[dict[str, Any]],
     *,
     timeout: int = 300,
-) -> Dict[str, Any]:
-    """Synchronous helper to collect multiple providers concurrently."""
+) -> dict[str, Any]:
+    """Synchronize batch evidence collection for multiple systems."""
     return asyncio.run(collect_evidence_parallel(requests, timeout=timeout))
 
 
@@ -180,7 +180,8 @@ def collect_evidence(
 
         if not all([base_url, namespace, workflow_name]):
             raise ValueError(
-                "argo_base_url, argo_namespace, and argo_workflow_name are required for argo provider"
+                "argo_base_url, argo_namespace, and argo_workflow_name "
+                "are required for argo provider"
             )
 
         artifacts, manifest, workflow = collect_argo(
@@ -235,9 +236,9 @@ def collect_evidence(
 def validate_evidence(
     config_path: str,
     environment: str,
-    control_ids: Optional[List[str]] = None,
-    evidence_dict: Optional[Dict[str, Any]] = None,
-) -> tuple[Dict[str, Any], Dict[str, int]]:
+    control_ids: list[str] | None = None,
+    evidence_dict: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, int]]:
     """
     Validate controls against evidence (reuses CLI validation logic).
 
@@ -259,7 +260,7 @@ def validate_evidence(
     # Get control IDs from catalogs if not provided
     if not control_ids:
         control_ids = []
-        for name, cat_path in cfg.catalogs.get_all_catalogs().items():
+        for cat_path in cfg.catalogs.get_all_catalogs().values():
             oscal_obj = load_oscal(cat_path)
             if isinstance(oscal_obj, OscalCatalog):
                 control_ids.extend(oscal_obj.control_ids())
@@ -334,10 +335,10 @@ def generate_report(
     config_path: str,
     environment: str,
     report_type: str = "readiness",
-    control_ids: Optional[List[str]] = None,
-    evidence_dict: Optional[Dict[str, Any]] = None,
-    output_path: Optional[str] = None,
-) -> tuple[Optional[str], Optional[str], Dict[str, Any]]:
+    control_ids: list[str] | None = None,
+    evidence_dict: dict[str, Any] | None = None,
+    output_path: str | None = None,
+) -> tuple[str | None, str | None, dict[str, Any]]:
     """
     Generate compliance report (reuses CLI reporting logic).
 
@@ -367,8 +368,8 @@ def generate_report(
 
 
 def _generate_readiness_report(
-    cfg: AppConfig, environment: str, output_path: Optional[str]
-) -> tuple[str, str, Dict[str, Any]]:
+    cfg: AppConfig, environment: str, output_path: str | None
+) -> tuple[str, str, dict[str, Any]]:
     """Generate readiness report (CLI logic)."""
     staging = Path(".auditly_manifests")
     staging.mkdir(exist_ok=True)
@@ -400,7 +401,7 @@ def _generate_readiness_report(
     # Add control coverage and validation
     try:
         control_ids = []
-        for name, cat_path in cfg.catalogs.get_all_catalogs().items():
+        for cat_path in cfg.catalogs.get_all_catalogs().values():
             oscal_obj = load_oscal(cat_path)
             if isinstance(oscal_obj, OscalCatalog):
                 control_ids.extend(oscal_obj.control_ids())
@@ -457,10 +458,10 @@ def _generate_readiness_report(
 def _generate_engineer_report(
     cfg: AppConfig,
     environment: str,
-    control_ids: Optional[List[str]],
-    evidence_dict: Optional[Dict[str, Any]],
-    output_path: Optional[str],
-) -> tuple[str, str, Dict[str, Any]]:
+    control_ids: list[str] | None,
+    evidence_dict: dict[str, Any] | None,
+    output_path: str | None,
+) -> tuple[str, str, dict[str, Any]]:
     """Generate engineer report (CLI logic)."""
     if not control_ids:
         # Use sample controls
@@ -506,10 +507,10 @@ def _generate_engineer_report(
 def _generate_auditor_report(
     cfg: AppConfig,
     environment: str,
-    control_ids: Optional[List[str]],
-    evidence_dict: Optional[Dict[str, Any]],
-    output_path: Optional[str],
-) -> tuple[str, str, Dict[str, Any]]:
+    control_ids: list[str] | None,
+    evidence_dict: dict[str, Any] | None,
+    output_path: str | None,
+) -> tuple[str, str, dict[str, Any]]:
     """Generate auditor report (CLI logic)."""
     if not control_ids:
         # Use sample controls

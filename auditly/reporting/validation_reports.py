@@ -1,6 +1,4 @@
-"""
-Generate validation reports for engineers and ATO auditors.
-"""
+"""Generate validation reports for engineers and ATO auditors."""
 
 from __future__ import annotations
 

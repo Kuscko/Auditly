@@ -13,6 +13,7 @@ class ValidationRepository:
     """Repository for validation results and findings."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize the ValidationRepository with a session."""
         self.session = session
 
     async def add_validation_result(

@@ -1,3 +1,5 @@
+"""CLI commands for generating compliance readiness and validation reports."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,6 +25,7 @@ def report_readiness(
     env: str = typer.Option(..., help="Environment key (e.g., edge)"),
     out: Path = typer.Option(Path("report.html"), help="Output HTML path"),
 ):
+    """Generate an HTML readiness report for compliance evidence in the given environment."""
     staging = Path(".auditly_manifests")
     staging.mkdir(exist_ok=True)
     if not any(staging.glob(f"{env}-*.json")):
@@ -105,6 +108,7 @@ def report_engineer(
     ),
     out: Path = typer.Option(Path("engineer-report.html"), help="Output HTML path"),
 ):
+    """Generate an engineer-focused validation report from evidence and control IDs."""
     import json as _json
 
     from .validators import FAMILY_PATTERNS
@@ -130,6 +134,7 @@ def report_auditor(
     ),
     out: Path = typer.Option(Path("auditor-report.html"), help="Output HTML path"),
 ):
+    """Generate an auditor-focused validation report from evidence and control IDs."""
     import json as _json
 
     from .validators import FAMILY_PATTERNS

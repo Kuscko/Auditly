@@ -1,3 +1,5 @@
+"""WASM policy evaluation utilities for OPA/Rego in Auditly."""
+
 from __future__ import annotations
 
 import json
@@ -15,6 +17,8 @@ except ImportError:
 
 @dataclass
 class WasmPolicyResult:
+    """Result of evaluating a WASM policy."""
+
     allowed: bool
     violations: List[Dict[str, Any]]
     metadata: Dict[str, Any]
@@ -22,6 +26,7 @@ class WasmPolicyResult:
 
 
 def wasm_available() -> bool:
+    """Return True if wasmtime is available for WASM policy evaluation."""
     return WASMTIME_AVAILABLE
 
 

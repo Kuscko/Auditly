@@ -1,3 +1,5 @@
+"""CLI commands for database operations (upgrade, migrate) in auditly."""
+
 from __future__ import annotations
 
 from pathlib import Path

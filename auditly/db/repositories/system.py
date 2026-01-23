@@ -14,6 +14,7 @@ class SystemRepository:
     """Repository for system operations."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize the SystemRepository with an async database session."""
         self.session = session
 
     async def get_system_by_name(self, name: str) -> Optional[System]:

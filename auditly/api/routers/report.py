@@ -69,15 +69,10 @@ def report(request: ReportRequest):
 
     except ValueError as e:
         logger.error(f"Validation error in report: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.exception(f"Report generation failed: {e}")
-        return ReportResponse(
-            success=False,
-            environment=request.environment,
-            report_type=request.report_type,
-            error=str(e),
-        )
+        raise HTTPException(status_code=500, detail=f"Report generation failed: {e}") from e
 
 
 @router.get("/html", response_class=HTMLResponse)
@@ -101,4 +96,4 @@ def report_html(environment: str, report_type: str = "readiness", config_path: s
         return HTMLResponse(content=report_html)
     except Exception as e:
         logger.exception(f"Report HTML generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Report HTML generation failed: {e}") from e

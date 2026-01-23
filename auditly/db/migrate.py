@@ -31,10 +31,12 @@ def get_alembic_config(database_url: Optional[str] = None) -> Config:
 
 
 def upgrade(head: str = "head", database_url: Optional[str] = None) -> None:
+    """Upgrade the database schema to the specified head revision."""
     cfg = get_alembic_config(database_url)
     command.upgrade(cfg, head)
 
 
 def downgrade(revision: str = "-1", database_url: Optional[str] = None) -> None:
+    """Downgrade the database schema to the specified revision."""
     cfg = get_alembic_config(database_url)
     command.downgrade(cfg, revision)

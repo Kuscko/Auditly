@@ -1,10 +1,13 @@
+"""GitHub Actions collectors for evidence and artifact retrieval."""
+
 from __future__ import annotations
 
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
+# type: ignore[import-untyped]
 import requests
 
 from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
@@ -12,6 +15,8 @@ from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
 
 @dataclass
 class GitHubRun:
+    """Represents a GitHub Actions workflow run."""
+
     id: int
     head_branch: Optional[str]
     status: str
@@ -20,7 +25,7 @@ class GitHubRun:
     name: Optional[str]
 
 
-def _gh_headers(token: str) -> Dict[str, str]:
+def _gh_headers(token: str) -> dict[str, str]:
     return {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
@@ -29,6 +34,7 @@ def _gh_headers(token: str) -> Dict[str, str]:
 
 
 def get_latest_run(repo: str, token: str, branch: Optional[str] = None) -> GitHubRun:
+    """Get the latest workflow run for a repository and optional branch."""
     url = f"https://api.github.com/repos/{repo}/actions/runs"
     params = {"per_page": 10}
     if branch:
@@ -50,6 +56,7 @@ def get_latest_run(repo: str, token: str, branch: Optional[str] = None) -> GitHu
 
 
 def get_run(repo: str, token: str, run_id: int) -> GitHubRun:
+    """Get a specific workflow run by run ID."""
     url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}"
     r = requests.get(url, headers=_gh_headers(token), timeout=30)
     r.raise_for_status()
@@ -65,6 +72,7 @@ def get_run(repo: str, token: str, run_id: int) -> GitHubRun:
 
 
 def download_run_logs(repo: str, token: str, run_id: int, out_dir: Path) -> Path:
+    """Download logs for a workflow run as a zip file."""
     url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/logs"
     # Logs return as a zip stream
     r = requests.get(url, headers=_gh_headers(token), timeout=60)
@@ -74,7 +82,8 @@ def download_run_logs(repo: str, token: str, run_id: int, out_dir: Path) -> Path
     return zip_path
 
 
-def list_artifacts(repo: str, token: str, run_id: int) -> List[Dict[str, Any]]:
+def list_artifacts(repo: str, token: str, run_id: int) -> list[dict[str, Any]]:
+    """List artifacts for a workflow run."""
     url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/artifacts"
     r = requests.get(url, headers=_gh_headers(token), timeout=30)
     r.raise_for_status()
@@ -82,6 +91,7 @@ def list_artifacts(repo: str, token: str, run_id: int) -> List[Dict[str, Any]]:
 
 
 def download_artifact_zip(repo: str, token: str, artifact_id: int, out_dir: Path) -> Path:
+    """Download a workflow run artifact as a zip file."""
     url = f"https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}/zip"
     r = requests.get(url, headers=_gh_headers(token), timeout=60)
     r.raise_for_status()
@@ -97,17 +107,18 @@ def collect_github_actions(
     run_id: Optional[int] = None,
     branch: Optional[str] = None,
     key_prefix: str = "github-actions",
-) -> Tuple[List[ArtifactRecord], EvidenceManifest, GitHubRun]:
+) -> tuple[list[ArtifactRecord], EvidenceManifest, GitHubRun]:
+    """Collect logs and artifacts for a GitHub Actions run and build evidence records and manifest."""
     run = get_run(repo, token, run_id) if run_id else get_latest_run(repo, token, branch)
     with tempfile.TemporaryDirectory() as td:
         tdir = Path(td)
         logs_zip = download_run_logs(repo, token, run.id, tdir)
         artifacts_meta = list_artifacts(repo, token, run.id)
-        artifact_zips: List[Path] = []
+        artifact_zips: list[Path] = []
         for art in artifacts_meta:
             artifact_zips.append(download_artifact_zip(repo, token, art["id"], tdir))
 
-        records: List[ArtifactRecord] = []
+        records: list[ArtifactRecord] = []
         # Logs record
         records.append(
             ArtifactRecord(

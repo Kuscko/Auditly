@@ -22,6 +22,7 @@ class EvidenceRepository:
     """Repository for evidence and manifest operations."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize the EvidenceRepository with a database session."""
         self.session = session
 
     async def add_evidence(

@@ -1,6 +1,8 @@
+"""Common CLI utilities and database/storage helpers for auditly."""
+
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from rich import print
 from sqlalchemy import func
@@ -14,6 +16,7 @@ from .storage.s3_backend import S3EvidenceVault
 
 
 def vault_from_envcfg(envcfg):
+    """Return a storage vault instance based on the environment config."""
     if isinstance(envcfg.storage, MinioStorageConfig):
         return MinioEvidenceVault(
             endpoint=envcfg.storage.endpoint,
@@ -32,6 +35,7 @@ def vault_from_envcfg(envcfg):
 
 
 def get_db_session(envcfg):
+    """Get a database session if database_url is configured in the environment config."""
     if not getattr(envcfg, "database_url", None):
         return None
     try:
@@ -45,6 +49,7 @@ def get_db_session(envcfg):
 def persist_manifest_and_artifacts(
     session, env: str, env_description: str | None, manifest, artifacts: Iterable
 ):
+    """Persist manifest and artifact records to the database."""
     from datetime import datetime
 
     collected_dt = datetime.utcfromtimestamp(manifest.created_at)
@@ -126,6 +131,7 @@ def persist_manifest_and_artifacts(
 
 
 def persist_if_db(envcfg, env: str, manifest, artifacts: Iterable):
+    """Persist manifest and artifacts to DB if database_url is configured."""
     session = get_db_session(envcfg)
     if not session:
         return
@@ -139,14 +145,7 @@ def persist_if_db(envcfg, env: str, manifest, artifacts: Iterable):
 
 
 def persist_validation_results(session, env: str, results_dict):
-    """
-    Persist validation results to database.
-
-    Args:
-        session: Database session
-        env: Environment/system name
-        results_dict: Dict of control_id -> ValidationResult
-    """
+    """Persist validation results to database for the given environment."""
     from .db.models import Control
     from .db.models import ValidationStatus as DBValidationStatus
     from .validators import ValidationStatus
@@ -197,14 +196,7 @@ def persist_validation_results(session, env: str, results_dict):
 
 
 def persist_validation_if_db(envcfg, env: str, results_dict):
-    """
-    Persist validation results to DB if database_url configured.
-
-    Args:
-        envcfg: Environment configuration
-        env: Environment/system name
-        results_dict: Dict of control_id -> ValidationResult
-    """
+    """Persist validation results to DB if database_url is configured in the environment config."""
     session = get_db_session(envcfg)
     if not session:
         return
