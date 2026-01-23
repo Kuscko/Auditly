@@ -545,7 +545,11 @@ def validate_controls(
             cache_key = validation_cache.make_key("control", cid_upper, evidence_hash)
             cached = validation_cache.get(cache_key)
             if cached is not None:
-                results[cid_upper] = cached
+                if isinstance(cached, ValidationResult):
+                    results[cid_upper] = cached
+                else:
+                    # Defensive: skip cache if wrong type
+                    continue
                 performance_metrics.record_validation(duration=0.0, cached=True)
                 continue
 
