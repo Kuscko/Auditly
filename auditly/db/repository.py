@@ -12,7 +12,7 @@ New code should use domain-specific repositories from auditly.db.repositories:
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Iterable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,7 +54,7 @@ class Repository:
         self._jobrun_repo = JobRunRepository(session)
 
     # Catalogs - delegate to CatalogRepository
-    async def get_catalog_by_name(self, name: str) -> Optional[Catalog]:
+    async def get_catalog_by_name(self, name: str) -> Catalog | None:
         """Get a catalog by its name."""
         return await self._catalog_repo.get_catalog_by_name(name)
 
@@ -74,7 +74,7 @@ class Repository:
         )
 
     # Controls - delegate to ControlRepository
-    async def get_control_by_id(self, catalog: Catalog, control_id: str) -> Optional[Control]:
+    async def get_control_by_id(self, catalog: Catalog, control_id: str) -> Control | None:
         """Get a control by its ID from a catalog."""
         return await self._control_repo.get_control_by_id(catalog, control_id)
 
@@ -110,7 +110,7 @@ class Repository:
         return await self._control_repo.get_control_requirements(control_ids)
 
     # Systems - delegate to SystemRepository
-    async def get_system_by_name(self, name: str) -> Optional[System]:
+    async def get_system_by_name(self, name: str) -> System | None:
         """Get a system by its name."""
         return await self._system_repo.get_system_by_name(name)
 
@@ -152,7 +152,7 @@ class Repository:
 
     async def create_manifest(
         self,
-        system: Optional[System],
+        system: System | None,
         environment: str,
         overall_hash: str,
         notes: str | None = None,

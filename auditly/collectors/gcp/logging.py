@@ -20,12 +20,11 @@ logger = logging.getLogger(__name__)
 
 # Predeclare for type checkers
 import types
-from typing import Optional
 
-logging_v2: Optional[types.ModuleType] = None
-ConfigServiceV2Client: Optional[type] = None
-MetricsServiceV2Client: Optional[type] = None
-LoggingServiceV2Client: Optional[type] = None
+logging_v2: types.ModuleType | None = None
+ConfigServiceV2Client: type | None = None
+MetricsServiceV2Client: type | None = None
+LoggingServiceV2Client: type | None = None
 GCP_AVAILABLE = False
 try:
     import google.cloud.logging_v2 as _logging_v2
@@ -92,7 +91,7 @@ class LoggingCollector:
         Returns:
             Dictionary containing all Logging evidence types
         """
-        evidence = {
+        evidence: dict[str, Any] = {
             "sinks": self.collect_sinks(),
             "metrics": self.collect_metrics(),
             "logs_summary": self.collect_logs_summary(),

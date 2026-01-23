@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from minio import Minio
 from minio.error import S3Error
@@ -18,8 +18,8 @@ class MinioEvidenceVault(EvidenceVault):
         self,
         endpoint: str,
         bucket: str,
-        access_key: Optional[str] = None,
-        secret_key: Optional[str] = None,
+        access_key: str | None = None,
+        secret_key: str | None = None,
         secure: bool = True,
     ) -> None:
         """Initialize the MinioEvidenceVault with connection details."""

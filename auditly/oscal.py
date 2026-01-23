@@ -32,7 +32,7 @@ class OscalCatalog:
             ids.extend(self._extract_control_ids_from_group(subgroup))
         return ids
 
-    def get_control(self, control_id: str) -> Optional[dict[str, Any]]:
+    def get_control(self, control_id: str) -> dict[str, Any] | None:
         """Retrieve a specific control by ID."""
         for group in self.catalog.get("groups", []):
             if control := self._find_control_in_group(group, control_id):
@@ -41,7 +41,7 @@ class OscalCatalog:
 
     def _find_control_in_group(
         self, group: dict[str, Any], control_id: str
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Recursively search for a control in a group."""
         for ctl in group.get("controls", []):
             if ctl.get("id") == control_id:
@@ -94,12 +94,12 @@ class OscalProfile:
         """Get profile metadata."""
         return self.profile.get("metadata", {})
 
-    def title(self) -> Optional[str]:
+    def title(self) -> str | None:
         """Get the profile title."""
         return self.metadata().get("title")
 
 
-def load_oscal_catalog(path: Path | str) -> Optional[OscalCatalog]:
+def load_oscal_catalog(path: Path | str) -> OscalCatalog | None:
     """Load an OSCAL catalog from a JSON file."""
     p = Path(path)
     if not p.exists():
@@ -110,7 +110,7 @@ def load_oscal_catalog(path: Path | str) -> Optional[OscalCatalog]:
     return OscalCatalog(data)
 
 
-def load_oscal_profile(path: Path | str) -> Optional[OscalProfile]:
+def load_oscal_profile(path: Path | str) -> OscalProfile | None:
     """Load an OSCAL profile from a JSON file."""
     p = Path(path)
     if not p.exists():
@@ -121,7 +121,7 @@ def load_oscal_profile(path: Path | str) -> Optional[OscalProfile]:
     return OscalProfile(data)
 
 
-def load_oscal(path: Path | str) -> Optional[OscalCatalog | OscalProfile]:
+def load_oscal(path: Path | str) -> OscalCatalog | OscalProfile | None:
     """Auto-detect and load either an OSCAL catalog or profile."""
     p = Path(path)
     if not p.exists():
@@ -136,4 +136,4 @@ def load_oscal(path: Path | str) -> Optional[OscalCatalog | OscalProfile]:
     return None
 
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict

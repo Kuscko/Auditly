@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import boto3
 
@@ -13,7 +13,7 @@ from .base import EvidenceVault
 class S3EvidenceVault(EvidenceVault):
     """Evidence vault implementation using AWS S3 as the backend."""
 
-    def __init__(self, bucket: str, region: str, profile: Optional[str] = None) -> None:
+    def __init__(self, bucket: str, region: str, profile: str | None = None) -> None:
         """Initialize the S3EvidenceVault with connection details."""
         session = boto3.Session(profile_name=profile) if profile else boto3.Session()
         self.s3 = session.client("s3", region_name=region)

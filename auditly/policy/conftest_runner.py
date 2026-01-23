@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List
 
 
 @dataclass
@@ -27,7 +27,7 @@ def conftest_available() -> bool:
 
 
 def run_conftest(
-    target_dir: Path | str, policy_dir: Optional[Path | str] = None
+    target_dir: Path | str, policy_dir: Path | str | None = None
 ) -> List[ConftestResult]:
     """Run conftest policy validation and return results."""
     if not conftest_available():

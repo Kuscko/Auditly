@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # type: ignore[import-untyped]
 import requests
@@ -101,7 +101,7 @@ def list_job_artifacts(base_url: str, project_id: str, token: str, job_id: int) 
 
 def download_job_artifacts(
     base_url: str, project_id: str, token: str, job_id: int, out_dir: Path
-) -> Optional[Path]:
+) -> Path | None:
     """Download job artifacts as a zip file if present."""
     url = f"{base_url}/api/v4/projects/{project_id}/jobs/{job_id}/artifacts"
     r = requests.get(url, headers=_gitlab_headers(token), timeout=60)
@@ -118,8 +118,8 @@ def collect_gitlab(
     base_url: str,
     project_id: str,
     token: str,
-    pipeline_id: Optional[int] = None,
-    ref: Optional[str] = None,
+    pipeline_id: int | None = None,
+    ref: str | None = None,
     key_prefix: str = "gitlab",
 ) -> tuple[list[ArtifactRecord], EvidenceManifest, GitLabPipeline]:
     """Collect logs and artifacts from a GitLab pipeline and return records, manifest, and pipeline info."""

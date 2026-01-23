@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -56,7 +56,7 @@ class ValidationResultCache:
         ttl = self.default_ttl if ttl is None else ttl
         self.cache[key] = CacheEntry(key=key, value=value, ttl_seconds=ttl)
 
-    def invalidate(self, pattern: Optional[str] = None):
+    def invalidate(self, pattern: str | None = None):
         """
         Invalidate cache entries.
 

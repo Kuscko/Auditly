@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # type: ignore[import-untyped]
 import requests
@@ -104,8 +104,8 @@ def collect_github_actions(
     environment: str,
     repo: str,
     token: str,
-    run_id: Optional[int] = None,
-    branch: Optional[str] = None,
+    run_id: int | None = None,
+    branch: str | None = None,
     key_prefix: str = "github-actions",
 ) -> tuple[list[ArtifactRecord], EvidenceManifest, GitHubRun]:
     """Collect logs and artifacts for a GitHub Actions run and build evidence records and manifest."""

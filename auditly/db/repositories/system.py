@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +15,7 @@ class SystemRepository:
         """Initialize the SystemRepository with an async database session."""
         self.session = session
 
-    async def get_system_by_name(self, name: str) -> Optional[System]:
+    async def get_system_by_name(self, name: str) -> System | None:
         """Get system by name."""
         stmt = select(System).where(System.name == name)
         res = await self.session.execute(stmt)
