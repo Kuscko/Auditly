@@ -55,13 +55,15 @@ class CloudSQLCollector:
         Returns:
             Dictionary containing all Cloud SQL evidence types
         """
-        evidence = {
+        evidence: dict[str, Any] = {
             "instances": self.collect_instances(),
-            "metadata": {
-                "collector": "GCPCloudSQLCollector",
-                "collected_at": datetime.utcnow().isoformat(),
-                "project_id": self.project_id,
-            },
+            "metadata": dict(
+                {
+                    "collector": "GCPCloudSQLCollector",
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "project_id": self.project_id,
+                }
+            ),
         }
 
         # Compute evidence checksum

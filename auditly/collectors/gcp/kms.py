@@ -54,14 +54,16 @@ class KMSCollector:
         Returns:
             Dictionary containing all KMS evidence types
         """
-        evidence = {
+        evidence: dict[str, Any] = {
             "key_rings": self.collect_key_rings(),
             "crypto_keys": self.collect_crypto_keys(),
-            "metadata": {
-                "collector": "GCPKMSCollector",
-                "collected_at": datetime.utcnow().isoformat(),
-                "project_id": self.project_id,
-            },
+            "metadata": dict(
+                {
+                    "collector": "GCPKMSCollector",
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "project_id": self.project_id,
+                }
+            ),
         }
 
         # Compute evidence checksum

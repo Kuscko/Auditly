@@ -59,16 +59,18 @@ class IAMCollector:
         Returns:
             Dictionary containing all IAM evidence types
         """
-        evidence = {
+        evidence: dict[str, Any] = {
             "service_accounts": self.collect_service_accounts(),
             "custom_roles": self.collect_custom_roles(),
             "iam_policies": self.collect_iam_policies(),
             "service_account_keys": self.collect_service_account_keys(),
-            "metadata": {
-                "collector": "GCPIAMCollector",
-                "collected_at": datetime.utcnow().isoformat(),
-                "project_id": self.project_id,
-            },
+            "metadata": dict(
+                {
+                    "collector": "GCPIAMCollector",
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "project_id": self.project_id,
+                }
+            ),
         }
 
         # Compute evidence checksum

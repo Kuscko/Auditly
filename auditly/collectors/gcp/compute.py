@@ -56,16 +56,18 @@ class ComputeCollector:
         Returns:
             Dictionary containing all Compute evidence types
         """
-        evidence = {
+        evidence: dict[str, Any] = {
             "instances": self.collect_instances(),
             "disks": self.collect_disks(),
             "firewalls": self.collect_firewalls(),
             "snapshots": self.collect_snapshots(),
-            "metadata": {
-                "collector": "GCPComputeCollector",
-                "collected_at": datetime.utcnow().isoformat(),
-                "project_id": self.project_id,
-            },
+            "metadata": dict(
+                {
+                    "collector": "GCPComputeCollector",
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "project_id": self.project_id,
+                }
+            ),
         }
 
         # Compute evidence checksum
