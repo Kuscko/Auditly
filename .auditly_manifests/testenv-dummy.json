@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "environment": "testenv",
+  "created_at": 1769233575.1504533,
+  "artifacts": [
+    {
+      "key": "noop",
+      "filename": "noop",
+      "sha256": "0",
+      "size": 0,
+      "metadata": {}
+    }
+  ],
+  "overall_hash": "bea1fa488f4b60d8b178c1e61b720229f27bb7e8dcd8446aec68e4a52ef34abe",
+  "notes": null
+}

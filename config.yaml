@@ -1,0 +1,9 @@
+environments:
+  testenv:
+    description: Test environment
+    database_url: 'sqlite:///:memory:'
+    storage:
+      type: s3
+      region: us-east-1
+      bucket: test-bucket
+catalogs: {}
