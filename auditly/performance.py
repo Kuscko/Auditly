@@ -283,6 +283,14 @@ class ParallelCollector:
 class Metrics:
     """Container for performance metric fields."""
 
+    def __getitem__(self, key: str) -> object:
+        """Get a metric value by key (dict-like access)."""
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value: object) -> None:
+        """Set a metric value by key (dict-like access)."""
+        setattr(self, key, value)
+
     def __init__(self) -> None:
         """Initialize all metric fields to default values."""
         self.total_validations: int = 0
