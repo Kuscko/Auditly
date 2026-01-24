@@ -1,3 +1,5 @@
+"""CLI commands for air-gap bundles (keygen, create, verify, import)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -24,6 +26,7 @@ def bundle_keygen(
     out_dir: Path = typer.Option(Path(".keys"), help="Output directory for keys"),
     name: str = typer.Option("auditly", help="Key name prefix"),
 ):
+    """Generate an Ed25519 keypair for bundles and save to the output directory."""
     out_dir.mkdir(parents=True, exist_ok=True)
     sk, pk = generate_ed25519_keypair()
     priv_path = out_dir / f"{name}.ed25519"
@@ -41,6 +44,7 @@ def bundle_create(
     out_path: Path = typer.Option(Path("evidence-bundle.tar.gz"), help="Output tar.gz path"),
     note: str = typer.Option("", help="Optional note"),
 ):
+    """Create a signed bundle from a vault prefix and save it as a tar.gz file."""
     cfg = AppConfig.load(config)
     if env not in cfg.environments:
         raise typer.BadParameter(f"Unknown environment: {env}")
@@ -70,6 +74,7 @@ def bundle_verify_cmd(
     bundle_path: Path = typer.Option(..., exists=True, help="Path to evidence-bundle.tar.gz"),
     public_key_path: Path = typer.Option(..., exists=True, help="Path to Ed25519 public key"),
 ):
+    """Verify the signature and manifest of a bundle using the provided public key."""
     vk = load_public_key(public_key_path)
     manifest = verify_bundle(bundle_path, vk)
     print(
@@ -85,6 +90,7 @@ def bundle_import(
     public_key_path: Path = typer.Option(..., exists=True, help="Path to Ed25519 public key"),
     dest_prefix: str = typer.Option("", help="Optional destination prefix to prepend"),
 ):
+    """Verify a bundle and import its contents into the specified vault environment."""
     cfg = AppConfig.load(config)
     if env not in cfg.environments:
         raise typer.BadParameter(f"Unknown environment: {env}")

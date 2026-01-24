@@ -1,3 +1,5 @@
+"""Common utilities and helpers for collectors."""
+
 from __future__ import annotations
 
 import hashlib

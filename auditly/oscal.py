@@ -1,15 +1,19 @@
+"""OSCAL catalog and profile utilities for auditly."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class OscalCatalog:
     """Represents an OSCAL catalog containing control definitions."""
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
+        """Initialize an OscalCatalog from a data dictionary."""
         self.data = data
+        self.catalog = data.get("catalog", {})
         self.catalog = data.get("catalog", {})
 
     def control_ids(self) -> list[str]:
@@ -19,7 +23,7 @@ class OscalCatalog:
             controls.extend(self._extract_control_ids_from_group(group))
         return controls
 
-    def _extract_control_ids_from_group(self, group: Dict[str, Any]) -> List[str]:
+    def _extract_control_ids_from_group(self, group: dict[str, Any]) -> list[str]:
         """Recursively extract control IDs from a group and its subgroups."""
         ids = []
         for ctl in group.get("controls", []):
@@ -29,7 +33,7 @@ class OscalCatalog:
             ids.extend(self._extract_control_ids_from_group(subgroup))
         return ids
 
-    def get_control(self, control_id: str) -> Optional[Dict[str, Any]]:
+    def get_control(self, control_id: str) -> dict[str, Any] | None:
         """Retrieve a specific control by ID."""
         for group in self.catalog.get("groups", []):
             if control := self._find_control_in_group(group, control_id):
@@ -37,8 +41,8 @@ class OscalCatalog:
         return None
 
     def _find_control_in_group(
-        self, group: Dict[str, Any], control_id: str
-    ) -> Optional[Dict[str, Any]]:
+        self, group: dict[str, Any], control_id: str
+    ) -> dict[str, Any] | None:
         """Recursively search for a control in a group."""
         for ctl in group.get("controls", []):
             if ctl.get("id") == control_id:
@@ -48,7 +52,7 @@ class OscalCatalog:
                 return control
         return None
 
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """Get catalog metadata."""
         return self.catalog.get("metadata", {})
 
@@ -56,7 +60,8 @@ class OscalCatalog:
 class OscalProfile:
     """Represents an OSCAL profile (baseline) that imports and tailors controls from catalogs."""
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
+        """Initialize an OscalProfile from a data dictionary."""
         self.data = data
         self.profile = data.get("profile", {})
 
@@ -86,16 +91,16 @@ class OscalProfile:
                 hrefs.append(href)
         return hrefs
 
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """Get profile metadata."""
         return self.profile.get("metadata", {})
 
-    def title(self) -> Optional[str]:
+    def title(self) -> str | None:
         """Get the profile title."""
         return self.metadata().get("title")
 
 
-def load_oscal_catalog(path: Path | str) -> Optional[OscalCatalog]:
+def load_oscal_catalog(path: Path | str) -> OscalCatalog | None:
     """Load an OSCAL catalog from a JSON file."""
     p = Path(path)
     if not p.exists():
@@ -106,7 +111,7 @@ def load_oscal_catalog(path: Path | str) -> Optional[OscalCatalog]:
     return OscalCatalog(data)
 
 
-def load_oscal_profile(path: Path | str) -> Optional[OscalProfile]:
+def load_oscal_profile(path: Path | str) -> OscalProfile | None:
     """Load an OSCAL profile from a JSON file."""
     p = Path(path)
     if not p.exists():
@@ -117,7 +122,7 @@ def load_oscal_profile(path: Path | str) -> Optional[OscalProfile]:
     return OscalProfile(data)
 
 
-def load_oscal(path: Path | str) -> Optional[OscalCatalog | OscalProfile]:
+def load_oscal(path: Path | str) -> OscalCatalog | OscalProfile | None:
     """Auto-detect and load either an OSCAL catalog or profile."""
     p = Path(path)
     if not p.exists():
@@ -128,5 +133,4 @@ def load_oscal(path: Path | str) -> Optional[OscalCatalog | OscalProfile]:
         return OscalCatalog(data)
     elif "profile" in data:
         return OscalProfile(data)
-
     return None

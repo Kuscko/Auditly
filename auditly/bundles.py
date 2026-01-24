@@ -1,3 +1,5 @@
+"""Bundle creation, verification, and key management for auditly."""
+
 from __future__ import annotations
 
 import base64
@@ -6,8 +8,8 @@ import tarfile
 import time
 from dataclasses import asdict, dataclass
 from hashlib import sha256
+from io import BytesIO
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from nacl import signing
 from nacl.encoding import RawEncoder
@@ -23,6 +25,8 @@ def _sha256_file(path: Path) -> str:
 
 @dataclass
 class BundleItem:
+    """Represents a single item in a bundle."""
+
     key: str
     size: int
     sha256: str
@@ -30,18 +34,22 @@ class BundleItem:
 
 @dataclass
 class BundleManifest:
+    """Manifest describing the contents and metadata of a bundle."""
+
     version: str
     environment: str
     created_at: float
-    items: List[BundleItem]
-    note: Optional[str] = None
+    items: list[BundleItem]
+    note: str | None = None
 
     def to_json_bytes(self) -> bytes:
+        """Serialize the manifest to JSON bytes."""
         data = asdict(self)
         return json.dumps(data, sort_keys=True, separators=(",", ":")).encode()
 
 
-def generate_ed25519_keypair() -> Tuple[bytes, bytes]:
+def generate_ed25519_keypair() -> tuple[bytes, bytes]:
+    """Generate a new Ed25519 keypair and return private and public key bytes."""
     sk = signing.SigningKey.generate()
     pk = sk.verify_key
     return bytes(sk), bytes(pk)
@@ -50,26 +58,30 @@ def generate_ed25519_keypair() -> Tuple[bytes, bytes]:
 def save_keypair(
     private_bytes: bytes, public_bytes: bytes, priv_path: Path, pub_path: Path
 ) -> None:
+    """Save private and public key bytes to the specified file paths."""
     priv_path.write_bytes(private_bytes)
     pub_path.write_bytes(public_bytes)
 
 
 def load_private_key(path: Path) -> signing.SigningKey:
+    """Load a private Ed25519 key from a file."""
     return signing.SigningKey(path.read_bytes())
 
 
 def load_public_key(path: Path) -> signing.VerifyKey:
+    """Load a public Ed25519 key from a file."""
     return signing.VerifyKey(path.read_bytes())
 
 
 def create_bundle(
     environment: str,
-    files: List[Tuple[Path, str]],
+    files: list[tuple[Path, str]],
     out_path: Path,
     private_key: signing.SigningKey,
-    note: Optional[str] = None,
+    note: str | None = None,
 ) -> Path:
-    items: List[BundleItem] = []
+    """Create a signed evidence bundle tar.gz from files and a private key."""
+    items: list[BundleItem] = []
     for src, key in files:
         items.append(BundleItem(key=key, size=src.stat().st_size, sha256=_sha256_file(src)))
 
@@ -114,6 +126,7 @@ def create_bundle(
 
 
 def verify_bundle(bundle_path: Path, public_key: signing.VerifyKey) -> BundleManifest:
+    """Verify a bundle's signature and hashes, returning the manifest if valid."""
     with tarfile.open(bundle_path, "r:gz") as tar:
         man = tar.extractfile("bundle/bundle.json")
         sig = tar.extractfile("bundle/bundle.sig")
@@ -133,14 +146,17 @@ def verify_bundle(bundle_path: Path, public_key: signing.VerifyKey) -> BundleMan
         # Verify each item hash
         for it in manifest.items:
             f = tar.extractfile(it.key)
-            if not f:
+            if f is None:
                 raise ValueError(f"missing file in bundle: {it.key}")
             h = sha256()
-            for chunk in iter(lambda: f.read(8192), b""):
+
+            # Defensive: type checker and runtime safe
+            def _read_chunk(_f=f):
+                assert _f is not None
+                return _f.read(8192)
+
+            for chunk in iter(_read_chunk, b""):
                 h.update(chunk)
             if h.hexdigest() != it.sha256:
                 raise ValueError(f"hash mismatch for {it.key}")
         return manifest
-
-
-from io import BytesIO

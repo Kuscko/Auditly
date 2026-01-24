@@ -1,3 +1,5 @@
+"""Logging utilities for Auditly CLI and applications."""
+
 from __future__ import annotations
 
 import logging

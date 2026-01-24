@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,9 +12,10 @@ class ControlRepository:
     """Repository for control operations."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize the ControlRepository with a database session."""
         self.session = session
 
-    async def get_control_by_id(self, catalog: Catalog, control_id: str) -> Optional[Control]:
+    async def get_control_by_id(self, catalog: Catalog, control_id: str) -> Control | None:
         """Get control by ID within a catalog."""
         stmt = select(Control).where(
             Control.catalog_id == catalog.id, Control.control_id == control_id.upper()

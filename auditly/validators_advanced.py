@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from .validators import ValidationResult, ValidationStatus
 
@@ -36,7 +36,7 @@ class CustomValidator:
     control_id: str
     name: str
     description: str
-    validator_func: Callable[[Dict[str, Any], Optional[Dict[str, Any]]], ValidationResult]
+    validator_func: Callable[[dict[str, object], dict[str, object] | None], ValidationResult]
     enabled: bool = True
     priority: int = 0  # Higher priority runs first
 
@@ -49,19 +49,20 @@ class FindingLifecycleEvent:
     timestamp: str
     from_status: str
     to_status: str
-    assigned_to: Optional[str] = None
-    notes: Optional[str] = None
-    remediation_evidence: Optional[Dict[str, Any]] = field(default_factory=dict)
+    assigned_to: str | None = None
+    notes: str | None = None
+    remediation_evidence: dict[str, object] | None = field(default_factory=dict)
 
 
 class ControlDependencyGraph:
     """Manages control dependencies and validates prerequisite controls."""
 
-    def __init__(self):
-        self.dependencies: Dict[str, List[ControlDependency]] = {}
+    def __init__(self) -> None:
+        """Initialize the ControlDependencyGraph with standard dependencies."""
+        self.dependencies: dict[str, list[ControlDependency]] = {}
         self._init_standard_dependencies()
 
-    def _init_standard_dependencies(self):
+    def _init_standard_dependencies(self) -> None:
         """Initialize standard FedRAMP/NIST control dependencies."""
         # AC-2 (Account Management) is prerequisite for AC-3, AC-4, AC-5
         self.add_dependency(
@@ -93,19 +94,19 @@ class ControlDependencyGraph:
                 )
             )
 
-    def add_dependency(self, dep: ControlDependency):
+    def add_dependency(self, dep: ControlDependency) -> None:
         """Add a control dependency."""
         control_upper = dep.source_control.upper()
         if control_upper not in self.dependencies:
             self.dependencies[control_upper] = []
         self.dependencies[control_upper].append(dep)
 
-    def get_dependencies(self, control_id: str) -> List[ControlDependency]:
+    def get_dependencies(self, control_id: str) -> list[ControlDependency]:
         """Get all dependencies for a control."""
         control_upper = control_id.upper()
         return self.dependencies.get(control_upper, [])
 
-    def get_blockers(self, control_id: str) -> List[str]:
+    def get_blockers(self, control_id: str) -> list[str]:
         """Get prerequisite controls that must pass for this control."""
         blockers = []
         for dep in self.get_dependencies(control_id):
@@ -114,8 +115,8 @@ class ControlDependencyGraph:
         return blockers
 
     def validate_with_dependencies(
-        self, control_id: str, validation_results: Dict[str, ValidationResult], strict: bool = False
-    ) -> tuple[bool, List[str]]:
+        self, control_id: str, validation_results: dict[str, ValidationResult], strict: bool = False
+    ) -> tuple[bool, list[str]]:
         """
         Check if control can be validated based on dependencies.
 
@@ -140,7 +141,7 @@ class ControlDependencyGraph:
 
         return len(blocking) == 0, blocking
 
-    def get_validation_order(self, control_ids: List[str]) -> List[str]:
+    def get_validation_order(self, control_ids: list[str]) -> list[str]:
         """
         Topologically sort controls by dependencies.
 
@@ -179,10 +180,11 @@ class ControlDependencyGraph:
 class CustomValidatorRegistry:
     """Registry for custom validators."""
 
-    def __init__(self):
-        self.validators: Dict[str, List[CustomValidator]] = {}
+    def __init__(self) -> None:
+        """Initialize the CustomValidatorRegistry with an empty validator dictionary."""
+        self.validators: dict[str, list[CustomValidator]] = {}
 
-    def register(self, validator: CustomValidator):
+    def register(self, validator: CustomValidator) -> None:
         """Register a custom validator."""
         control_upper = validator.control_id.upper()
         if control_upper not in self.validators:
@@ -191,7 +193,7 @@ class CustomValidatorRegistry:
         # Sort by priority (descending)
         self.validators[control_upper].sort(key=lambda v: v.priority, reverse=True)
 
-    def get_validators(self, control_id: str) -> List[CustomValidator]:
+    def get_validators(self, control_id: str) -> list[CustomValidator]:
         """Get enabled validators for a control."""
         control_upper = control_id.upper()
         validators = self.validators.get(control_upper, [])
@@ -200,9 +202,9 @@ class CustomValidatorRegistry:
     def validate(
         self,
         control_id: str,
-        evidence: Dict[str, Any],
-        system_state: Optional[Dict[str, Any]] = None,
-    ) -> Optional[ValidationResult]:
+        evidence: dict[str, object],
+        system_state: dict[str, object] | None = None,
+    ) -> ValidationResult | None:
         """
         Run custom validators for a control.
 
@@ -251,19 +253,19 @@ class FindingsLifecycleManager:
         "closed": ["open"],  # Reopen if needed
     }
 
-    def __init__(self, session=None):
+    def __init__(self, session=None) -> None:
         """Initialize with optional DB session for persistence."""
         self.session = session
-        self.events: List[FindingLifecycleEvent] = []
+        self.events: list[FindingLifecycleEvent] = []
 
     def transition_finding(
         self,
         finding_id: int,
         from_status: str,
         to_status: str,
-        assigned_to: Optional[str] = None,
-        notes: Optional[str] = None,
-        remediation_evidence: Optional[Dict[str, Any]] = None,
+        assigned_to: str | None = None,
+        notes: str | None = None,
+        remediation_evidence: dict[str, Any] | None = None,
     ) -> bool:
         """
         Transition finding to new status.
@@ -303,7 +305,7 @@ class FindingsLifecycleManager:
 
         return True
 
-    def get_finding_status_history(self, finding_id: int) -> List[FindingLifecycleEvent]:
+    def get_finding_status_history(self, finding_id: int) -> list[FindingLifecycleEvent]:
         """Get status change history for a finding."""
         return [e for e in self.events if e.finding_id == finding_id]
 
@@ -320,7 +322,7 @@ class FindingsLifecycleManager:
 
         return datetime.utcnow().isoformat()
 
-    def _persist_event(self, event: FindingLifecycleEvent):
+    def _persist_event(self, event: FindingLifecycleEvent) -> None:
         """Persist event to database (async wrapper needed for actual use)."""
         # This would need async context in real usage
         # For now, just track in memory

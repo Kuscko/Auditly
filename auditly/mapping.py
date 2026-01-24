@@ -1,9 +1,10 @@
-from __future__ import annotations
+"""Evidence-to-control mapping logic for auditly."""
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
+# type: ignore[import-untyped]
 import yaml
 
 from .evidence import EvidenceManifest
@@ -13,25 +14,26 @@ from .evidence import EvidenceManifest
 class MappingRule:
     """Maps evidence attributes to control IDs."""
 
-    control_ids: List[str]
+    control_ids: list[str]
     evidence_kind: str
-    required_metadata: Optional[Dict[str, Any]] = None
-    description: Optional[str] = None
+    required_metadata: dict[str, Any] | None = None
+    description: str | None = None
 
 
 @dataclass
 class ControlMapping:
     """Collection of mapping rules."""
 
-    rules: List[MappingRule]
+    rules: list[MappingRule]
 
     @staticmethod
-    def from_yaml(path: Path | str) -> ControlMapping:
+    def from_yaml(path: Path) -> "ControlMapping":
+        """Load a ControlMapping from a YAML file."""
         p = Path(path)
         if not p.exists():
             return ControlMapping(rules=[])
         data = yaml.safe_load(p.read_text())
-        rules = []
+        rules: list[MappingRule] = []
         for item in data.get("mappings", []):
             rules.append(
                 MappingRule(
@@ -43,7 +45,8 @@ class ControlMapping:
             )
         return ControlMapping(rules=rules)
 
-    def save(self, path: Path | str) -> None:
+    def save(self, path: Path) -> None:
+        """Save the ControlMapping to a YAML file."""
         p = Path(path)
         data = {
             "mappings": [
@@ -60,9 +63,9 @@ class ControlMapping:
 
 
 def match_evidence_to_controls(
-    manifests: List[EvidenceManifest],
-    mapping: ControlMapping,
-) -> Dict[str, List[str]]:
+    manifests: list[EvidenceManifest],
+    mapping: "ControlMapping",
+) -> dict[str, list[str]]:
     """
     Match evidence artifacts to controls based on mapping rules.
 
@@ -73,7 +76,7 @@ def match_evidence_to_controls(
     Returns:
         Dict mapping control_id -> list of evidence keys
     """
-    control_evidence: Dict[str, List[str]] = {}
+    control_evidence: dict[str, list[str]] = {}
 
     for manifest in manifests:
         for artifact in manifest.artifacts:
@@ -103,9 +106,9 @@ def match_evidence_to_controls(
 
 
 def compute_control_coverage(
-    all_control_ids: List[str],
-    control_evidence: Dict[str, List[str]],
-) -> Dict[str, Any]:
+    all_control_ids: list[str],
+    control_evidence: dict[str, list[str]],
+) -> dict[str, object]:
     """
     Compute control coverage statistics.
 
@@ -133,3 +136,6 @@ def compute_control_coverage(
         "uncovered_ids": sorted(all_ids_set - covered_ids),
         "control_evidence": control_evidence,
     }
+
+
+# Removed redundant imports

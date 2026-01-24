@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Iterable, Optional
+from typing import Iterable
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +22,7 @@ class EvidenceRepository:
     """Repository for evidence and manifest operations."""
 
     def __init__(self, session: AsyncSession):
+        """Initialize the EvidenceRepository with a database session."""
         self.session = session
 
     async def add_evidence(
@@ -60,7 +61,7 @@ class EvidenceRepository:
 
     async def create_manifest(
         self,
-        system: Optional[System],
+        system: System | None,
         environment: str,
         overall_hash: str,
         notes: str | None = None,
@@ -100,7 +101,7 @@ class EvidenceRepository:
             data: dict,
             collector_version: str | None = None,
             signature: str | None = None,
-            collected_at: Optional[datetime] = None,
+            collected_at: datetime | None = None,
             attributes: dict | None = None,
         ) -> EvidenceVersion:
             """Create a new version record for an evidence row."""

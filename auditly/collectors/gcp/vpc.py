@@ -53,16 +53,18 @@ class VPCCollector:
         Returns:
             Dictionary containing all VPC evidence types
         """
-        evidence = {
+        evidence: dict[str, Any] = {
             "networks": self.collect_networks(),
             "subnetworks": self.collect_subnetworks(),
             "vpn_tunnels": self.collect_vpn_tunnels(),
             "routers": self.collect_routers(),
-            "metadata": {
-                "collector": "GCPVPCCollector",
-                "collected_at": datetime.utcnow().isoformat(),
-                "project_id": self.project_id,
-            },
+            "metadata": dict(
+                {
+                    "collector": "GCPVPCCollector",
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "project_id": self.project_id,
+                }
+            ),
         }
 
         # Compute evidence checksum

@@ -1,8 +1,10 @@
+"""CLI commands for collecting evidence from various providers and uploading to vaults."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import typer
 
@@ -31,6 +33,14 @@ try:
 
     AWS_AVAILABLE = True
 except ImportError:
+    AWSClient = None  # type: ignore
+    CloudTrailCollector = None  # type: ignore
+    EC2Collector = None  # type: ignore
+    IAMCollector = None  # type: ignore
+    KMSCollector = None  # type: ignore
+    RDSCollector = None  # type: ignore
+    S3Collector = None  # type: ignore
+    VPCCollector = None  # type: ignore
     AWS_AVAILABLE = False
 
 # Import GCP collectors
@@ -53,7 +63,16 @@ try:
     )
 
     GCP_AVAILABLE = True
+
 except ImportError:
+    GCPIAMCollector = None  # type: ignore
+    ComputeCollector = None  # type: ignore
+    StorageCollector = None  # type: ignore
+    CloudSQLCollector = None  # type: ignore
+    GCPVPCCollector = None  # type: ignore
+    GCPKMSCollector = None  # type: ignore
+    LoggingCollector = None  # type: ignore
+    GCPClient = None  # type: ignore
     GCP_AVAILABLE = False
 
 collect_app = typer.Typer(help="Collect CI/IaC evidence into vault")
@@ -72,15 +91,14 @@ def collect_batch_cmd(
 
     The input file must be a JSON list of objects matching the /collect schema. Example:
     [
-      {"config_path": "config.yaml", "environment": "prod", "provider": "terraform", "terraform_plan_path": "plan.json"},
-      {"config_path": "config.yaml", "environment": "prod", "provider": "github", "github_repo": "org/repo", "github_token": "..."}
+        {"config_path": "config.yaml", "environment": "prod", "provider": "terraform", "terraform_plan_path": "plan.json"},
+        {"config_path": "config.yaml", "environment": "prod", "provider": "github", "github_repo": "org/repo", "github_token": "..."}
     ]
     """
-
     try:
-        payload: List[Dict[str, Any]] = json.loads(requests_file.read_text())
+        payload: list[dict[str, Any]] = json.loads(requests_file.read_text())
     except Exception as e:
-        raise typer.BadParameter(f"Unable to read requests file: {e}")
+        raise typer.BadParameter(f"Unable to read requests file: {e}") from e
 
     if not isinstance(payload, list) or not payload:
         raise typer.BadParameter("requests file must be a non-empty JSON list")
@@ -99,15 +117,16 @@ def collect_terraform_cmd(
     config: Path = typer.Option(..., exists=True, help="Path to config.yaml"),
     env: str = typer.Option(..., help="Environment key (e.g., edge)"),
     plan: Path = typer.Option(..., exists=True, help="Path to terraform plan artifact"),
-    apply: Optional[Path] = typer.Option(None, exists=True, help="Path to terraform apply log"),
+    apply: Path | None = typer.Option(None, exists=True, help="Path to terraform apply log"),
 ):
+    """Collect Terraform plan/apply artifacts and upload them to the evidence vault."""
     cfg = AppConfig.load(config)
     if env not in cfg.environments:
         raise typer.BadParameter(f"Unknown environment: {env}")
     envcfg = cfg.environments[env]
     vault = vault_from_envcfg(envcfg)
 
-    md = {}
+    md: dict[str, Any] = {}
     artifacts, manifest = collect_terraform(
         environment=env, plan_path=plan, apply_log_path=apply, extra_metadata=md
     )
@@ -132,14 +151,15 @@ def collect_github_cmd(
     config: Path = typer.Option(..., exists=True, help="Path to config.yaml"),
     env: str = typer.Option(..., help="Environment key (e.g., edge)"),
     repo: str = typer.Option(..., help="GitHub repo 'owner/name'"),
-    token: Optional[str] = typer.Option(
+    token: str | None = typer.Option(
         None, envvar="GITHUB_TOKEN", help="GitHub token or env GITHUB_TOKEN"
     ),
-    run_id: Optional[int] = typer.Option(
+    run_id: int | None = typer.Option(
         None, help="Specific run id; if not set, uses latest (optionally by branch)"
     ),
-    branch: Optional[str] = typer.Option(None, help="Branch to filter latest run"),
+    branch: str | None = typer.Option(None, help="Branch to filter latest run"),
 ):
+    """Fetch GitHub Actions logs and artifacts and upload them to the evidence vault."""
     if not token:
         raise typer.BadParameter("GitHub token required (use --token or set GITHUB_TOKEN)")
     cfg = AppConfig.load(config)
@@ -155,7 +175,7 @@ def collect_github_cmd(
     uploaded = 0
     for a in artifacts:
         local_path = a.metadata.get("_local_path")
-        if not local_path:
+        if not isinstance(local_path, (str, Path)):
             continue
         vault.put_file(
             local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
@@ -174,14 +194,15 @@ def collect_gitlab_cmd(
     env: str = typer.Option(..., help="Environment key (e.g., edge)"),
     base_url: str = typer.Option("https://gitlab.com", help="GitLab instance URL"),
     project_id: str = typer.Option(..., help="GitLab project ID or 'namespace/project'"),
-    token: Optional[str] = typer.Option(
+    token: str | None = typer.Option(
         None, envvar="GITLAB_TOKEN", help="GitLab token or env GITLAB_TOKEN"
     ),
-    pipeline_id: Optional[int] = typer.Option(
+    pipeline_id: int | None = typer.Option(
         None, help="Specific pipeline id; if not set, uses latest (optionally by ref)"
     ),
-    ref: Optional[str] = typer.Option(None, help="Ref (branch/tag) to filter latest pipeline"),
+    ref: str | None = typer.Option(None, help="Ref (branch/tag) to filter latest pipeline"),
 ):
+    """Fetch GitLab pipeline logs and artifacts and upload them to the evidence vault."""
     if not token:
         raise typer.BadParameter("GitLab token required (use --token or set GITLAB_TOKEN)")
     cfg = AppConfig.load(config)
@@ -202,7 +223,7 @@ def collect_gitlab_cmd(
     uploaded = 0
     for a in artifacts:
         local_path = a.metadata.get("_local_path")
-        if not local_path:
+        if not isinstance(local_path, (str, Path)):
             continue
         vault.put_file(
             local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
@@ -221,13 +242,14 @@ def collect_argo_cmd(
     env: str = typer.Option(..., help="Environment key (e.g., edge)"),
     base_url: str = typer.Option(..., help="Argo Server URL (e.g., https://argo-server:2746)"),
     namespace: str = typer.Option("argo", help="Kubernetes namespace"),
-    workflow_name: Optional[str] = typer.Option(
+    workflow_name: str | None = typer.Option(
         None, help="Specific workflow name; if not set, uses latest"
     ),
-    token: Optional[str] = typer.Option(
+    token: str | None = typer.Option(
         None, envvar="ARGO_TOKEN", help="Argo token or env ARGO_TOKEN (optional)"
     ),
 ):
+    """Fetch Argo Workflow logs and artifacts and upload them to the evidence vault."""
     cfg = AppConfig.load(config)
     if env not in cfg.environments:
         raise typer.BadParameter(f"Unknown environment: {env}")
@@ -245,7 +267,7 @@ def collect_argo_cmd(
     uploaded = 0
     for a in artifacts:
         local_path = a.metadata.get("_local_path")
-        if not local_path:
+        if not isinstance(local_path, (str, Path)):
             continue
         vault.put_file(
             local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
@@ -268,10 +290,11 @@ def collect_azure_cmd(
     resource_group: str = typer.Option(..., help="Azure resource group name"),
     storage_account: str = typer.Option(..., help="Storage account name"),
     key_vault: str = typer.Option(..., help="Key Vault name"),
-    output_dir: Optional[Path] = typer.Option(
+    output_dir: Path | None = typer.Option(
         None, help="Output directory for collected evidence (default: temp)"
     ),
 ):
+    """Collect Azure resources evidence and upload to the evidence vault."""
     cfg = AppConfig.load(config)
     if env not in cfg.environments:
         raise typer.BadParameter(f"Unknown environment: {env}")
@@ -290,7 +313,8 @@ def collect_azure_cmd(
     uploaded: list[ArtifactRecord] = []
     for a in artifacts:
         metadata = {k: v for k, v in a.metadata.items()}
-        vault.put_json(a.key, a.metadata, metadata=metadata)
+        # Serialize a.metadata to JSON string for put_json
+        vault.put_json(a.key, json.dumps(a.metadata), metadata=metadata)
         uploaded.append(a)
 
     manifest_key = f"manifests/{env}/azure-manifest.json"
@@ -307,11 +331,11 @@ def collect_aws_cmd(
     config: Path = typer.Option(..., exists=True, help="Path to config.yaml"),
     env: str = typer.Option(..., help="Environment key (e.g., production)"),
     region: str = typer.Option("us-east-1", help="AWS region"),
-    profile: Optional[str] = typer.Option(None, help="AWS CLI profile name"),
+    profile: str | None = typer.Option(None, help="AWS CLI profile name"),
     services: str = typer.Option(
         "iam,ec2,s3,cloudtrail,vpc,rds,kms", help="Comma-separated services to collect"
     ),
-    output_dir: Optional[Path] = typer.Option(None, help="Output directory for evidence files"),
+    output_dir: Path | None = typer.Option(None, help="Output directory for evidence files"),
 ):
     """Collect evidence from AWS services.
 
@@ -346,12 +370,15 @@ def collect_aws_cmd(
 
     # Initialize AWS client
     try:
-        client = AWSClient(region=region, profile_name=profile)
+        if AWSClient is not None:
+            client = AWSClient(region=region, profile_name=profile)
+        else:
+            raise RuntimeError("AWSClient is not available")
         account_id = client.get_account_id()
         typer.echo(f"Connected to AWS account: {account_id} (region: {region})")
     except Exception as e:
         typer.echo(f"Error connecting to AWS: {e}", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     # Collect evidence
     artifacts: list[ArtifactRecord] = []
@@ -360,70 +387,119 @@ def collect_aws_cmd(
     for service in service_list:
         typer.echo(f"Collecting evidence from AWS {service}...")
 
+        evidence = None
+        summary = None
         try:
             if service == "iam":
-                collector = IAMCollector(client)
-                evidence = collector.collect_all()
-                summary = f"users={len(evidence.get('users', []))}, roles={len(evidence.get('roles', []))}, policies={len(evidence.get('policies', []))}"
+                if IAMCollector is not None:
+                    iam_collector = IAMCollector(client)
+                else:
+                    raise RuntimeError("IAMCollector is not available")
+                evidence = iam_collector.collect_all()
+                summary = (
+                    f"users={len(evidence.get('users', []))}, "
+                    f"roles={len(evidence.get('roles', []))}, "
+                    f"policies={len(evidence.get('policies', []))}"
+                )
 
             elif service == "ec2":
-                collector = EC2Collector(client)
-                evidence = collector.collect_all()
-                summary = f"instances={len(evidence.get('instances', []))}, sg={len(evidence.get('security_groups', []))}, volumes={len(evidence.get('volumes', []))}"
+                if EC2Collector is not None:
+                    ec2_collector = EC2Collector(client)
+                else:
+                    raise RuntimeError("EC2Collector is not available")
+                evidence = ec2_collector.collect_all()
+                summary = (
+                    f"instances={len(evidence.get('instances', []))}, "
+                    f"sg={len(evidence.get('security_groups', []))}, "
+                    f"volumes={len(evidence.get('volumes', []))}"
+                )
 
             elif service == "s3":
-                collector = S3Collector(client)
-                evidence = collector.collect_all()
-                summary = f"buckets={len(evidence.get('buckets', []))}, policies={len(evidence.get('policies', []))}"
+                if S3Collector is not None:
+                    s3_collector = S3Collector(client)
+                else:
+                    raise RuntimeError("S3Collector is not available")
+                evidence = s3_collector.collect_all()
+                summary = (
+                    f"buckets={len(evidence.get('buckets', []))}, "
+                    f"policies={len(evidence.get('policies', []))}"
+                )
 
             elif service == "cloudtrail":
-                collector = CloudTrailCollector(client)
-                evidence = collector.collect_all()
-                summary = f"trails={len(evidence.get('trails', []))}, events={len(evidence.get('events', []))}"
+                if CloudTrailCollector is not None:
+                    cloudtrail_collector = CloudTrailCollector(client)
+                else:
+                    raise RuntimeError("CloudTrailCollector is not available")
+                evidence = cloudtrail_collector.collect_all()
+                summary = (
+                    f"trails={len(evidence.get('trails', []))}, "
+                    f"events={len(evidence.get('events', []))}"
+                )
 
             elif service == "vpc":
-                collector = VPCCollector(client)
-                evidence = collector.collect_all()
-                summary = f"flow_logs={len(evidence.get('flow_logs', []))}, nacls={len(evidence.get('nacls', []))}"
+                if VPCCollector is not None:
+                    vpc_collector = VPCCollector(client)
+                else:
+                    raise RuntimeError("VPCCollector is not available")
+                evidence = vpc_collector.collect_all()
+                summary = (
+                    f"flow_logs={len(evidence.get('flow_logs', []))}, "
+                    f"nacls={len(evidence.get('nacls', []))}"
+                )
 
             elif service == "rds":
-                collector = RDSCollector(client)
-                evidence = collector.collect_all()
-                summary = f"instances={len(evidence.get('instances', []))}, clusters={len(evidence.get('clusters', []))}"
+                if RDSCollector is not None:
+                    rds_collector = RDSCollector(client)
+                else:
+                    raise RuntimeError("RDSCollector is not available")
+                evidence = rds_collector.collect_all()
+                summary = (
+                    f"instances={len(evidence.get('instances', []))}, "
+                    f"clusters={len(evidence.get('clusters', []))}"
+                )
 
             elif service == "kms":
-                collector = KMSCollector(client)
-                evidence = collector.collect_all()
-                summary = f"keys={len(evidence.get('keys', []))}, policies={len(evidence.get('policies', []))}"
+                if KMSCollector is not None:
+                    kms_collector = KMSCollector(client)
+                else:
+                    raise RuntimeError("KMSCollector is not available")
+                evidence = kms_collector.collect_all()
+                summary = (
+                    f"keys={len(evidence.get('keys', []))}, "
+                    f"policies={len(evidence.get('policies', []))}"
+                )
 
-            # Save evidence to temp file or output dir
-            if output_dir:
-                output_dir.mkdir(parents=True, exist_ok=True)
-                evidence_file = output_dir / f"aws-{service}-{collected_at}.json"
-                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
-            else:
-                evidence_file = Path(tempfile.mktemp(suffix=".json"))
-                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+            if evidence is not None:
+                # Save evidence to temp file or output dir
+                if output_dir:
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    evidence_file = output_dir / f"aws-{service}-{collected_at}.json"
+                    evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+                else:
+                    evidence_file = Path(tempfile.mktemp(suffix=".json"))
+                    evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
 
-            # Create artifact record
-            artifact = ArtifactRecord(
-                key=f"evidence/{env}/aws-{service}-{account_id}.json",
-                sha256=evidence["metadata"]["sha256"],
-                size=evidence_file.stat().st_size,
-                metadata={
-                    "kind": f"aws-{service}",
-                    "service": service,
-                    "account_id": account_id,
-                    "region": region,
-                    "collected_at": collected_at,
-                    "_local_path": str(evidence_file),
-                },
-            )
-            artifacts.append(artifact)
+                # Create artifact record
+                artifact = ArtifactRecord(
+                    key=f"evidence/{env}/aws-{service}-{account_id}.json",
+                    filename=evidence_file.name,
+                    sha256=evidence["metadata"]["sha256"],
+                    size=evidence_file.stat().st_size,
+                    metadata={
+                        "kind": f"aws-{service}",
+                        "service": service,
+                        "account_id": account_id,
+                        "region": region,
+                        "collected_at": collected_at,
+                        "_local_path": str(evidence_file),
+                    },
+                )
+                artifacts.append(artifact)
 
-            # Upload to vault
-            vault.put_json(artifact.key, evidence, metadata=artifact.metadata)
-            typer.echo(f"  ✓ {summary}")
+                # Upload to vault
+                vault.put_json(artifact.key, json.dumps(evidence), metadata=artifact.metadata)
+                if summary is not None:
+                    typer.echo(f"  ✓ {summary}")
 
         except Exception as e:
             typer.echo(f"  ✗ Error collecting {service}: {e}", err=True)
@@ -435,17 +511,14 @@ def collect_aws_cmd(
 
     # Create manifest
     manifest = EvidenceManifest(
+        version="1.0",
         environment=env,
+        created_at=datetime.utcnow().timestamp(),
         artifacts=artifacts,
-        overall_hash=EvidenceManifest.compute_overall_hash([a.sha256 for a in artifacts]),
+        overall_hash="",  # Temporary, will set below
         notes=f"AWS evidence collection: {', '.join(service_list)}",
-        attributes={
-            "account_id": account_id,
-            "region": region,
-            "services": service_list,
-            "collected_at": collected_at,
-        },
     )
+    manifest.overall_hash = manifest.compute_overall_hash()
 
     # Upload manifest
     manifest_key = f"manifests/{env}/aws-{'-'.join(service_list)}-manifest.json"
@@ -464,16 +537,16 @@ def collect_aws_cmd(
 def collect_gcp_cmd(
     config: Path = typer.Option(..., exists=True, help="Path to config.yaml"),
     env: str = typer.Option(..., help="Environment key (e.g., production)"),
-    project_id: Optional[str] = typer.Option(
+    project_id: str | None = typer.Option(
         None, help="GCP project ID (auto-detect if not provided)"
     ),
-    credentials_path: Optional[Path] = typer.Option(
+    credentials_path: Path | None = typer.Option(
         None, exists=True, help="Path to service account JSON"
     ),
     services: str = typer.Option(
         "iam,compute,storage,sql,vpc,kms,logging", help="Comma-separated services"
     ),
-    output_dir: Optional[Path] = typer.Option(None, help="Output directory for evidence files"),
+    output_dir: Path | None = typer.Option(None, help="Output directory for evidence files"),
 ):
     """Collect evidence from GCP services.
 
@@ -513,15 +586,18 @@ def collect_gcp_cmd(
 
     # Initialize GCP client
     try:
-        client = GCPClient(
-            project_id=project_id,
-            credentials_path=str(credentials_path) if credentials_path else None,
-        )
+        if GCPClient is not None:
+            client = GCPClient(
+                project_id=project_id,
+                credentials_path=str(credentials_path) if credentials_path else None,
+            )
+        else:
+            raise RuntimeError("GCPClient is not available")
         project_id = client.project_id
         typer.echo(f"Connected to GCP project: {project_id}")
     except Exception as e:
         typer.echo(f"Error connecting to GCP: {e}", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     # Collect evidence
     artifacts: list[ArtifactRecord] = []
@@ -530,70 +606,112 @@ def collect_gcp_cmd(
     for service in service_list:
         typer.echo(f"Collecting evidence from GCP {service}...")
 
+        evidence = None
+        summary = None
         try:
+            # Use separate variables for each collector type to avoid type conflicts
             if service == "iam":
-                collector = GCPIAMCollector(client)
-                evidence = collector.collect_all()
-                summary = f"service_accounts={len(evidence.get('service_accounts', []))}, roles={len(evidence.get('custom_roles', []))}"
+                if GCPIAMCollector is not None:
+                    gcp_iam_collector = GCPIAMCollector(client)
+                else:
+                    raise RuntimeError("GCPIAMCollector is not available")
+                evidence = gcp_iam_collector.collect_all()
+                summary = (
+                    f"service_accounts={len(evidence.get('service_accounts', []))}, "
+                    f"roles={len(evidence.get('custom_roles', []))}"
+                )
 
             elif service == "compute":
-                collector = ComputeCollector(client)
-                evidence = collector.collect_all()
-                summary = f"instances={len(evidence.get('instances', []))}, disks={len(evidence.get('disks', []))}, firewalls={len(evidence.get('firewalls', []))}"
+                if ComputeCollector is not None:
+                    compute_collector = ComputeCollector(client)
+                else:
+                    raise RuntimeError("ComputeCollector is not available")
+                evidence = compute_collector.collect_all()
+                summary = (
+                    f"instances={len(evidence.get('instances', []))}, "
+                    f"disks={len(evidence.get('disks', []))}, "
+                    f"firewalls={len(evidence.get('firewalls', []))}"
+                )
 
             elif service == "storage":
-                collector = StorageCollector(client)
-                evidence = collector.collect_all()
+                if StorageCollector is not None:
+                    storage_collector = StorageCollector(client)
+                else:
+                    raise RuntimeError("StorageCollector is not available")
+                evidence = storage_collector.collect_all()
                 summary = f"buckets={len(evidence.get('buckets', []))}"
 
             elif service == "sql":
-                collector = CloudSQLCollector(client)
-                evidence = collector.collect_all()
+                if CloudSQLCollector is not None:
+                    sql_collector = CloudSQLCollector(client)
+                else:
+                    raise RuntimeError("CloudSQLCollector is not available")
+                evidence = sql_collector.collect_all()
                 summary = f"instances={len(evidence.get('instances', []))}"
 
             elif service == "vpc":
-                collector = GCPVPCCollector(client)
-                evidence = collector.collect_all()
-                summary = f"networks={len(evidence.get('networks', []))}, subnets={len(evidence.get('subnetworks', []))}"
+                if GCPVPCCollector is not None:
+                    gcp_vpc_collector = GCPVPCCollector(client)
+                else:
+                    raise RuntimeError("GCPVPCCollector is not available")
+                evidence = gcp_vpc_collector.collect_all()
+                summary = (
+                    f"networks={len(evidence.get('networks', []))}, "
+                    f"subnets={len(evidence.get('subnetworks', []))}"
+                )
 
             elif service == "kms":
-                collector = GCPKMSCollector(client)
-                evidence = collector.collect_all()
-                summary = f"key_rings={len(evidence.get('key_rings', []))}, keys={len(evidence.get('crypto_keys', []))}"
+                if GCPKMSCollector is not None:
+                    gcp_kms_collector = GCPKMSCollector(client)
+                else:
+                    raise RuntimeError("GCPKMSCollector is not available")
+                evidence = gcp_kms_collector.collect_all()
+                summary = (
+                    f"key_rings={len(evidence.get('key_rings', []))}, "
+                    f"keys={len(evidence.get('crypto_keys', []))}"
+                )
 
             elif service == "logging":
-                collector = LoggingCollector(client)
-                evidence = collector.collect_all()
-                summary = f"sinks={len(evidence.get('sinks', []))}, metrics={len(evidence.get('metrics', []))}"
+                if LoggingCollector is not None:
+                    logging_collector = LoggingCollector(client)
+                else:
+                    raise RuntimeError("LoggingCollector is not available")
+                evidence = logging_collector.collect_all()
+                summary = (
+                    f"sinks={len(evidence.get('sinks', []))}, "
+                    f"metrics={len(evidence.get('metrics', []))}"
+                )
 
-            # Save evidence to temp file or output dir
-            if output_dir:
-                output_dir.mkdir(parents=True, exist_ok=True)
-                evidence_file = output_dir / f"gcp-{service}-{collected_at}.json"
-                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
-            else:
-                evidence_file = Path(tempfile.mktemp(suffix=".json"))
-                evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+            if evidence is not None:
+                # Save evidence to temp file or output dir
+                if output_dir:
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    evidence_file = output_dir / f"gcp-{service}-{collected_at}.json"
+                    evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
+                else:
+                    evidence_file = Path(tempfile.mktemp(suffix=".json"))
+                    evidence_file.write_text(json.dumps(evidence, indent=2, default=str))
 
-            # Create artifact record
-            artifact = ArtifactRecord(
-                key=f"evidence/{env}/gcp-{service}-{project_id}.json",
-                filename=f"gcp-{service}-{project_id}.json",
-                sha256=evidence["metadata"]["sha256"],
-                size=evidence_file.stat().st_size,
-                metadata={
-                    "kind": f"gcp-{service}",
-                    "service": service,
-                    "project_id": project_id,
-                    "collected_at": collected_at,
-                    "_local_path": str(evidence_file),
-                },
-            )
-            artifacts.append(artifact)
+                # Create artifact record
+                artifact = ArtifactRecord(
+                    key=f"evidence/{env}/gcp-{service}-{project_id}.json",
+                    filename=f"gcp-{service}-{project_id}.json",
+                    sha256=evidence["metadata"]["sha256"],
+                    size=evidence_file.stat().st_size,
+                    metadata={
+                        "kind": f"gcp-{service}",
+                        "service": service,
+                        "project_id": project_id,
+                        "collected_at": collected_at,
+                        "_local_path": str(evidence_file),
+                    },
+                )
+                artifacts.append(artifact)
 
-            # Upload to vault
-            vault.put_json(artifact.key, evidence, metadata=artifact.metadata)
-            typer.echo(f"  ✓ {summary}")
+                # Upload to vault
+                vault.put_json(artifact.key, json.dumps(evidence), metadata=artifact.metadata)
+                if summary is not None:
+                    typer.echo(f"  ✓ {summary}")
 
         except Exception as e:
             typer.echo(f"  ✗ Error collecting {service}: {e}", err=True)
@@ -620,8 +738,3 @@ def collect_gcp_cmd(
 
     # Persist to database if configured
     persist_if_db(envcfg, env, manifest, artifacts)
-
-    typer.echo(f"\n✓ Collected {len(artifacts)} artifact(s) from GCP")
-    typer.echo(f"✓ Manifest: {manifest_key}")
-    if output_dir:
-        typer.echo(f"✓ Evidence files: {output_dir}")

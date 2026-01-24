@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from . import get_sync_session, init_db_sync
 from .models import Evidence, EvidenceManifestEntry, System
@@ -13,7 +12,7 @@ from .models import EvidenceManifest as DBManifest
 
 
 def migrate_manifests(
-    manifests_dir: Path | str, env: str, database_url: str, env_description: Optional[str] = None
+    manifests_dir: Path | str, env: str, database_url: str, env_description: str | None = None
 ) -> int:
     """
     Load manifest JSON files from a directory and persist them into the database.

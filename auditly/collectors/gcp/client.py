@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class GCPClient:
 
     def __init__(
         self,
-        project_id: Optional[str] = None,
-        credentials_path: Optional[str] = None,
-        organization_id: Optional[str] = None,
+        project_id: str | None = None,
+        credentials_path: str | None = None,
+        organization_id: str | None = None,
     ):
         """Initialize GCP client.
 

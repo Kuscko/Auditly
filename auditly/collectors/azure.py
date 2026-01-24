@@ -1,21 +1,23 @@
+"""Azure collectors for evidence and artifact retrieval."""
+
 from __future__ import annotations
 
 import json
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
 
 
-def _run_az_command(cmd: List[str]) -> str:
+def _run_az_command(cmd: list[str]) -> str:
     """Run Azure CLI command and return JSON output."""
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Azure CLI command failed: {e.stderr}")
+        raise RuntimeError(f"Azure CLI command failed: {e.stderr}") from e
 
 
 def _create_json_file(data: Any, path: Path) -> Path:
@@ -32,10 +34,10 @@ def collect_azure(
     resource_group: str,
     storage_account: str,
     key_vault: str,
-    output_dir: Optional[Path | str] = None,
-    extra_metadata: Optional[Dict[str, Any]] = None,
+    output_dir: Path | str | None = None,
+    extra_metadata: dict[str, Any] | None = None,
     key_prefix: str = "azure",
-) -> (List[ArtifactRecord], EvidenceManifest):
+) -> tuple[list[ArtifactRecord], EvidenceManifest]:
     """
     Collect Azure resources evidence (storage, Key Vault, IAM, activity log, MFA).
 
@@ -58,7 +60,7 @@ def collect_azure(
         output_dir = Path(output_dir)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    artifacts: List[ArtifactRecord] = []
+    artifacts: list[ArtifactRecord] = []
 
     # Ensure subscription is set
     _run_az_command(["az", "account", "set", "--subscription", subscription_id])

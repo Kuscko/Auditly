@@ -61,13 +61,15 @@ class StorageCollector:
         Returns:
             Dictionary containing all Storage evidence types
         """
-        evidence = {
+        evidence: dict[str, Any] = {
             "buckets": self.collect_buckets(),
-            "metadata": {
-                "collector": "GCPStorageCollector",
-                "collected_at": datetime.utcnow().isoformat(),
-                "project_id": self.project_id,
-            },
+            "metadata": dict(
+                {
+                    "collector": "GCPStorageCollector",
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "project_id": self.project_id,
+                }
+            ),
         }
 
         # Compute evidence checksum

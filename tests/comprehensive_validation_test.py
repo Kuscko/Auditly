@@ -19,7 +19,12 @@ from typing import Any, Dict
 
 from auditly.config import AppConfig
 from auditly.oscal import OscalCatalog, OscalProfile, load_oscal
-from auditly.validators import ComplianceValidator, ValidationResult, get_control_requirement
+from auditly.validators import (
+    ComplianceValidator,
+    ValidationResult,
+    ValidationStatus,
+    get_control_requirement,
+)
 
 
 def load_test_evidence() -> Dict[str, Any]:
@@ -29,15 +34,15 @@ def load_test_evidence() -> Dict[str, Any]:
         return json.load(f)
 
 
-def create_evidence_for_control(control_id: str, test_data: Dict[str, Any]) -> Dict[str, str]:
+def create_evidence_for_control(control_id: str, test_data: Dict[str, Any]) -> Dict[str, object]:
     """Create evidence dictionary for a specific control based on family and requirements"""
-    evidence = {}
+    evidence: Dict[str, object] = {}
 
     # Extract family from control ID (e.g., "AC-2" -> "AC")
     family = control_id.split("-")[0].upper()
 
     # Map evidence types to this control based on family membership
-    for category, artifacts_dict in test_data["evidence_artifacts"].items():
+    for _category, artifacts_dict in test_data["evidence_artifacts"].items():
         for evidence_type, evidence_info in artifacts_dict.items():
             satisfies_families = evidence_info.get("satisfies_families", [])
             # Add evidence if it satisfies this control's family
@@ -67,7 +72,7 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
 
     # Load all catalogs and profiles
     print("Loading OSCAL catalogs and profiles...")
-    all_controls = {}  # control_id -> catalog_name
+    all_controls: Dict[str, list[str]] = {}  # control_id -> catalog_name
     catalog_stats = {}
 
     for catalog_name, catalog_path in config.catalogs.get_all_catalogs().items():
@@ -97,7 +102,12 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
     print("Validating all controls...")
     print()
 
-    results = {
+    by_status: defaultdict[str, int] = defaultdict(int)
+    by_family = defaultdict(
+        lambda: {"total": 0, "pass": 0, "insufficient": 0, "failed": 0, "unknown": 0}
+    )  # type: ignore
+
+    results: Dict[str, Any] = {
         "metadata": {
             "test_timestamp": datetime.now().isoformat() + "Z",
             "total_controls": len(all_controls),
@@ -107,10 +117,8 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
         },
         "controls": {},
         "statistics": {
-            "by_status": defaultdict(int),
-            "by_family": defaultdict(
-                lambda: {"total": 0, "pass": 0, "insufficient": 0, "failed": 0, "unknown": 0}
-            ),
+            "by_status": by_status,
+            "by_family": by_family,
         },
     }
 
@@ -138,12 +146,12 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
             # Validate
             if requirement:
                 validator = ComplianceValidator(requirement)
-                result = validator.validate(evidence_keys)
+                result = validator.validate(evidence_keys, evidence)
             else:
                 # No validator - this shouldn't happen with family patterns
                 result = ValidationResult(
                     control_id=control_id,
-                    status="unknown",
+                    status=ValidationStatus.UNKNOWN,
                     message="No validation pattern found",
                     evidence_keys=[],
                     metadata={},

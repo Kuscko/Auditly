@@ -1,7 +1,8 @@
+"""CLI commands for generating compliance readiness and validation reports."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -23,6 +24,7 @@ def report_readiness(
     env: str = typer.Option(..., help="Environment key (e.g., edge)"),
     out: Path = typer.Option(Path("report.html"), help="Output HTML path"),
 ):
+    """Generate an HTML readiness report for compliance evidence in the given environment."""
     staging = Path(".auditly_manifests")
     staging.mkdir(exist_ok=True)
     if not any(staging.glob(f"{env}-*.json")):
@@ -50,7 +52,7 @@ def report_readiness(
     try:
         cfg = AppConfig.load(config)
         control_ids = []
-        for name, cat_path in cfg.catalogs.get_all_catalogs().items():
+        for _, cat_path in cfg.catalogs.get_all_catalogs().items():
             oscal_obj = load_oscal(cat_path)
             if isinstance(oscal_obj, OscalCatalog):
                 control_ids.extend(oscal_obj.control_ids())
@@ -60,7 +62,12 @@ def report_readiness(
                     control_ids.extend(imported)
 
         seen = set()
-        control_ids = [x for x in control_ids if not (x in seen or seen.add(x))]
+        deduped = []
+        for x in control_ids:
+            if x not in seen:
+                deduped.append(x)
+                seen.add(x)
+        control_ids = deduped
 
         mapping_path = Path("mapping.yaml")
         if not mapping_path.exists():
@@ -74,8 +81,8 @@ def report_readiness(
         else:
             summary["controls"] = control_coverage_placeholder(control_ids, manifests)
 
-        evidence_dict = {
-            a.metadata.get("kind", "unknown"): True for m in manifests for a in m.artifacts
+        evidence_dict: dict[str, object] = {
+            str(a.metadata.get("kind", "unknown")): True for m in manifests for a in m.artifacts
         }
         validation_results = validate_controls(control_ids, evidence_dict)
         summary["validation"] = {
@@ -100,11 +107,12 @@ def report_readiness(
 @report_app.command("engineer", help="Generate engineer-focused validation report")
 def report_engineer(
     evidence_file: Path = typer.Option(..., exists=True, help="JSON file with evidence dict"),
-    control_ids: Optional[str] = typer.Option(
+    control_ids: str | None = typer.Option(
         None, help="Comma-separated control IDs (default: sample)"
     ),
     out: Path = typer.Option(Path("engineer-report.html"), help="Output HTML path"),
 ):
+    """Generate an engineer-focused validation report from evidence and control IDs."""
     import json as _json
 
     from .validators import FAMILY_PATTERNS
@@ -125,11 +133,12 @@ def report_engineer(
 @report_app.command("auditor", help="Generate auditor-focused validation report")
 def report_auditor(
     evidence_file: Path = typer.Option(..., exists=True, help="JSON file with evidence dict"),
-    control_ids: Optional[str] = typer.Option(
+    control_ids: str | None = typer.Option(
         None, help="Comma-separated control IDs (default: sample)"
     ),
     out: Path = typer.Option(Path("auditor-report.html"), help="Output HTML path"),
 ):
+    """Generate an auditor-focused validation report from evidence and control IDs."""
     import json as _json
 
     from .validators import FAMILY_PATTERNS

@@ -7,7 +7,7 @@ Create Date: 2026-01-08 00:00:00
 
 import sqlalchemy as sa
 
-from alembic import op
+from alembic import op  # type: ignore[attr-defined]
 
 # revision identifiers, used by Alembic.
 revision = "3c1e3b2a5d6f"

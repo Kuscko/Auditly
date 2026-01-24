@@ -4,21 +4,14 @@
 # Run: pre-commit run --all-files
 
 repos:
-  # Code formatting with Black
-- repo: https://github.com/psf/black
-  rev: 24.10.0
-  hooks:
-  - id: black
-    language_version: python3
-    args: [--line-length=100]
-    exclude: ^(tests/terraform/|docs/|examples/)
+
 
   # Linting with Ruff
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.3.5
   hooks:
   - id: ruff
-    args: [--fix]
+    args: [--fix, --extend-ignore=E501]
     exclude: ^(tests/terraform/|docs/|examples/)
   - id: ruff-format
     args: [--line-length=100]
@@ -39,8 +32,7 @@ repos:
   rev: v1.8.0
   hooks:
   - id: mypy
-    # additional_dependencies: [types-all]  # Removed to fix CI/CD errors
-    args: [--ignore-missing-imports]
+    additional_dependencies: [types-PyYAML==6.0.12.20250915, types-requests==2.32.4.20260107]
     exclude: ^(tests/terraform/|examples/)
     # stages removed: now runs automatically on commit and CI
 

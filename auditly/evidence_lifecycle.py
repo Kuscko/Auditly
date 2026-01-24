@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,14 +14,15 @@ class EvidenceLifecycleManager:
     """Manage evidence lifecycle: staleness, deduplication, access tracking."""
 
     def __init__(self, session: Session):
+        """Initialize the EvidenceLifecycleManager with a database session."""
         self.session = session
 
     def detect_stale_evidence(
         self,
         system_id: int,
         staleness_threshold_days: int = 30,
-        evidence_type: Optional[str] = None,
-    ) -> List[Evidence]:
+        evidence_type: str | None = None,
+    ) -> list[Evidence]:
         """
         Find evidence that hasn't been updated within the staleness threshold.
 
@@ -47,7 +47,7 @@ class EvidenceLifecycleManager:
         result = self.session.execute(query)
         return list(result.scalars().all())
 
-    def get_evidence_versions(self, evidence_id: int) -> List[EvidenceVersion]:
+    def get_evidence_versions(self, evidence_id: int) -> list[EvidenceVersion]:
         """
         Get all versions of an evidence record, ordered by version number.
 
@@ -69,8 +69,8 @@ class EvidenceLifecycleManager:
         self,
         system_id: int,
         sha256_hash: str,
-        exclude_evidence_id: Optional[int] = None,
-    ) -> List[Evidence]:
+        exclude_evidence_id: int | None = None,
+    ) -> list[Evidence]:
         """
         Find duplicate evidence by SHA256 hash.
 
@@ -98,7 +98,7 @@ class EvidenceLifecycleManager:
         evidence_id: int,
         version1: int,
         version2: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, object]:
         """
         Compare two versions of evidence to detect configuration drift.
 
@@ -164,7 +164,7 @@ class EvidenceLifecycleManager:
         self,
         evidence_id: int,
         limit: int = 100,
-    ) -> List[EvidenceAccessLog]:
+    ) -> list[EvidenceAccessLog]:
         """
         Get access log for evidence.
 
@@ -189,8 +189,8 @@ class EvidenceLifecycleManager:
         evidence_id: int,
         user_id: str,
         action: str,
-        ip_address: Optional[str] = None,
-        attributes: Optional[Dict[str, Any]] = None,
+        ip_address: str | None = None,
+        attributes: dict[str, object] | None = None,
     ) -> EvidenceAccessLog:
         """
         Log evidence access for audit trail.

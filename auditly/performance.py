@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import fnmatch
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
 
 
 @dataclass
@@ -13,7 +14,7 @@ class CacheEntry:
     """Cached entry with TTL."""
 
     key: str
-    value: Any
+    value: object
     created_at: datetime = field(default_factory=datetime.utcnow)
     ttl_seconds: int = 3600  # 1 hour default
 
@@ -36,10 +37,10 @@ class ValidationResultCache:
         Args:
             default_ttl: Default TTL in seconds (3600 = 1 hour)
         """
-        self.cache: Dict[str, CacheEntry] = {}
+        self.cache: dict[str, CacheEntry] = {}
         self.default_ttl = default_ttl
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> object | None:
         """Get cached value if not expired."""
         if key not in self.cache:
             return None
@@ -51,12 +52,12 @@ class ValidationResultCache:
 
         return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None):
+    def set(self, key: str, value: object, ttl: int | None = None):
         """Cache a value."""
         ttl = self.default_ttl if ttl is None else ttl
         self.cache[key] = CacheEntry(key=key, value=value, ttl_seconds=ttl)
 
-    def invalidate(self, pattern: Optional[str] = None):
+    def invalidate(self, pattern: str | None = None):
         """
         Invalidate cache entries.
 
@@ -67,7 +68,6 @@ class ValidationResultCache:
             self.cache.clear()
         else:
             # Simple wildcard matching
-            import fnmatch
 
             keys_to_delete = [k for k in self.cache.keys() if fnmatch.fnmatch(k, pattern)]
             for k in keys_to_delete:
@@ -86,7 +86,7 @@ class ValidationResultCache:
         """Create cache key from parts."""
         return "-".join(str(p).lower() for p in parts)
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, object]:
         """Get cache statistics."""
         expired = sum(1 for e in self.cache.values() if e.is_expired())
         return {
@@ -99,11 +99,12 @@ class ValidationResultCache:
 class EvidenceDependencyGraph:
     """Track which controls depend on which evidence types."""
 
-    def __init__(self):
-        self.evidence_to_controls: Dict[str, Set[str]] = {}
-        self.control_to_evidence: Dict[str, Set[str]] = {}
+    def __init__(self) -> None:
+        """Initialize EvidenceDependencyGraph with empty mappings."""
+        self.evidence_to_controls: dict[str, set[str]] = {}
+        self.control_to_evidence: dict[str, set[str]] = {}
 
-    def add_dependency(self, control_id: str, evidence_types: List[str]):
+    def add_dependency(self, control_id: str, evidence_types: list[str]):
         """Register evidence types for a control."""
         control_upper = control_id.upper()
         self.control_to_evidence[control_upper] = set(evidence_types)
@@ -113,7 +114,7 @@ class EvidenceDependencyGraph:
                 self.evidence_to_controls[ev_type] = set()
             self.evidence_to_controls[ev_type].add(control_upper)
 
-    def get_affected_controls(self, evidence_types: List[str]) -> Set[str]:
+    def get_affected_controls(self, evidence_types: list[str]) -> set[str]:
         """
         Get controls affected by changes to specific evidence types.
 
@@ -129,7 +130,7 @@ class EvidenceDependencyGraph:
             affected.update(controls)
         return affected
 
-    def get_evidence_for_control(self, control_id: str) -> Set[str]:
+    def get_evidence_for_control(self, control_id: str) -> set[str]:
         """Get evidence types needed for a control."""
         return self.control_to_evidence.get(control_id.upper(), set())
 
@@ -137,21 +138,22 @@ class EvidenceDependencyGraph:
 class IncrementalValidator:
     """Validates only controls affected by evidence changes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize IncrementalValidator with evidence graph and snapshots."""
         self.evidence_graph = EvidenceDependencyGraph()
-        self.last_validation: Dict[str, Any] = {}
-        self.evidence_snapshots: Dict[str, Dict[str, Any]] = {}
+        self.last_validation: dict[str, object] = {}
+        self.evidence_snapshots: dict[str, dict[str, object]] = {}
 
-    def register_evidence_types(self, control_id: str, evidence_types: List[str]):
+    def register_evidence_types(self, control_id: str, evidence_types: list[str]):
         """Register what evidence types affect a control."""
         self.evidence_graph.add_dependency(control_id, evidence_types)
 
     def get_controls_needing_validation(
         self,
-        all_controls: List[str],
-        current_evidence: Dict[str, Any],
-        previous_evidence: Optional[Dict[str, Any]] = None,
-    ) -> List[str]:
+        all_controls: list[str],
+        current_evidence: dict[str, object],
+        previous_evidence: dict[str, object] | None = None,
+    ) -> list[str]:
         """
         Determine which controls need re-validation.
 
@@ -192,10 +194,8 @@ class IncrementalValidator:
         # Return intersection with requested controls
         return [c for c in all_controls if c.upper() in affected]
 
-    def snapshot_evidence(self, evidence: Dict[str, Any]):
+    def snapshot_evidence(self, evidence: dict[str, object]):
         """Store evidence snapshot for comparison next time."""
-        import json
-
         # Use JSON serialization to handle complex types
         self.evidence_snapshots["last"] = json.loads(json.dumps(evidence, default=str))
 
@@ -203,19 +203,14 @@ class IncrementalValidator:
 class ParallelCollector:
     """Enables parallel evidence collection across services."""
 
-    def __init__(self, max_concurrent: int = 5):
-        """
-        Initialize parallel collector.
-
-        Args:
-            max_concurrent: Maximum concurrent collection tasks
-        """
+    def __init__(self, max_concurrent: int = 5) -> None:
+        """Initialize ParallelCollector with concurrency limit."""
         self.max_concurrent = max_concurrent
         self.semaphore = asyncio.Semaphore(max_concurrent)
 
     async def collect_parallel(
-        self, collectors: Dict[str, Any], timeout: int = 300
-    ) -> Dict[str, Any]:
+        self, collectors: dict[str, asyncio.Future], timeout: int = 300
+    ) -> dict[str, object]:
         """
         Run collectors in parallel with concurrency limit.
 
@@ -254,10 +249,10 @@ class ParallelCollector:
 
     async def collect_with_fallback(
         self,
-        primary_collectors: Dict[str, Any],
-        fallback_collectors: Optional[Dict[str, Any]] = None,
+        primary_collectors: dict[str, asyncio.Future],
+        fallback_collectors: dict[str, asyncio.Future] | None = None,
         timeout: int = 60,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, object]:
         """
         Run primary collectors, with fallback if needed.
 
@@ -271,68 +266,94 @@ class ParallelCollector:
         """
         primary = await self.collect_parallel(primary_collectors, timeout)
 
-        if fallback_collectors and primary["failed"] > 0:
+        if fallback_collectors and isinstance(primary["failed"], int) and primary["failed"] > 0:
             # Try fallback for services that failed
             fallback = await self.collect_parallel(fallback_collectors, timeout)
 
             # Merge: fallback fills in missing results
-            for service, evidence in fallback["results"].items():
-                if service not in primary["results"]:
-                    primary["results"][service] = evidence
+            if isinstance(fallback["results"], dict):
+                for service, evidence in fallback["results"].items():
+                    if isinstance(primary["results"], dict):
+                        if service not in primary["results"]:
+                            primary["results"][service] = evidence
 
         return primary
+
+
+class Metrics:
+    """Container for performance metric fields."""
+
+    def __getitem__(self, key: str) -> object:
+        """Get a metric value by key (dict-like access)."""
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value: object) -> None:
+        """Set a metric value by key (dict-like access)."""
+        setattr(self, key, value)
+
+    def __init__(self) -> None:
+        """Initialize all metric fields to default values."""
+        self.total_validations: int = 0
+        self.cached_validations: int = 0
+        self.parallel_collections: int = 0
+        self.incremental_validations: int = 0
+        self.avg_validation_time: float = 0.0
+        self.collection_times: dict[str, list[float]] = {}
+        self.cache_hit_rate: float = 0.0
 
 
 class PerformanceMetrics:
     """Track validation performance metrics."""
 
-    def __init__(self):
-        self.metrics: Dict[str, Any] = {
-            "total_validations": 0,
-            "cached_validations": 0,
-            "parallel_collections": 0,
-            "incremental_validations": 0,
-            "avg_validation_time": 0.0,
-            "collection_times": {},
-            "cache_hit_rate": 0.0,
-        }
-        self.timings: List[float] = []
+    def __init__(self) -> None:
+        """Initialize PerformanceMetrics with default metrics and timings."""
+        self.metrics = Metrics()
+        self.timings: list[float] = []
 
     def record_validation(self, duration: float, cached: bool = False):
         """Record a validation run."""
-        self.metrics["total_validations"] += 1
+        self.metrics.total_validations += 1
         if cached:
-            self.metrics["cached_validations"] += 1
+            self.metrics.cached_validations += 1
 
         self.timings.append(duration)
-        self.metrics["avg_validation_time"] = sum(self.timings) / len(self.timings)
-        self.metrics["cache_hit_rate"] = (
-            (self.metrics["cached_validations"] / self.metrics["total_validations"])
-            if self.metrics["total_validations"] > 0
+        self.metrics.avg_validation_time = sum(self.timings) / len(self.timings)
+        self.metrics.cache_hit_rate = (
+            (self.metrics.cached_validations / self.metrics.total_validations)
+            if self.metrics.total_validations > 0
             else 0.0
         )
 
     def record_collection(self, service: str, duration: float):
         """Record collection timing for a service."""
-        if service not in self.metrics["collection_times"]:
-            self.metrics["collection_times"][service] = []
-        self.metrics["collection_times"][service].append(duration)
+        if service not in self.metrics.collection_times:
+            self.metrics.collection_times[service] = []
+        self.metrics.collection_times[service].append(duration)
 
     def record_incremental_validation(self):
         """Record an incremental validation."""
-        self.metrics["incremental_validations"] += 1
+        self.metrics.incremental_validations += 1
 
     def record_parallel_collection(self):
         """Record a parallel collection."""
-        self.metrics["parallel_collections"] += 1
+        self.metrics.parallel_collections += 1
 
-    def get_report(self) -> Dict[str, Any]:
+    def get_report(self) -> dict[str, object]:
         """Get metrics report."""
         avg_times = {}
-        for service, times in self.metrics["collection_times"].items():
+        for service, times in self.metrics.collection_times.items():
             avg_times[service] = sum(times) / len(times) if times else 0.0
 
-        return {**self.metrics, "avg_collection_times": avg_times}
+        return {
+            "total_validations": self.metrics.total_validations,
+            "cached_validations": self.metrics.cached_validations,
+            "parallel_collections": self.metrics.parallel_collections,
+            "incremental_validations": self.metrics.incremental_validations,
+            "avg_validation_time": self.metrics.avg_validation_time,
+            "collection_times": self.metrics.collection_times,
+            "cache_hit_rate": self.metrics.cache_hit_rate,
+            "avg_collection_times": avg_times,
+        }
 
 
 # Global instances

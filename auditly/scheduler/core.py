@@ -70,7 +70,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
 
         for sys in systems:
             evidence_rows = await repo.list_evidence_for_system(sys)
-            evidence_dict = {}
+            evidence_dict: dict[str, list[dict]] = {}
 
             for ev in evidence_rows:
                 payload = {
@@ -82,7 +82,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
                 }
                 evidence_dict.setdefault(ev.evidence_type, []).append(payload)
 
-            results = validate_controls(control_ids, evidence_dict, system_state=None)
+            results = validate_controls(control_ids, dict(evidence_dict), system_state=None)
 
             for cid, res in results.items():
                 control = control_map.get(cid.upper())
@@ -135,7 +135,7 @@ async def run_validation_job(config_path: str, env_name: str) -> dict:
 
 
 def run_validation_job_sync(config_path: str, env_name: str) -> dict:
-    """Synchronous wrapper for run_validation_job.
+    """Synchronize validation job execution using run_validation_job.
 
     Args:
         config_path: Path to environment configuration file

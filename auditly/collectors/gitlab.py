@@ -1,10 +1,13 @@
+"""GitLab CI pipeline and artifact collection utilities."""
+
 from __future__ import annotations
 
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
+# type: ignore[import-untyped]
 import requests
 
 from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
@@ -12,14 +15,17 @@ from ..evidence import ArtifactRecord, EvidenceManifest, sha256_file
 
 @dataclass
 class GitLabPipeline:
+    """Represents a GitLab pipeline with basic metadata."""
+
     id: int
-    ref: Optional[str]
+    ref: str | None
     status: str
     created_at: str
-    web_url: Optional[str]
+    web_url: str | None
 
 
-def _gitlab_headers(token: str) -> Dict[str, str]:
+def _gitlab_headers(token: str) -> dict[str, str]:
+    """Return headers for GitLab API requests."""
     return {
         "PRIVATE-TOKEN": token,
         "Content-Type": "application/json",
@@ -27,11 +33,15 @@ def _gitlab_headers(token: str) -> Dict[str, str]:
 
 
 def get_latest_pipeline(
-    base_url: str, project_id: str, token: str, ref: Optional[str] = None
+    base_url: str, project_id: str, token: str, ref: str | None = None
 ) -> GitLabPipeline:
+    """Get the latest pipeline for a project, optionally filtered by ref."""
     url = f"{base_url}/api/v4/projects/{project_id}/pipelines"
-    params = {"per_page": 10, "order_by": "id", "sort": "desc"}
+    from collections.abc import Mapping
+
+    params: Mapping[str, str] = {"per_page": "10", "order_by": "id", "sort": "desc"}
     if ref:
+        params = dict(params)
         params["ref"] = ref
     r = requests.get(url, headers=_gitlab_headers(token), params=params, timeout=30)
     r.raise_for_status()
@@ -49,6 +59,7 @@ def get_latest_pipeline(
 
 
 def get_pipeline(base_url: str, project_id: str, token: str, pipeline_id: int) -> GitLabPipeline:
+    """Get a specific pipeline by ID."""
     url = f"{base_url}/api/v4/projects/{project_id}/pipelines/{pipeline_id}"
     r = requests.get(url, headers=_gitlab_headers(token), timeout=30)
     r.raise_for_status()
@@ -64,7 +75,8 @@ def get_pipeline(base_url: str, project_id: str, token: str, pipeline_id: int) -
 
 def list_pipeline_jobs(
     base_url: str, project_id: str, token: str, pipeline_id: int
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
+    """List jobs for a given pipeline."""
     url = f"{base_url}/api/v4/projects/{project_id}/pipelines/{pipeline_id}/jobs"
     r = requests.get(url, headers=_gitlab_headers(token), timeout=30)
     r.raise_for_status()
@@ -74,6 +86,7 @@ def list_pipeline_jobs(
 def download_job_trace(
     base_url: str, project_id: str, token: str, job_id: int, out_dir: Path
 ) -> Path:
+    """Download the trace log for a job and save it to out_dir."""
     url = f"{base_url}/api/v4/projects/{project_id}/jobs/{job_id}/trace"
     r = requests.get(url, headers=_gitlab_headers(token), timeout=60)
     r.raise_for_status()
@@ -83,7 +96,7 @@ def download_job_trace(
 
 
 def list_job_artifacts(base_url: str, project_id: str, token: str, job_id: int) -> bool:
-    # Check if artifacts exist by attempting to list them
+    """Check if job artifacts exist for a given job."""
     url = f"{base_url}/api/v4/projects/{project_id}/jobs/{job_id}/artifacts"
     r = requests.head(url, headers=_gitlab_headers(token), timeout=10)
     return r.status_code == 200
@@ -91,7 +104,8 @@ def list_job_artifacts(base_url: str, project_id: str, token: str, job_id: int) 
 
 def download_job_artifacts(
     base_url: str, project_id: str, token: str, job_id: int, out_dir: Path
-) -> Optional[Path]:
+) -> Path | None:
+    """Download job artifacts as a zip file if present."""
     url = f"{base_url}/api/v4/projects/{project_id}/jobs/{job_id}/artifacts"
     r = requests.get(url, headers=_gitlab_headers(token), timeout=60)
     if r.status_code == 404:
@@ -107,10 +121,11 @@ def collect_gitlab(
     base_url: str,
     project_id: str,
     token: str,
-    pipeline_id: Optional[int] = None,
-    ref: Optional[str] = None,
+    pipeline_id: int | None = None,
+    ref: str | None = None,
     key_prefix: str = "gitlab",
-) -> Tuple[List[ArtifactRecord], EvidenceManifest, GitLabPipeline]:
+) -> tuple[list[ArtifactRecord], EvidenceManifest, GitLabPipeline]:
+    """Collect logs and artifacts from a GitLab pipeline and return records, manifest, and pipeline info."""
     pipeline = (
         get_pipeline(base_url, project_id, token, pipeline_id)
         if pipeline_id
@@ -119,7 +134,7 @@ def collect_gitlab(
     with tempfile.TemporaryDirectory() as td:
         tdir = Path(td)
         jobs = list_pipeline_jobs(base_url, project_id, token, pipeline.id)
-        records: List[ArtifactRecord] = []
+        records: list[ArtifactRecord] = []
 
         for job in jobs:
             job_id = job["id"]

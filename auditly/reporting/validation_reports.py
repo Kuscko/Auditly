@@ -1,12 +1,10 @@
-"""
-Generate validation reports for engineers and ATO auditors.
-"""
+"""Generate validation reports for engineers and ATO auditors."""
 
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from ..validators import ValidationResult, ValidationStatus
 
@@ -18,7 +16,7 @@ def _write_html(path: Path | str, html: str) -> None:
         f.write(html)
 
 
-def _get_evidence_guidance() -> Dict[str, str]:
+def _get_evidence_guidance() -> dict[str, str]:
     """Get collection guidance for each evidence type."""
     return {
         "terraform-plan": "<strong>Terraform Plan:</strong> Run <code>terraform plan -out=plan.tfplan && terraform show -json plan.tfplan</code> to export your infrastructure configuration and changes.",
@@ -35,8 +33,8 @@ def _get_evidence_guidance() -> Dict[str, str]:
 
 
 def generate_engineer_report(
-    results: Dict[str, ValidationResult],
-    evidence: Dict[str, Any],
+    results: dict[str, ValidationResult],
+    evidence: dict[str, Any],
     output_path: Path | str,
 ) -> None:
     """
@@ -69,11 +67,11 @@ def generate_engineer_report(
         options = metadata.get("options", [])
 
         # Build list of required evidence with guidance
-        needed_evidence = []
-        if required_all:
-            needed_evidence.extend(required_all)
-        if options:
-            needed_evidence.extend(options)
+        needed_evidence: list[str] = []
+        if isinstance(required_all, list):
+            needed_evidence.extend([str(x) for x in required_all if isinstance(x, str)])
+        if isinstance(options, list):
+            needed_evidence.extend([str(x) for x in options if isinstance(x, str)])
 
         guidance_text = ""
         for ev_type in needed_evidence:
@@ -83,16 +81,14 @@ def generate_engineer_report(
             guidance_text += f"<div style='margin: 8px 0; padding: 8px; background: #f0f7ff; border-left: 3px solid #1976d2; border-radius: 2px;'>{guidance}</div>"
 
         requirement_text = ""
-        if required_all:
-            requirement_text += f"<strong>Required:</strong> All of {', '.join(required_all)}<br/>"
-        if required_any:
-            requirement_text += (
-                f"<strong>Options:</strong> At least one of {', '.join(required_any)}<br/>"
-            )
-        if missing:
-            requirement_text += f"<strong>Missing:</strong> {', '.join(missing)}<br/>"
-        if options:
-            requirement_text += f"<strong>Need one of:</strong> {', '.join(options)}<br/>"
+        if isinstance(required_all, list) and required_all:
+            requirement_text += f"<strong>Required:</strong> All of {', '.join([str(x) for x in required_all if isinstance(x, str)])}<br/>"
+        if isinstance(required_any, list) and required_any:
+            requirement_text += f"<strong>Options:</strong> At least one of {', '.join([str(x) for x in required_any if isinstance(x, str)])}<br/>"
+        if isinstance(missing, list) and missing:
+            requirement_text += f"<strong>Missing:</strong> {', '.join([str(x) for x in missing if isinstance(x, str)])}<br/>"
+        if isinstance(options, list) and options:
+            requirement_text += f"<strong>Need one of:</strong> {', '.join([str(x) for x in options if isinstance(x, str)])}<br/>"
 
         remediation_rows += f"""
         <tr>
@@ -105,11 +101,12 @@ def generate_engineer_report(
     # Build evidence summary
     evidence_summary = "<ul>"
     for ev_type, ev_data in evidence.items():
-        if isinstance(ev_data, dict):
-            path = ev_data.get("path", "(inline)")
-            evidence_summary += f"<li><strong>{ev_type}</strong>: {path}</li>"
-        else:
-            evidence_summary += f"<li><strong>{ev_type}</strong>: (value)</li>"
+        if isinstance(ev_type, str):
+            if isinstance(ev_data, dict):
+                path = ev_data.get("path", "(inline)")
+                evidence_summary += f"<li><strong>{ev_type}</strong>: {path}</li>"
+            else:
+                evidence_summary += f"<li><strong>{ev_type}</strong>: (value)</li>"
     evidence_summary += "</ul>"
 
     # Calculate stats
@@ -372,7 +369,7 @@ def generate_engineer_report(
         <h2>Compliant Controls ({pass_count})</h2>
         <p>The following {pass_count} controls have the required evidence and satisfy compliance criteria:</p>
         <div class="controls-list">
-            {', '.join(sorted(passed.keys())) if passed else 'None'}
+            {', '.join(sorted([str(x) for x in passed.keys() if isinstance(x, str)])) if passed else 'None'}
         </div>
     </div>
     </div>
@@ -384,8 +381,8 @@ def generate_engineer_report(
 
 
 def generate_auditor_report(
-    results: Dict[str, ValidationResult],
-    evidence: Dict[str, Any],
+    results: dict[str, ValidationResult],
+    evidence: dict[str, Any],
     output_path: Path | str,
 ) -> None:
     """
@@ -400,7 +397,7 @@ def generate_auditor_report(
 
     # Build detailed control table with evidence
     control_rows = ""
-    for cid in sorted(results.keys()):
+    for cid in sorted([str(x) for x in results.keys() if isinstance(x, str)]):
         result = results[cid]
         status_class = result.status.value.lower().replace("_", "-")
         status_display = result.status.value.replace("_", " ").title()
@@ -414,7 +411,7 @@ def generate_auditor_report(
 
         # Build evidence table
         evidence_html = ""
-        if evidence_locations:
+        if isinstance(evidence_locations, dict) and evidence_locations:
             evidence_html = "<table style='font-size: 11px; margin: 5px 0;'>"
             for ev_type, ev_info in evidence_locations.items():
                 path = (
@@ -425,12 +422,20 @@ def generate_auditor_report(
 
         # Build requirements status
         req_html = "<div style='font-size: 11px; margin: 5px 0;'>"
-        if required_all:
-            matched = ", ".join(matched_all) if matched_all else "MISSING"
-            req_html += f"<p><strong>Required All:</strong> {', '.join(required_all)}<br/><em style='color: #666;'>Matched: {matched}</em></p>"
-        if required_any:
-            matched = ", ".join(matched_any) if matched_any else "NONE"
-            req_html += f"<p><strong>Required Any:</strong> {', '.join(required_any)}<br/><em style='color: #666;'>Matched: {matched}</em></p>"
+        if isinstance(required_all, list) and required_all:
+            matched = (
+                ", ".join([str(x) for x in matched_all])
+                if isinstance(matched_all, list) and matched_all
+                else "MISSING"
+            )
+            req_html += f"<p><strong>Required All:</strong> {', '.join([str(x) for x in required_all if isinstance(x, str)])}<br/><em style='color: #666;'>Matched: {matched}</em></p>"
+        if isinstance(required_any, list) and required_any:
+            matched = (
+                ", ".join([str(x) for x in matched_any])
+                if isinstance(matched_any, list) and matched_any
+                else "NONE"
+            )
+            req_html += f"<p><strong>Required Any:</strong> {', '.join([str(x) for x in required_any if isinstance(x, str)])}<br/><em style='color: #666;'>Matched: {matched}</em></p>"
         req_html += "</div>"
 
         control_rows += f"""
@@ -446,16 +451,17 @@ def generate_auditor_report(
     # Build evidence inventory
     evidence_inventory = ""
     for ev_type, ev_data in evidence.items():
-        if isinstance(ev_data, dict):
-            details = "<br/>".join([f"<strong>{k}:</strong> {v}" for k, v in ev_data.items()])
-        else:
-            details = str(ev_data)[:200]
-        evidence_inventory += f"""
-        <div style='margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-left: 3px solid #2196F3;'>
-            <strong>{ev_type}</strong>
-            <div style='font-size: 12px; color: #555; margin-top: 5px;'>{details}</div>
-        </div>
-        """
+        if isinstance(ev_type, str):
+            if isinstance(ev_data, dict):
+                details = "<br/>".join([f"<strong>{k}:</strong> {v}" for k, v in ev_data.items()])
+            else:
+                details = str(ev_data)[:200]
+            evidence_inventory += f"""
+            <div style='margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-left: 3px solid #2196F3;'>
+                <strong>{ev_type}</strong>
+                <div style='font-size: 12px; color: #555; margin-top: 5px;'>{details}</div>
+            </div>
+            """
 
     # Calculate stats
     total = len(results)

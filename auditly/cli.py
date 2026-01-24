@@ -1,7 +1,8 @@
+"""Main entry point for the auditly CLI application."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich import print
@@ -78,7 +79,7 @@ def check_catalogs(
         cfg = AppConfig.load(config)
     except Exception as e:
         console.print(f"[red]Error loading config:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     catalogs_dict = cfg.catalogs.get_all_catalogs()
 
@@ -156,7 +157,7 @@ def check_catalogs(
 
 @app.command()
 def list_validators(
-    filter_family: Optional[str] = typer.Option(
+    filter_family: str | None = typer.Option(
         None, "--family", "-f", help="Filter by control family (e.g., CM, AC, SC)"
     ),
     show_all: bool = typer.Option(
@@ -227,9 +228,7 @@ def list_validators(
 @app.command()
 def check_validator_coverage(
     config: Path = typer.Option("config.yaml", exists=True, help="Path to config.yaml"),
-    profile: Optional[str] = typer.Option(
-        None, help="Specific profile to check (e.g., fedramp_high)"
-    ),
+    profile: str | None = typer.Option(None, help="Specific profile to check (e.g., fedramp_high)"),
 ):
     """Check validator coverage across all controls in configured catalogs."""
     from .oscal import OscalCatalog, OscalProfile, load_oscal
@@ -240,7 +239,7 @@ def check_validator_coverage(
         cfg = AppConfig.load(config)
     except Exception as e:
         console.print(f"[red]Error loading config:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     catalogs_dict = cfg.catalogs.get_all_catalogs()
 
@@ -345,7 +344,7 @@ def test_validator(
 
     # Run validation
     validator = ComplianceValidator(req)
-    result = validator.validate(evidence_set)
+    result = validator.validate(evidence_set, {})
 
     # Display result
     status_color = {

@@ -49,17 +49,10 @@ def collect_batch(request: CollectBatchRequest):
             message="Batch collection completed",
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.exception(f"Batch collection failed: {e}")
-        return CollectBatchResponse(
-            success=False,
-            results={},
-            errors={"__batch__": str(e)},
-            succeeded=0,
-            failed=len(request.requests),
-            message="Batch collection failed",
-        )
+        raise HTTPException(status_code=500, detail=f"Batch collection failed: {e}") from e
 
 
 @router.post("", response_model=CollectResponse)
@@ -103,13 +96,19 @@ def collect(request: CollectRequest):
         elif request.provider == "github":
             provider_params["github_repo"] = request.github_repo
             provider_params["github_token"] = request.github_token
-            provider_params["github_run_id"] = request.github_run_id
+            provider_params["github_run_id"] = (
+                str(request.github_run_id) if request.github_run_id is not None else None
+            )
             provider_params["github_branch"] = request.github_branch
         elif request.provider == "gitlab":
             provider_params["gitlab_base_url"] = request.gitlab_base_url
-            provider_params["gitlab_project_id"] = request.gitlab_project_id
+            provider_params["gitlab_project_id"] = (
+                str(request.gitlab_project_id) if request.gitlab_project_id is not None else None
+            )
             provider_params["gitlab_token"] = request.gitlab_token
-            provider_params["gitlab_pipeline_id"] = request.gitlab_pipeline_id
+            provider_params["gitlab_pipeline_id"] = (
+                str(request.gitlab_pipeline_id) if request.gitlab_pipeline_id is not None else None
+            )
             provider_params["gitlab_ref"] = request.gitlab_ref
         elif request.provider == "argo":
             provider_params["argo_base_url"] = request.argo_base_url
@@ -140,14 +139,7 @@ def collect(request: CollectRequest):
 
     except ValueError as e:
         logger.error(f"Validation error in collect: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.exception(f"Collection failed: {e}")
-        return CollectResponse(
-            success=False,
-            artifacts_uploaded=0,
-            manifest_key="",
-            environment=request.environment,
-            provider=request.provider,
-            error=str(e),
-        )
+        raise HTTPException(status_code=500, detail=f"Collection failed: {e}") from e

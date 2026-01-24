@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
 
-from alembic import command
+from alembic import command  # type: ignore[attr-defined]
 from alembic.config import Config
 
 
-def get_alembic_config(database_url: Optional[str] = None) -> Config:
+def get_alembic_config(database_url: str | None = None) -> Config:
     """
     Get Alembic configuration.
 
@@ -30,11 +29,13 @@ def get_alembic_config(database_url: Optional[str] = None) -> Config:
     return cfg
 
 
-def upgrade(head: str = "head", database_url: Optional[str] = None) -> None:
+def upgrade(head: str = "head", database_url: str | None = None) -> None:
+    """Upgrade the database schema to the specified head revision."""
     cfg = get_alembic_config(database_url)
     command.upgrade(cfg, head)
 
 
-def downgrade(revision: str = "-1", database_url: Optional[str] = None) -> None:
+def downgrade(revision: str = "-1", database_url: str | None = None) -> None:
+    """Downgrade the database schema to the specified revision."""
     cfg = get_alembic_config(database_url)
     command.downgrade(cfg, revision)
