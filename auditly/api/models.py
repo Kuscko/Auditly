@@ -4,6 +4,41 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+# --- Evidence CRUD Models ---
+
+
+class Evidence(BaseModel):
+    """Evidence record model."""
+
+    id: str
+    environment: str
+    provider: str
+    data: dict
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class EvidenceCreate(BaseModel):
+    """Model for creating new evidence."""
+
+    environment: str
+    provider: str
+    data: dict
+
+
+class EvidenceUpdate(BaseModel):
+    """Model for updating evidence data."""
+
+    data: dict
+
+
+class ControlStatusResponse(BaseModel):
+    """Response model for control status summary."""
+
+    environment: str
+    status_summary: dict[str, int]  # e.g., {"passed": 10, "failed": 2}
+    details: list[dict] | None = None
+
 
 # Request models
 class CollectRequest(BaseModel):

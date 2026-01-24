@@ -8,10 +8,13 @@ The current development focus is on core functionality (collectors, validators, 
 
 ## Overview
 
-This API provides three core endpoints that wrap existing CLI functionality:
+
+This API provides core endpoints that wrap existing CLI functionality:
 - `/collect` - Trigger evidence collection from cloud providers
 - `/validate` - Run validation against collected evidence
 - `/report` - Generate compliance reports
+- `/evidence` - Evidence CRUD (Create, Read, Update, Delete)
+- `/evidence/control-status` - Query control status summary for an environment
 
 **Design Principle**: DRY (Don't Repeat Yourself)
 - All API endpoints reuse existing CLI/collection/validation logic
@@ -32,7 +35,48 @@ auditly/api/
     ├── __init__.py     # Router exports
     ├── collect.py      # Collection endpoints
     ├── validate.py     # Validation endpoints
-    └── report.py       # Reporting endpoints
+    ├── report.py       # Reporting endpoints
+    └── evidence.py     # Evidence CRUD & control status endpoints
+### Evidence CRUD & Control Status Endpoints
+
+#### POST `/evidence`
+Create a new evidence item.
+
+**Example:**
+```json
+POST /evidence
+{
+  "environment": "testenv",
+  "provider": "test",
+  "data": {"foo": "bar"}
+}
+```
+
+#### GET `/evidence/{evidence_id}`
+Get evidence by ID.
+
+#### PUT `/evidence/{evidence_id}`
+Update evidence by ID.
+
+#### DELETE `/evidence/{evidence_id}`
+Delete evidence by ID.
+
+#### GET `/evidence`
+List all evidence (optionally filter by environment).
+
+**Example:**
+```
+GET /evidence?environment=testenv
+```
+
+#### GET `/evidence/control-status?environment=...`
+Get control status summary for an environment.
+
+**Example:**
+```
+GET /evidence/control-status?environment=testenv
+```
+
 ```
 
 ### Benefits
@@ -360,7 +404,33 @@ See Helm charts (future enhancement).
 
 ## Testing
 
+
 ### Manual Testing with curl
+
+**Evidence CRUD**:
+```bash
+# Create evidence
+curl -X POST http://localhost:8000/evidence \
+  -H "Content-Type: application/json" \
+  -d '{"environment": "testenv", "provider": "test", "data": {"foo": "bar"}}'
+
+# List evidence
+curl http://localhost:8000/evidence?environment=testenv
+
+# Get evidence by ID
+curl http://localhost:8000/evidence/<EVIDENCE_ID>
+
+# Update evidence
+curl -X PUT http://localhost:8000/evidence/<EVIDENCE_ID> \
+  -H "Content-Type: application/json" \
+  -d '{"data": {"foo": "baz"}}'
+
+# Delete evidence
+curl -X DELETE http://localhost:8000/evidence/<EVIDENCE_ID>
+
+# Control status
+curl http://localhost:8000/evidence/control-status?environment=testenv
+```
 
 **Collect Terraform Evidence**:
 ```bash

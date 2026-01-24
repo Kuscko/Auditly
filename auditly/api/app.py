@@ -4,7 +4,7 @@ import logging
 
 from fastapi import FastAPI
 
-from .routers import collect_router, report_router, validate_router
+from .routers import collect_router, evidence_router, report_router, validate_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,10 +21,12 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+
 # Register routers
 app.include_router(collect_router)
 app.include_router(validate_router)
 app.include_router(report_router)
+app.include_router(evidence_router)
 
 
 @app.get("/", tags=["health"])
@@ -34,5 +36,5 @@ def root():
         "service": "auditly API",
         "version": "0.2.0",
         "status": "healthy",
-        "endpoints": ["/collect", "/validate", "/report"],
+        "endpoints": ["/collect", "/validate", "/report", "/evidence"],
     }
