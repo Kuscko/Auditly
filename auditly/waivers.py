@@ -42,7 +42,7 @@ class Waiver:
 class WaiverRegistry:
     """Track approved exceptions and compensating controls."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the WaiverRegistry."""
         self.waivers: dict[str, Waiver] = {}
 

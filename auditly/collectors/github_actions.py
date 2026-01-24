@@ -36,7 +36,7 @@ def _gh_headers(token: str) -> dict[str, str]:
 def get_latest_run(repo: str, token: str, branch: str | None = None) -> GitHubRun:
     """Get the latest workflow run for a repository and optional branch."""
     url = f"https://api.github.com/repos/{repo}/actions/runs"
-    params = {"per_page": 10}
+    params: dict[str, str | int] = {"per_page": 10}
     if branch:
         params["branch"] = branch
     r = requests.get(url, headers=_gh_headers(token), params=params, timeout=30)
@@ -46,7 +46,7 @@ def get_latest_run(repo: str, token: str, branch: str | None = None) -> GitHubRu
         raise RuntimeError("No workflow runs found")
     run = runs[0]
     return GitHubRun(
-        id=run["id"],
+        id=int(run["id"]),
         head_branch=run.get("head_branch"),
         status=run.get("status"),
         conclusion=run.get("conclusion"),
@@ -62,7 +62,7 @@ def get_run(repo: str, token: str, run_id: int) -> GitHubRun:
     r.raise_for_status()
     run = r.json()
     return GitHubRun(
-        id=run["id"],
+        id=int(run["id"]),
         head_branch=run.get("head_branch"),
         status=run.get("status"),
         conclusion=run.get("conclusion"),

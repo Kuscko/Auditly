@@ -37,10 +37,14 @@ async def collect_evidence_parallel(
     Returns the parallel collector aggregate payload containing results/errors.
     """
 
-    async def _run(req: dict[str, Any]):
+    async def _run(req: dict[str, Any]) -> Any:
         return await asyncio.to_thread(collect_evidence, **req)
 
-    tasks = {req.get("name", f"request-{idx}"): _run(req) for idx, req in enumerate(requests)}
+    # mypy expects Future[Any] for collect_parallel
+    tasks: dict[str, asyncio.Future[Any]] = {}
+    for idx, req in enumerate(requests):
+        name = req.get("name", f"request-{idx}")
+        tasks[name] = asyncio.ensure_future(_run(req))
 
     return await parallel_collector.collect_parallel(tasks, timeout=timeout)
 
@@ -80,7 +84,7 @@ def collect_evidence(
     envcfg = cfg.environments[environment]
     vault = vault_from_envcfg(envcfg)
 
-    artifacts = []
+    artifacts: list[ArtifactRecord] = []
     manifest = None
     manifest_key = ""
 
@@ -184,10 +188,11 @@ def collect_evidence(
                 "are required for argo provider"
             )
 
+        # namespace is required as str
         artifacts, manifest, workflow = collect_argo(
             environment=environment,
             base_url=base_url,
-            namespace=namespace,
+            namespace=str(namespace),
             workflow_name=workflow_name,
             token=token,
         )
@@ -201,19 +206,31 @@ def collect_evidence(
                 )
                 uploaded += 1
 
-        manifest_key = f"manifests/{environment}/argo-workflow-{workflow.metadata.name}.json"
+        # workflow.name instead of workflow.metadata.name
+        manifest_key = f"manifests/{environment}/argo-workflow-{workflow.name}.json"
         vault.put_json(manifest_key, manifest.to_json(), metadata={"kind": "evidence-manifest"})
         persist_if_db(envcfg, environment, manifest, artifacts)
 
     elif provider == "azure":
         subscription_id = provider_params.get("azure_subscription_id")
         resource_group = provider_params.get("azure_resource_group")
+        storage_account = provider_params.get("azure_storage_account")
+        key_vault = provider_params.get("azure_key_vault")
 
         if not subscription_id:
             raise ValueError("azure_subscription_id is required for azure provider")
 
+        # Pass all required args, ensure resource_group is str or None
+        # All arguments must be str for collect_azure
+        rg: str = str(resource_group) if resource_group is not None else ""
+        sa: str = str(storage_account) if storage_account is not None else ""
+        kv: str = str(key_vault) if key_vault is not None else ""
         artifacts, manifest = collect_azure(
-            environment=environment, subscription_id=subscription_id, resource_group=resource_group
+            environment=environment,
+            subscription_id=subscription_id,
+            resource_group=rg,
+            storage_account=sa,
+            key_vault=kv,
         )
 
         for a in artifacts:
@@ -271,13 +288,18 @@ def validate_evidence(
 
         # Deduplicate
         seen = set()
-        control_ids = [x for x in control_ids if not (x in seen or seen.add(x))]
+        deduped = []
+        for x in control_ids:
+            if x not in seen:
+                deduped.append(x)
+                seen.add(x)
+        control_ids = deduped
 
     # Build evidence dict if not provided
+    evidence: dict[str, object]
     if evidence_dict is None:
         # Try to load from manifests in staging directory
-        evidence_dict = {}
-
+        evidence = {}
         staging = Path(".auditly_manifests")
         if staging.exists():
             for p in staging.glob(f"{environment}-*.json"):
@@ -288,20 +310,24 @@ def validate_evidence(
                     meta = artifact.get("metadata", {}) or {}
                     kind = meta.get("kind", "unknown")
                     # Aggregate by kind; preserve last-seen
-                    evidence_dict[kind] = {
-                        "key": artifact.get("key"),
-                        "filename": artifact.get("filename"),
-                        "sha256": artifact.get("sha256"),
-                        "size": artifact.get("size"),
-                        "metadata": meta,
-                        "manifest": str(p),
-                    }
+                    if isinstance(kind, str):
+                        evidence[kind] = {
+                            "key": artifact.get("key"),
+                            "filename": artifact.get("filename"),
+                            "sha256": artifact.get("sha256"),
+                            "size": artifact.get("size"),
+                            "metadata": meta,
+                            "manifest": str(p),
+                        }
+        # else evidence remains empty
+    else:
+        evidence = evidence_dict  # type: ignore
 
     # Run validation with database_url for access logging
     database_url = getattr(envcfg, "database_url", None)
     validation_results = validate_controls(
         control_ids,
-        evidence_dict,
+        evidence,
         database_url=database_url,
         user_id="api-validator",
     )
@@ -319,7 +345,7 @@ def validate_evidence(
     # Convert to serializable dict
     results_dict = {}
     for cid, result in validation_results.items():
-        results_dict[cid] = {
+        results_dict[str(cid)] = {
             "control_id": result.control_id,
             "status": result.status.value,
             "message": result.message,
@@ -354,15 +380,19 @@ def generate_report(
         Tuple of (report_path, report_html, summary)
     """
     cfg = AppConfig.load(config_path)
-    if environment not in cfg.environments:
-        raise ValueError(f"Unknown environment: {environment}")
-
     if report_type == "readiness":
         return _generate_readiness_report(cfg, environment, output_path)
     elif report_type == "engineer":
-        return _generate_engineer_report(cfg, environment, control_ids, evidence_dict, output_path)
+        # Always pass a dict[str, Any] for evidence_dict
+        engineer_evidence_dict: dict[str, Any] = evidence_dict if evidence_dict is not None else {}
+        return _generate_engineer_report(
+            cfg, environment, control_ids, engineer_evidence_dict, output_path
+        )
     elif report_type == "auditor":
-        return _generate_auditor_report(cfg, environment, control_ids, evidence_dict, output_path)
+        auditor_evidence_dict: dict[str, Any] = evidence_dict if evidence_dict is not None else {}
+        return _generate_auditor_report(
+            cfg, environment, control_ids, auditor_evidence_dict, output_path
+        )
     else:
         raise ValueError(f"Unsupported report type: {report_type}")
 
@@ -411,7 +441,12 @@ def _generate_readiness_report(
                     control_ids.extend(imported)
 
         seen = set()
-        control_ids = [x for x in control_ids if not (x in seen or seen.add(x))]
+        deduped = []
+        for x in control_ids:
+            if x not in seen:
+                deduped.append(x)
+                seen.add(x)
+        control_ids = deduped
 
         mapping_path = Path("mapping.yaml")
         if not mapping_path.exists():
@@ -423,10 +458,10 @@ def _generate_readiness_report(
             control_evidence = match_evidence_to_controls(manifests, mapping)
             summary["controls"] = compute_control_coverage(control_ids, control_evidence)
 
-        evidence_dict = {
-            a.metadata.get("kind", "unknown"): True for m in manifests for a in m.artifacts
+        evidence_dict2: dict[str, object] = {
+            str(a.metadata.get("kind", "unknown")): True for m in manifests for a in m.artifacts
         }
-        validation_results = validate_controls(control_ids, evidence_dict)
+        validation_results = validate_controls(control_ids, evidence_dict2)
         summary["validation"] = {
             "passed": sum(1 for r in validation_results.values() if r.status.value == "pass"),
             "failed": sum(1 for r in validation_results.values() if r.status.value == "fail"),
@@ -474,7 +509,7 @@ def _generate_engineer_report(
     if not evidence_dict:
         # Try to load from staging
         staging = Path(".auditly_manifests")
-        evidence_dict = {}
+        evidence_dict2: dict[str, object] = {}
         if staging.exists():
             for p in staging.glob(f"{environment}-*.json"):
                 import json as _json
@@ -482,17 +517,21 @@ def _generate_engineer_report(
                 data = _json.loads(p.read_text())
                 for artifact in data.get("artifacts", []):
                     kind = artifact.get("metadata", {}).get("kind", "unknown")
-                    if kind not in evidence_dict:
-                        evidence_dict[kind] = True
+                    if isinstance(kind, str) and kind not in evidence_dict2:
+                        evidence_dict2[kind] = True
+        else:
+            evidence_dict2 = {}
+    else:
+        evidence_dict2 = evidence_dict  # type: ignore
 
-    results = validate_controls(control_ids, evidence_dict)
+    results = validate_controls(control_ids, evidence_dict2)
 
     if output_path:
         out = Path(output_path)
     else:
         out = Path(tempfile.mktemp(suffix=".html", prefix="auditly-engineer-"))
 
-    generate_engineer_report(results, evidence_dict, out)
+    generate_engineer_report(results, evidence_dict2, out)
     html_content = out.read_text()
 
     summary = {
@@ -523,7 +562,7 @@ def _generate_auditor_report(
     if not evidence_dict:
         # Try to load from staging
         staging = Path(".auditly_manifests")
-        evidence_dict = {}
+        evidence_dict2: dict[str, object] = {}
         if staging.exists():
             for p in staging.glob(f"{environment}-*.json"):
                 import json as _json
@@ -531,17 +570,21 @@ def _generate_auditor_report(
                 data = _json.loads(p.read_text())
                 for artifact in data.get("artifacts", []):
                     kind = artifact.get("metadata", {}).get("kind", "unknown")
-                    if kind not in evidence_dict:
-                        evidence_dict[kind] = True
+                    if kind not in evidence_dict2:
+                        evidence_dict2[kind] = True
+        else:
+            evidence_dict2 = {}
+    else:
+        evidence_dict2 = evidence_dict  # type: ignore
 
-    results = validate_controls(control_ids, evidence_dict)
+    results = validate_controls(control_ids, evidence_dict2)
 
     if output_path:
         out = Path(output_path)
     else:
         out = Path(tempfile.mktemp(suffix=".html", prefix="auditly-auditor-"))
 
-    generate_auditor_report(results, evidence_dict, out)
+    generate_auditor_report(results, evidence_dict2, out)
     html_content = out.read_text()
 
     summary = {

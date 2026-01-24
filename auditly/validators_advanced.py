@@ -57,12 +57,12 @@ class FindingLifecycleEvent:
 class ControlDependencyGraph:
     """Manages control dependencies and validates prerequisite controls."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ControlDependencyGraph with standard dependencies."""
         self.dependencies: dict[str, list[ControlDependency]] = {}
         self._init_standard_dependencies()
 
-    def _init_standard_dependencies(self):
+    def _init_standard_dependencies(self) -> None:
         """Initialize standard FedRAMP/NIST control dependencies."""
         # AC-2 (Account Management) is prerequisite for AC-3, AC-4, AC-5
         self.add_dependency(
@@ -94,7 +94,7 @@ class ControlDependencyGraph:
                 )
             )
 
-    def add_dependency(self, dep: ControlDependency):
+    def add_dependency(self, dep: ControlDependency) -> None:
         """Add a control dependency."""
         control_upper = dep.source_control.upper()
         if control_upper not in self.dependencies:
@@ -180,11 +180,11 @@ class ControlDependencyGraph:
 class CustomValidatorRegistry:
     """Registry for custom validators."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the CustomValidatorRegistry with an empty validator dictionary."""
         self.validators: dict[str, list[CustomValidator]] = {}
 
-    def register(self, validator: CustomValidator):
+    def register(self, validator: CustomValidator) -> None:
         """Register a custom validator."""
         control_upper = validator.control_id.upper()
         if control_upper not in self.validators:
@@ -253,7 +253,7 @@ class FindingsLifecycleManager:
         "closed": ["open"],  # Reopen if needed
     }
 
-    def __init__(self, session=None):
+    def __init__(self, session=None) -> None:
         """Initialize with optional DB session for persistence."""
         self.session = session
         self.events: list[FindingLifecycleEvent] = []
@@ -322,7 +322,7 @@ class FindingsLifecycleManager:
 
         return datetime.utcnow().isoformat()
 
-    def _persist_event(self, event: FindingLifecycleEvent):
+    def _persist_event(self, event: FindingLifecycleEvent) -> None:
         """Persist event to database (async wrapper needed for actual use)."""
         # This would need async context in real usage
         # For now, just track in memory

@@ -99,7 +99,7 @@ class ValidationResultCache:
 class EvidenceDependencyGraph:
     """Track which controls depend on which evidence types."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize EvidenceDependencyGraph with empty mappings."""
         self.evidence_to_controls: dict[str, set[str]] = {}
         self.control_to_evidence: dict[str, set[str]] = {}
@@ -138,7 +138,7 @@ class EvidenceDependencyGraph:
 class IncrementalValidator:
     """Validates only controls affected by evidence changes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize IncrementalValidator with evidence graph and snapshots."""
         self.evidence_graph = EvidenceDependencyGraph()
         self.last_validation: dict[str, object] = {}
@@ -203,7 +203,7 @@ class IncrementalValidator:
 class ParallelCollector:
     """Enables parallel evidence collection across services."""
 
-    def __init__(self, max_concurrent: int = 5):
+    def __init__(self, max_concurrent: int = 5) -> None:
         """Initialize ParallelCollector with concurrency limit."""
         self.max_concurrent = max_concurrent
         self.semaphore = asyncio.Semaphore(max_concurrent)
@@ -283,7 +283,7 @@ class ParallelCollector:
 class Metrics:
     """Container for performance metric fields."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize all metric fields to default values."""
         self.total_validations: int = 0
         self.cached_validations: int = 0
@@ -297,7 +297,7 @@ class Metrics:
 class PerformanceMetrics:
     """Track validation performance metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize PerformanceMetrics with default metrics and timings."""
         self.metrics = Metrics()
         self.timings: list[float] = []

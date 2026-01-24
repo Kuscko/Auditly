@@ -62,7 +62,12 @@ def report_readiness(
                     control_ids.extend(imported)
 
         seen = set()
-        control_ids = [x for x in control_ids if not (x in seen or seen.add(x))]
+        deduped = []
+        for x in control_ids:
+            if x not in seen:
+                deduped.append(x)
+                seen.add(x)
+        control_ids = deduped
 
         mapping_path = Path("mapping.yaml")
         if not mapping_path.exists():
@@ -76,8 +81,8 @@ def report_readiness(
         else:
             summary["controls"] = control_coverage_placeholder(control_ids, manifests)
 
-        evidence_dict = {
-            a.metadata.get("kind", "unknown"): True for m in manifests for a in m.artifacts
+        evidence_dict: dict[str, object] = {
+            str(a.metadata.get("kind", "unknown")): True for m in manifests for a in m.artifacts
         }
         validation_results = validate_controls(control_ids, evidence_dict)
         summary["validation"] = {
