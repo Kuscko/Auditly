@@ -120,6 +120,58 @@ uvicorn auditly.api.app:app --reload --host 0.0.0.0 --port 8000
 
 ## API Endpoints
 
+### POST `/webhook`
+
+Webhook Support: Auto-trigger validation on system/evidence changes.
+
+This endpoint allows external systems (CI/CD, cloud event sources, manual triggers) to notify auditly of evidence or environment changes, automatically triggering validation workflows.
+
+**Payload Model:**
+```json
+{
+  "event_type": "evidence_changed", // or "environment_changed"
+  "environment": "production",
+  "evidence_id": "abc123", // optional
+  "payload": {"key": "value"} // optional
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "evidence_changed",
+    "environment": "production",
+    "evidence_id": "abc123",
+    "payload": {"source": "terraform"}
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "summary": {
+    "passed": 35,
+    "failed": 2,
+    "insufficient": 5
+  }
+}
+```
+
+**Model Reference:**
+
+The `WebhookEvent` model supports:
+- `event_type`: Type of event triggering validation (e.g., `evidence_changed`, `environment_changed`).
+- `environment`: Target environment key (e.g., `production`).
+- `evidence_id`: Optional evidence ID if the event relates to a specific evidence item.
+- `payload`: Optional event-specific data (arbitrary key-value structure).
+
+See [routers/webhook.py](routers/webhook.py) and [models.py](models.py) for implementation details.
+
+---
+
 ### POST `/collect`
 
 Collect evidence from cloud providers or CI/CD systems.
