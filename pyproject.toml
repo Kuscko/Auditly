@@ -30,11 +30,33 @@ filterwarnings = [
   "ignore::DeprecationWarning",
   "ignore::PendingDeprecationWarning",
 ]
-markers = [
-  "integration: integration tests requiring database",
-  "unit: unit tests without database",
-  "slow: slow running tests",
-  "smoke: smoke tests",
+[project]
+name = "auditly"
+version = "0.4.0"
+description = "Auditly: Compliance automation API and CLI"
+authors = ["Auditly Team <team@auditly.io>"]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.109.2",
+  "uvicorn>=0.27.1",
+  "pydantic>=2.6.4",
+  "PyYAML>=6.0.2",
+  "sqlalchemy>=2.0.25",
+  "alembic>=1.13.1",
+  "asyncpg>=0.29.0",
+  "jinja2>=3.1.4",
+  "requests>=2.32.3",
+  "boto3>=1.34.34",
+  "rich>=13.7.1",
+  "ruff>=0.1.14",
+  "mypy>=1.8.0",
+  "pydocstyle>=6.3.0"
 ]
-# Database URL for tests - set via environment
-# DATABASE_URL=postgresql://test_user:test_password@localhost:5432/auditly_test
+
+[project.scripts]
+auditly = "auditly.cli:app"
+
+[tool.pipx]
+main = "auditly.cli:app"
+include_apps = true
