@@ -1,7 +1,6 @@
 """Evidence CRUD and control status API router."""
 
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query
 
@@ -61,8 +60,8 @@ def delete_evidence_endpoint(evidence_id: str):
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
-@router.get("", response_model=List[Evidence])
-def list_evidence_endpoint(environment: Optional[str] = Query(None)):
+@router.get("", response_model=list[Evidence])
+def list_evidence_endpoint(environment: str | None = Query(None)):
     """List all evidence (optionally filter by environment)."""
     try:
         return list_evidence(environment=environment)

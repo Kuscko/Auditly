@@ -175,7 +175,7 @@ def collect_github_cmd(
     uploaded = 0
     for a in artifacts:
         local_path = a.metadata.get("_local_path")
-        if not isinstance(local_path, (str, Path)):
+        if not isinstance(local_path, str | Path):
             continue
         vault.put_file(
             local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
@@ -223,7 +223,7 @@ def collect_gitlab_cmd(
     uploaded = 0
     for a in artifacts:
         local_path = a.metadata.get("_local_path")
-        if not isinstance(local_path, (str, Path)):
+        if not isinstance(local_path, str | Path):
             continue
         vault.put_file(
             local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
@@ -267,7 +267,7 @@ def collect_argo_cmd(
     uploaded = 0
     for a in artifacts:
         local_path = a.metadata.get("_local_path")
-        if not isinstance(local_path, (str, Path)):
+        if not isinstance(local_path, str | Path):
             continue
         vault.put_file(
             local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}

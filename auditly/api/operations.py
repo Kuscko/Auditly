@@ -5,7 +5,7 @@ import datetime
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from ..cli_common import persist_if_db, vault_from_envcfg
 from ..collectors.argo import collect_argo
@@ -72,7 +72,7 @@ def delete_evidence(evidence_id: str) -> None:
         raise ValueError("Evidence not found")
 
 
-def list_evidence(environment: Optional[str] = None) -> list[Evidence]:
+def list_evidence(environment: str | None = None) -> list[Evidence]:
     """List all evidence records, optionally filtered by environment."""
     if environment:
         return [ev for ev in _EVIDENCE_DB.values() if ev.environment == environment]

@@ -5,7 +5,6 @@ Tests evidence collection, validation, and reporting across all control families
 
 import json
 from pathlib import Path
-from typing import Dict, Set
 
 import pytest
 
@@ -23,7 +22,7 @@ def load_test_evidence_data():
         return json.load(f)
 
 
-def get_evidence_for_families(families: Set[str], test_data: Dict) -> Dict[str, bool]:
+def get_evidence_for_families(families: set[str], test_data: dict) -> dict[str, bool]:
     """Get evidence relevant to specific control families."""
     evidence = {}
 
