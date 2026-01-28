@@ -146,4 +146,14 @@ jobs:
         sleep 10
     - name: Run compliance check (score >= 90%)
       run: |
-        python -c "import requests; import sys;\nresp = requests.get('http://127.0.0.1:8000/report/json?environment=production&report_type=readiness');\nassert resp.status_code == 200, f'API error: {resp.status_code}';\ndata = resp.json();\nscore = data.get('score', 0);\nprint(f'Compliance score: {score}');\nif score < 90: sys.exit(f'Compliance score {score} is below threshold 90')"
+        python -c "python -c
+        import requests
+        import sys
+        resp = requests.get('http://127.0.0.1:8000/report/json?environment=production&report_type=readiness')
+        assert resp.status_code == 200, f'API error: {resp.status_code}'
+        data = resp.json()
+        score = data.get('score', 0)
+        print(f'Compliance score: {score}')
+        if score < 90:
+            sys.exit(f'Compliance score {score} is below threshold 90')
+        "
