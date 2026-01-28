@@ -14,7 +14,7 @@ from auditly.evidence_lifecycle import EvidenceLifecycleManager
 @pytest.fixture
 def db_session():
     """Create in-memory test database session."""
-    engine = create_engine("sqlite:///:memory:")
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
