@@ -6,7 +6,6 @@ This ensures we're not creating false positives in our tests.
 
 import json
 from pathlib import Path
-from typing import Dict, Set
 
 from auditly.validators import CONTROL_REQUIREMENTS, FAMILY_PATTERNS
 
@@ -18,7 +17,7 @@ def load_test_evidence_data():
         return json.load(f)
 
 
-def get_evidence_types_for_family(family: str, test_data: Dict) -> Set[str]:
+def get_evidence_types_for_family(family: str, test_data: dict) -> set[str]:
     """Get all evidence types that satisfy a given family."""
     evidence_types = set()
 

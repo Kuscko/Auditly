@@ -1,9 +1,9 @@
-"""Reporting endpoint router."""
+"""Reporting endpoint router for generating and exporting compliance reports (HTML/JSON)."""
 
 import logging
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from ..models import ReportRequest, ReportResponse
 from ..operations import generate_report
@@ -11,6 +11,30 @@ from ..operations import generate_report
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/report", tags=["reporting"])
+
+
+@router.get("/json", response_class=JSONResponse)
+def report_json(environment: str, report_type: str = "readiness", config_path: str = "config.yaml"):
+    """
+    Generate and return report summary as JSON (for programmatic export).
+
+    Query parameters:
+    - environment: Environment key
+    - report_type: readiness, engineer, or auditor (default: readiness)
+    - config_path: Path to config file (default: config.yaml)
+
+    Example: `/report/json?environment=production&report_type=readiness`
+    """
+    try:
+        _, _, summary = generate_report(
+            config_path=config_path,
+            environment=environment,
+            report_type=report_type,
+        )
+        return JSONResponse(content=summary)
+    except Exception as e:
+        logger.exception(f"Report JSON generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Report JSON generation failed: {e}") from e
 
 
 @router.post("", response_model=ReportResponse)

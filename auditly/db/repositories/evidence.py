@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession

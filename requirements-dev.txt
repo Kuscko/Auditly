@@ -1,9 +1,10 @@
-# Pre-commit for local linting
-pre-commit
 # auditly Development and Testing Dependencies
 # All packages are compatible with Python 3.12. Do not use Python 3.13+.
-# Include all runtime dependencies
+# Includes all runtime dependencies
 -r requirements.txt
+
+# Pre-commit for local linting
+pre-commit
 
 # Testing frameworks
 pytest==9.0.2

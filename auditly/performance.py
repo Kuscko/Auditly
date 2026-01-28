@@ -229,7 +229,7 @@ class ParallelCollector:
                 try:
                     result = await asyncio.wait_for(coro, timeout=timeout)
                     results[name] = result
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     errors[name] = f"Timeout after {timeout}s"
                 except Exception as e:
                     errors[name] = str(e)

@@ -1,9 +1,9 @@
 """Core API operations - reuses existing CLI/collection/validation logic."""
 
-from __future__ import annotations
-
 import asyncio
+import datetime
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +22,74 @@ from ..reporting.report import readiness_summary, write_html
 from ..reporting.validation_reports import generate_auditor_report, generate_engineer_report
 from ..validators import validate_controls
 from ..waivers import WaiverRegistry
+from .models import ControlStatusResponse, Evidence, EvidenceCreate, EvidenceUpdate
+
+# --- Evidence CRUD and Control Status Operations ---
+
+_EVIDENCE_DB: dict[str, Evidence] = {}
+EVIDENCE_NOT_FOUND_MSG = "Evidence not found"
+
+
+def create_evidence(evidence: EvidenceCreate) -> Evidence:
+    """Create a new evidence record."""
+    eid = str(uuid.uuid4())
+    now = datetime.datetime.now(datetime.UTC).isoformat()
+    ev = Evidence(
+        id=eid,
+        environment=evidence.environment,
+        provider=evidence.provider,
+        data=evidence.data,
+        created_at=now,
+        updated_at=now,
+    )
+    _EVIDENCE_DB[eid] = ev
+    return ev
+
+
+def get_evidence(evidence_id: str) -> Evidence:
+    """Retrieve an evidence record by ID."""
+    ev = _EVIDENCE_DB.get(evidence_id)
+    if not ev:
+        raise ValueError(EVIDENCE_NOT_FOUND_MSG)
+    return ev
+
+
+def update_evidence(evidence_id: str, evidence: EvidenceUpdate) -> Evidence:
+    """Update an existing evidence record."""
+    ev = _EVIDENCE_DB.get(evidence_id)
+    if not ev:
+        raise ValueError(EVIDENCE_NOT_FOUND_MSG)
+    updated_ev = ev.copy(
+        update={
+            "data": evidence.data,
+            "updated_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        }
+    )
+    _EVIDENCE_DB[evidence_id] = updated_ev
+    return updated_ev
+
+
+def delete_evidence(evidence_id: str) -> None:
+    """Delete an evidence record by ID."""
+    if evidence_id in _EVIDENCE_DB:
+        del _EVIDENCE_DB[evidence_id]
+    else:
+        raise ValueError(EVIDENCE_NOT_FOUND_MSG)
+
+
+def list_evidence(environment: str | None = None) -> list[Evidence]:
+    """List all evidence records, optionally filtered by environment."""
+    if environment:
+        return [ev for ev in _EVIDENCE_DB.values() if ev.environment == environment]
+    return list(_EVIDENCE_DB.values())
+
+
+def get_control_status(environment: str) -> ControlStatusResponse:
+    """Get a summary of control status for a given environment."""
+    env_evidence = [ev for ev in _EVIDENCE_DB.values() if ev.environment == environment]
+    summary = {"total": len(env_evidence)}
+    details = [ev.dict() for ev in env_evidence]
+    return ControlStatusResponse(environment=environment, status_summary=summary, details=details)
 
 
 async def collect_evidence_parallel(
@@ -136,7 +204,9 @@ def collect_evidence(
             local_path = a.metadata.get("_local_path")
             if local_path:
                 vault.put_file(
-                    local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
+                    str(local_path),
+                    a.key,
+                    {k: v for k, v in a.metadata.items() if k != "_local_path"},
                 )
                 uploaded += 1
 
@@ -168,7 +238,9 @@ def collect_evidence(
             local_path = a.metadata.get("_local_path")
             if local_path:
                 vault.put_file(
-                    local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
+                    str(local_path),
+                    a.key,
+                    {k: v for k, v in a.metadata.items() if k != "_local_path"},
                 )
                 uploaded += 1
 
@@ -182,18 +254,18 @@ def collect_evidence(
         workflow_name = provider_params.get("argo_workflow_name")
         token = provider_params.get("argo_token")
 
-        if not all([base_url, namespace, workflow_name]):
+        # Ensure all required parameters are present and are str
+        if base_url is None or namespace is None or workflow_name is None:
             raise ValueError(
                 "argo_base_url, argo_namespace, and argo_workflow_name "
-                "are required for argo provider"
+                "are required for argo provider and must not be None"
             )
 
-        # namespace is required as str
         artifacts, manifest, workflow = collect_argo(
             environment=environment,
-            base_url=base_url,
+            base_url=str(base_url),
             namespace=str(namespace),
-            workflow_name=workflow_name,
+            workflow_name=str(workflow_name),
             token=token,
         )
 
@@ -202,7 +274,9 @@ def collect_evidence(
             local_path = a.metadata.get("_local_path")
             if local_path:
                 vault.put_file(
-                    local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
+                    str(local_path),
+                    a.key,
+                    {k: v for k, v in a.metadata.items() if k != "_local_path"},
                 )
                 uploaded += 1
 
@@ -237,7 +311,9 @@ def collect_evidence(
             local_path = a.metadata.get("_local_path")
             if local_path:
                 vault.put_file(
-                    local_path, a.key, {k: v for k, v in a.metadata.items() if k != "_local_path"}
+                    str(local_path),
+                    a.key,
+                    {k: v for k, v in a.metadata.items() if k != "_local_path"},
                 )
 
         manifest_key = f"manifests/{environment}/azure-{subscription_id}.json"

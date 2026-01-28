@@ -15,7 +15,7 @@ import json
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from auditly.config import AppConfig
 from auditly.oscal import OscalCatalog, OscalProfile, load_oscal
@@ -27,16 +27,16 @@ from auditly.validators import (
 )
 
 
-def load_test_evidence() -> Dict[str, Any]:
+def load_test_evidence() -> dict[str, Any]:
     """Load comprehensive test evidence patterns"""
     test_data_path = Path(__file__).parent / "test_evidence_data.json"
     with open(test_data_path, encoding="utf-8") as f:
         return json.load(f)
 
 
-def create_evidence_for_control(control_id: str, test_data: Dict[str, Any]) -> Dict[str, object]:
+def create_evidence_for_control(control_id: str, test_data: dict[str, Any]) -> dict[str, object]:
     """Create evidence dictionary for a specific control based on family and requirements"""
-    evidence: Dict[str, object] = {}
+    evidence: dict[str, object] = {}
 
     # Extract family from control ID (e.g., "AC-2" -> "AC")
     family = control_id.split("-")[0].upper()
@@ -57,7 +57,7 @@ def create_evidence_for_control(control_id: str, test_data: Dict[str, Any]) -> D
     return evidence
 
 
-def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[str, Any]:
+def validate_all_controls(config_path: str, test_data: dict[str, Any]) -> dict[str, Any]:
     """Validate all controls from all catalogs"""
     print("=" * 80)
     print("auditly Comprehensive Validation Test")
@@ -72,7 +72,7 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
 
     # Load all catalogs and profiles
     print("Loading OSCAL catalogs and profiles...")
-    all_controls: Dict[str, list[str]] = {}  # control_id -> catalog_name
+    all_controls: dict[str, list[str]] = {}  # control_id -> catalog_name
     catalog_stats = {}
 
     for catalog_name, catalog_path in config.catalogs.get_all_catalogs().items():
@@ -107,7 +107,7 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
         lambda: {"total": 0, "pass": 0, "insufficient": 0, "failed": 0, "unknown": 0}
     )  # type: ignore
 
-    results: Dict[str, Any] = {
+    results: dict[str, Any] = {
         "metadata": {
             "test_timestamp": datetime.now().isoformat() + "Z",
             "total_controls": len(all_controls),
@@ -189,7 +189,7 @@ def validate_all_controls(config_path: str, test_data: Dict[str, Any]) -> Dict[s
     return results
 
 
-def generate_html_report(results: Dict[str, Any], output_path: Path):
+def generate_html_report(results: dict[str, Any], output_path: Path):
     """Generate comprehensive HTML report"""
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -518,13 +518,13 @@ def generate_html_report(results: Dict[str, Any], output_path: Path):
         f.write(html)
 
 
-def generate_json_report(results: Dict[str, Any], output_path: Path):
+def generate_json_report(results: dict[str, Any], output_path: Path):
     """Generate JSON report"""
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
 
-def print_summary(results: Dict[str, Any]):
+def print_summary(results: dict[str, Any]):
     """Print summary to console"""
     print("=" * 80)
     print("Test Summary")
