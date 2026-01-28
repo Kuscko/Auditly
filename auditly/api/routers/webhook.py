@@ -65,7 +65,7 @@ async def webhook_handler(event: WebhookEvent):
     logger.info(f"Received webhook event: {event.event_type} for env={event.environment}")
     try:
         # For now, always trigger full validation for the environment
-        results, summary = validate_evidence(
+        _, summary = validate_evidence(
             config_path="config.yaml",
             environment=event.environment,
         )

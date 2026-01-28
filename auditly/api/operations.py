@@ -25,13 +25,15 @@ from ..waivers import WaiverRegistry
 from .models import ControlStatusResponse, Evidence, EvidenceCreate, EvidenceUpdate
 
 # --- Evidence CRUD and Control Status Operations ---
+
 _EVIDENCE_DB: dict[str, Evidence] = {}
+EVIDENCE_NOT_FOUND_MSG = "Evidence not found"
 
 
 def create_evidence(evidence: EvidenceCreate) -> Evidence:
     """Create a new evidence record."""
     eid = str(uuid.uuid4())
-    now = datetime.datetime.utcnow().isoformat()
+    now = datetime.datetime.now(datetime.UTC).isoformat()
     ev = Evidence(
         id=eid,
         environment=evidence.environment,
@@ -48,7 +50,7 @@ def get_evidence(evidence_id: str) -> Evidence:
     """Retrieve an evidence record by ID."""
     ev = _EVIDENCE_DB.get(evidence_id)
     if not ev:
-        raise ValueError("Evidence not found")
+        raise ValueError(EVIDENCE_NOT_FOUND_MSG)
     return ev
 
 
@@ -56,9 +58,12 @@ def update_evidence(evidence_id: str, evidence: EvidenceUpdate) -> Evidence:
     """Update an existing evidence record."""
     ev = _EVIDENCE_DB.get(evidence_id)
     if not ev:
-        raise ValueError("Evidence not found")
+        raise ValueError(EVIDENCE_NOT_FOUND_MSG)
     updated_ev = ev.copy(
-        update={"data": evidence.data, "updated_at": datetime.datetime.utcnow().isoformat()}
+        update={
+            "data": evidence.data,
+            "updated_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        }
     )
     _EVIDENCE_DB[evidence_id] = updated_ev
     return updated_ev
@@ -69,7 +74,7 @@ def delete_evidence(evidence_id: str) -> None:
     if evidence_id in _EVIDENCE_DB:
         del _EVIDENCE_DB[evidence_id]
     else:
-        raise ValueError("Evidence not found")
+        raise ValueError(EVIDENCE_NOT_FOUND_MSG)
 
 
 def list_evidence(environment: str | None = None) -> list[Evidence]:

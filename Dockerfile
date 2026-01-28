@@ -17,11 +17,10 @@ COPY config.yaml catalogs/ ./
 # Expose port and run API
 EXPOSE 8000
 
-# Add a non-root user and group
-RUN addgroup --system auditly && adduser --system --ingroup auditly auditly
-
-# Set permissions for app files
-RUN chown -R auditly:auditly /app /usr/local
+# Add a non-root user, group, and set permissions for app files
+RUN addgroup --system auditly \
+	&& adduser --system --ingroup auditly auditly \
+	&& chown -R auditly:auditly /app /usr/local
 
 # Switch to non-root user
 USER auditly

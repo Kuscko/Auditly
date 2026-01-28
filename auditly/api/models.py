@@ -4,6 +4,21 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+# --- Shared Constants ---
+ENV_PRODUCTION = "production"
+PROVIDER_TERRAFORM = "terraform"
+CONFIG_YAML = "config.yaml"
+REPORT_TYPE_READINESS = "readiness"
+ENVIRONMENT_KEY_DESC = "Environment key (e.g., 'production', 'staging')."
+EVIDENCE_PROVIDER_DESC = "Evidence provider type (e.g., 'terraform', 'github')."
+EVIDENCE_DATA_DESC = "Evidence data payload (arbitrary key-value structure)."
+CONTROL_STATUS_COUNTS_DESC = "Summary of control status counts (e.g., {'passed': 10, 'failed': 2})."
+COLLECT_PROVIDER_DESC = "Provider type: terraform, github, gitlab, argo, azure."
+REPORT_TYPE_DESC = "Report type: readiness, engineer, auditor."
+REPORT_PATH_DESC = "Path to the generated report file."
+REPORT_HTML_DESC = "Inline HTML report content (if requested)."
+REPORT_SUMMARY_DESC = "Summary of report results."
+
 # --- Evidence CRUD Models ---
 
 
@@ -15,19 +30,9 @@ class Evidence(BaseModel):
     """
 
     id: str = Field(..., description="Unique evidence ID.", examples=["abc123"])
-    environment: str = Field(
-        ..., description="Environment key (e.g., 'production').", examples=["production"]
-    )
-    provider: str = Field(
-        ...,
-        description="Evidence provider type (e.g., 'terraform', 'github').",
-        examples=["terraform"],
-    )
-    data: dict = Field(
-        ...,
-        description="Evidence data payload (arbitrary key-value structure).",
-        examples=[{"resource_count": 5}],
-    )
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
+    provider: str = Field(..., description=EVIDENCE_PROVIDER_DESC, examples=[PROVIDER_TERRAFORM])
+    data: dict = Field(..., description=EVIDENCE_DATA_DESC, examples=[{"resource_count": 5}])
     created_at: str | None = Field(
         None,
         description="Timestamp when evidence was created (ISO 8601).",
@@ -47,19 +52,9 @@ class EvidenceCreate(BaseModel):
     Used in POST /evidence requests.
     """
 
-    environment: str = Field(
-        ..., description="Environment key (e.g., 'production').", examples=["production"]
-    )
-    provider: str = Field(
-        ...,
-        description="Evidence provider type (e.g., 'terraform', 'github').",
-        examples=["terraform"],
-    )
-    data: dict = Field(
-        ...,
-        description="Evidence data payload (arbitrary key-value structure).",
-        examples=[{"resource_count": 5}],
-    )
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
+    provider: str = Field(..., description=EVIDENCE_PROVIDER_DESC, examples=[PROVIDER_TERRAFORM])
+    data: dict = Field(..., description=EVIDENCE_DATA_DESC, examples=[{"resource_count": 5}])
 
 
 class EvidenceUpdate(BaseModel):
@@ -81,11 +76,9 @@ class ControlStatusResponse(BaseModel):
     Returned by GET /evidence/control-status.
     """
 
-    environment: str = Field(..., description="Environment key.", examples=["production"])
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
     status_summary: dict[str, int] = Field(
-        ...,
-        description="Summary of control status counts (e.g., {'passed': 10, 'failed': 2}).",
-        examples=[{"passed": 10, "failed": 2}],
+        ..., description=CONTROL_STATUS_COUNTS_DESC, examples=[{"passed": 10, "failed": 2}]
     )
     details: list[dict] | None = Field(
         None,
@@ -103,20 +96,10 @@ class CollectRequest(BaseModel):
     """
 
     config_path: str = Field(
-        default="config.yaml",
-        description="Path to config.yaml file.",
-        examples=["config.yaml"],
+        default=CONFIG_YAML, description="Path to config.yaml file.", examples=[CONFIG_YAML]
     )
-    environment: str = Field(
-        ...,
-        description="Environment key (e.g., 'production', 'staging').",
-        examples=["production"],
-    )
-    provider: str = Field(
-        ...,
-        description="Provider type: terraform, github, gitlab, argo, azure.",
-        examples=["terraform"],
-    )
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
+    provider: str = Field(..., description=COLLECT_PROVIDER_DESC, examples=[PROVIDER_TERRAFORM])
 
     # Provider-specific parameters
     terraform_plan_path: str | None = Field(
@@ -181,8 +164,8 @@ class CollectBatchRequest(BaseModel):
         examples=[
             [
                 {
-                    "environment": "production",
-                    "provider": "terraform",
+                    "environment": ENV_PRODUCTION,
+                    "provider": PROVIDER_TERRAFORM,
                     "terraform_plan_path": "/path/to/plan.json",
                 }
             ]
@@ -203,15 +186,9 @@ class ValidateRequest(BaseModel):
     """
 
     config_path: str = Field(
-        default="config.yaml",
-        description="Path to config.yaml file.",
-        examples=["config.yaml"],
+        default=CONFIG_YAML, description="Path to config.yaml file.", examples=[CONFIG_YAML]
     )
-    environment: str = Field(
-        ...,
-        description="Environment key.",
-        examples=["production"],
-    )
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
     control_ids: list[str] | None = Field(
         None,
         description="Specific control IDs to validate (default: all from catalogs).",
@@ -232,19 +209,13 @@ class ReportRequest(BaseModel):
     """
 
     config_path: str = Field(
-        default="config.yaml",
-        description="Path to config.yaml file.",
-        examples=["config.yaml"],
+        default=CONFIG_YAML, description="Path to config.yaml file.", examples=[CONFIG_YAML]
     )
-    environment: str = Field(
-        ...,
-        description="Environment key.",
-        examples=["production"],
-    )
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
     report_type: str = Field(
-        default="readiness",
-        description="Report type: readiness, engineer, auditor.",
-        examples=["readiness"],
+        default=REPORT_TYPE_READINESS,
+        description=REPORT_TYPE_DESC,
+        examples=[REPORT_TYPE_READINESS],
     )
     control_ids: list[str] | None = Field(
         None,
@@ -275,8 +246,8 @@ class CollectResponse(BaseModel):
         description="Key or path to the evidence manifest.",
         examples=["manifests/prod-20240101.json"],
     )
-    environment: str = Field(..., description="Environment key.", examples=["production"])
-    provider: str = Field(..., description="Provider type.", examples=["terraform"])
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
+    provider: str = Field(..., description="Provider type.", examples=[PROVIDER_TERRAFORM])
     message: str | None = Field(
         None, description="Optional informational message.", examples=["Collection completed."]
     )
@@ -331,21 +302,19 @@ class ReportResponse(BaseModel):
     success: bool = Field(
         ..., description="Whether the report was generated successfully.", examples=[True]
     )
-    environment: str = Field(..., description="Environment key.", examples=["production"])
-    report_type: str = Field(..., description="Type of report generated.", examples=["readiness"])
+    environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
+    report_type: str = Field(
+        ..., description="Type of report generated.", examples=[REPORT_TYPE_READINESS]
+    )
     report_path: str | None = Field(
-        None,
-        description="Path to the generated report file.",
-        examples=["reports/prod-readiness-20240101.html"],
+        None, description=REPORT_PATH_DESC, examples=["reports/prod-readiness-20240101.html"]
     )
     report_html: str | None = Field(
-        None,
-        description="Inline HTML report content (if requested).",
-        examples=["<html>...</html>"],
+        None, description=REPORT_HTML_DESC, examples=["<html>...</html>"]
     )
     summary: dict[str, object] | None = Field(
         None,
-        description="Summary of report results.",
+        description=REPORT_SUMMARY_DESC,
         examples=[{"artifacts": 42, "validation": {"passed": 35, "failed": 2}}],
     )
     message: str | None = Field(

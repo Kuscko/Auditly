@@ -6,8 +6,11 @@ client = TestClient(app)
 
 
 def test_create_evidence_exception(monkeypatch):
+    class CreateEvidenceError(RuntimeError):
+        pass
+
     def fail_create(*a, **kw):
-        raise Exception("fail create")
+        raise CreateEvidenceError("fail create")
 
     monkeypatch.setattr("auditly.api.routers.evidence.create_evidence", fail_create)
     resp = client.post("/evidence", json={"name": "foo"})
@@ -15,8 +18,11 @@ def test_create_evidence_exception(monkeypatch):
 
 
 def test_get_evidence_exception(monkeypatch):
+    class GetEvidenceError(KeyError):
+        pass
+
     def fail_get(*a, **kw):
-        raise Exception("fail get")
+        raise GetEvidenceError("fail get")
 
     monkeypatch.setattr("auditly.api.routers.evidence.get_evidence", fail_get)
     resp = client.get("/evidence/someid")
@@ -25,8 +31,11 @@ def test_get_evidence_exception(monkeypatch):
 
 
 def test_update_evidence_exception(monkeypatch):
+    class UpdateEvidenceError(ValueError):
+        pass
+
     def fail_update(*a, **kw):
-        raise Exception("fail update")
+        raise UpdateEvidenceError("fail update")
 
     monkeypatch.setattr("auditly.api.routers.evidence.update_evidence", fail_update)
     resp = client.put("/evidence/someid", json={"name": "bar"})
@@ -34,8 +43,11 @@ def test_update_evidence_exception(monkeypatch):
 
 
 def test_delete_evidence_exception(monkeypatch):
+    class DeleteEvidenceError(KeyError):
+        pass
+
     def fail_delete(*a, **kw):
-        raise Exception("fail delete")
+        raise DeleteEvidenceError("fail delete")
 
     monkeypatch.setattr("auditly.api.routers.evidence.delete_evidence", fail_delete)
     resp = client.delete("/evidence/someid")
@@ -44,8 +56,11 @@ def test_delete_evidence_exception(monkeypatch):
 
 
 def test_list_evidence_exception(monkeypatch):
+    class ListEvidenceError(RuntimeError):
+        pass
+
     def fail_list(*a, **kw):
-        raise Exception("fail list")
+        raise ListEvidenceError("fail list")
 
     monkeypatch.setattr("auditly.api.routers.evidence.list_evidence", fail_list)
     resp = client.get("/evidence")
@@ -54,8 +69,11 @@ def test_list_evidence_exception(monkeypatch):
 
 
 def test_control_status_exception(monkeypatch):
+    class ControlStatusError(LookupError):
+        pass
+
     def fail_status(*a, **kw):
-        raise Exception("fail status")
+        raise ControlStatusError("fail status")
 
     monkeypatch.setattr("auditly.api.routers.evidence.get_control_status", fail_status)
     resp = client.get("/evidence/control-status?environment=prod")

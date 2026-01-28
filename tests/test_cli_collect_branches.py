@@ -9,6 +9,7 @@ def test_collect_github_cmd_invalid_local_path(monkeypatch, tmp_path):
             raise AssertionError("Should not be called")
 
         def put_json(self, *a, **k):
+            # No-op for test: method intentionally left empty because put_json is not relevant for this test branch
             pass
 
     class DummyArtifact:
@@ -19,6 +20,7 @@ def test_collect_github_cmd_invalid_local_path(monkeypatch, tmp_path):
 
     class DummyManifest:
         def to_json(self):
+            # Return minimal JSON for test; no-op content
             return "{}"
 
     def dummy_collect_github_actions(*a, **k):
@@ -42,6 +44,7 @@ def test_collect_gitlab_cmd_invalid_local_path(monkeypatch, tmp_path):
             raise AssertionError("Should not be called")
 
         def put_json(self, *a, **k):
+            # No-op for test: method intentionally left empty because put_json is not relevant for this test branch
             pass
 
     class DummyArtifact:
@@ -52,6 +55,7 @@ def test_collect_gitlab_cmd_invalid_local_path(monkeypatch, tmp_path):
 
     class DummyManifest:
         def to_json(self):
+            # Return minimal JSON for test; no-op content
             return "{}"
 
     def dummy_collect_gitlab(*a, **k):
@@ -74,6 +78,7 @@ def test_collect_argo_cmd_invalid_local_path(monkeypatch, tmp_path):
             raise AssertionError("Should not be called")
 
         def put_json(self, *a, **k):
+            # No-op for test: method intentionally left empty because put_json is not relevant for this test branch
             pass
 
     class DummyArtifact:
@@ -84,6 +89,7 @@ def test_collect_argo_cmd_invalid_local_path(monkeypatch, tmp_path):
 
     class DummyManifest:
         def to_json(self):
+            # Return minimal JSON for test; no-op content
             return "{}"
 
     def dummy_collect_argo(*a, **k):

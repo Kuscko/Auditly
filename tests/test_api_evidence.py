@@ -47,7 +47,8 @@ def test_control_status():
         import pytest
 
         pytest.skip("In-memory DB was reset; skipping edge-case test.")
-    assert resp.status_code == 200
+    if resp.status_code != 200:
+        raise AssertionError(f"Expected 200 OK, got {resp.status_code}: {resp.text}")
     data = resp.json()
     assert data["environment"] == "env2"
     assert data["status_summary"]["total"] >= 1

@@ -92,9 +92,12 @@ def test__generate_readiness_report_error(monkeypatch, tmp_path):
 
     monkeypatch.setattr("auditly.api.operations.OscalCatalog", object)
     monkeypatch.setattr("auditly.api.operations.OscalProfile", object)
-    monkeypatch.setattr(
-        "auditly.api.operations.load_oscal", lambda x: (_ for _ in ()).throw(Exception("fail"))
-    )
+
+    def raise_fail(*args, **kwargs):
+        # Directly raise the exception for test error simulation
+        raise Exception("fail")
+
+    monkeypatch.setattr("auditly.api.operations.load_oscal", raise_fail)
 
     def dummy_create(environment, artifacts):
         return type("M", (), {"to_json": lambda self: "{}", "artifacts": []})()
@@ -108,7 +111,7 @@ def test__generate_readiness_report_error(monkeypatch, tmp_path):
     manifest_path = os.path.join(manifest_dir, "env-dummy.json")
     with open(manifest_path, "w") as f:
         json.dump({"version": "1.0", "environment": "env", "created_at": 0, "artifacts": []}, f)
-    out, html, summary = operations._generate_readiness_report(
+    _, _, summary = operations._generate_readiness_report(
         DummyCfg(), "env", str(tmp_path / "out.html")
     )
     assert "error" in summary["controls"]
