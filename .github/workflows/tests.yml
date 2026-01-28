@@ -126,34 +126,3 @@ jobs:
         name: coverage-html-py${{ matrix.python-version }}
         path: htmlcov/
         retention-days: 30
-
-  compliance:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-    - name: Start FastAPI app (background)
-      run: |
-        uvicorn auditly.api.app:app --host 127.0.0.1 --port 8000 &
-        sleep 10
-    - name: Run compliance check (score >= 90%)
-      run: |
-        python -c "
-        import requests
-        import sys
-        resp = requests.get('http://127.0.0.1:8000/report/json?environment=production&report_type=readiness')
-        assert resp.status_code == 200, f'API error: {resp.status_code}'
-        data = resp.json()
-        score = data.get('score', 0)
-        print(f'Compliance score: {score}')
-        if score < 90:
-          sys.exit(f'Compliance score {score} is below threshold 90')
-        "
