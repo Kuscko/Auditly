@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 ENV_PRODUCTION = "production"
 PROVIDER_TERRAFORM = "terraform"
 CONFIG_YAML = "config.yaml"
+CONFIG_PATH_DESC = "Path to config.yaml file."
 REPORT_TYPE_READINESS = "readiness"
 ENVIRONMENT_KEY_DESC = "Environment key (e.g., 'production', 'staging')."
 EVIDENCE_PROVIDER_DESC = "Evidence provider type (e.g., 'terraform', 'github')."
@@ -96,7 +97,7 @@ class CollectRequest(BaseModel):
     """
 
     config_path: str = Field(
-        default=CONFIG_YAML, description="Path to config.yaml file.", examples=[CONFIG_YAML]
+        default=CONFIG_YAML, description=CONFIG_PATH_DESC, examples=[CONFIG_YAML]
     )
     environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
     provider: str = Field(..., description=COLLECT_PROVIDER_DESC, examples=[PROVIDER_TERRAFORM])
@@ -186,7 +187,7 @@ class ValidateRequest(BaseModel):
     """
 
     config_path: str = Field(
-        default=CONFIG_YAML, description="Path to config.yaml file.", examples=[CONFIG_YAML]
+        default=CONFIG_YAML, description=CONFIG_PATH_DESC, examples=[CONFIG_YAML]
     )
     environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
     control_ids: list[str] | None = Field(
@@ -209,7 +210,7 @@ class ReportRequest(BaseModel):
     """
 
     config_path: str = Field(
-        default=CONFIG_YAML, description="Path to config.yaml file.", examples=[CONFIG_YAML]
+        default=CONFIG_YAML, description=CONFIG_PATH_DESC, examples=[CONFIG_YAML]
     )
     environment: str = Field(..., description=ENVIRONMENT_KEY_DESC, examples=[ENV_PRODUCTION])
     report_type: str = Field(

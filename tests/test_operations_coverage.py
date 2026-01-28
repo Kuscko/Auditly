@@ -95,7 +95,7 @@ def test__generate_readiness_report_error(monkeypatch, tmp_path):
 
     def raise_fail(*args, **kwargs):
         # Directly raise the exception for test error simulation
-        raise Exception("fail")
+        raise RuntimeError("fail")
 
     monkeypatch.setattr("auditly.api.operations.load_oscal", raise_fail)
 
