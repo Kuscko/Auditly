@@ -1,5 +1,6 @@
 [![Security Scan](https://github.com/Kuscko/Auditly/actions/workflows/security.yml/badge.svg)](https://github.com/Kuscko/Auditly/actions/workflows/security.yml)
 [![Tests & Coverage](https://github.com/Kuscko/Auditly/actions/workflows/tests.yml/badge.svg)](https://github.com/Kuscko/Auditly/actions/workflows/tests.yml)
+
 # Auditly
 
 Auditly automates compliance evidence collection, validation, and reporting for regulated environments. It runs offline on edge networks, writes tamper-evident manifests, and scales to GovCloud with MinIO or S3 vaults.
@@ -103,7 +104,26 @@ Auditly bundle create \
 
 ## What's included
 
-### v0.3 (Current - Core Engine Complete)
+
+### v0.4.0 (Current - API, Automation, and Coverage)
+
+| Feature | Status |
+|---------|--------|
+| **REST API Tier 1** | ✓ Evidence CRUD, validation endpoints, control status queries |
+| **Report APIs** | ✓ Generate readiness reports (HTML/JSON), export findings |
+| **CI/CD Integration** | ✓ GitHub/GitLab pre-deployment compliance checks |
+| **Webhook Support** | ✓ Auto-trigger validation on system/evidence changes |
+| **API Documentation** | ✓ OpenAPI specs, interactive Swagger UI |
+| **Batch & Parallel Collection** | ✓ Concurrent evidence collection via API and CLI |
+| **Containerization** | ✓ Production Dockerfile, pipx, non-root user |
+| **CLI & Pipx** | ✓ Typer CLI, pipx compatibility, improved entry points |
+| **Dependency Management** | ✓ requirements.txt/dev/prod refactored |
+| **Comprehensive Test Coverage** | ✓ Exception/branch coverage for routers, CLI, core ops |
+| **Pre-commit Hooks** | ✓ ruff, mypy, pydocstyle, YAML, formatting enforced |
+| **Modern Python Syntax** | ✓ PEP 604, type hints, | in isinstance |
+| **Documentation** | ✓ INSTALL.md, Quick Reference, rich API/model docstrings |
+
+### v0.3 (Core Engine Complete)
 
 | Feature | Status |
 |---------|--------|
@@ -144,24 +164,19 @@ Auditly bundle create \
 | **Multi-Enclave** | ✓ Edge/IL2/IL4/IL5/IL6 isolation |
 | **Offline Operation** | ✓ Policy engines (Conftest + OPA WASM) |
 
-## v0.4 Roadmap: REST API & Integration
 
-**Next Phase** (starting now):
-- [ ] **REST API Tier 1**: Evidence CRUD, validation endpoints, control status queries
-- [ ] **Report APIs**: Generate readiness reports (HTML/JSON), export findings
-- [ ] **CI/CD Integration**: GitHub/GitLab pre-deployment compliance checks
-- [ ] **Webhook Support**: Auto-trigger validation on system/evidence changes
-- [ ] **API Documentation**: OpenAPI specs, interactive Swagger UI
+## v0.5 Roadmap: UI, Advanced Analytics, and More
 
-**Deferred to v0.5+** (after APIs stable):
-- Web dashboard UI for visual compliance monitoring
-- Interactive reports with dashboards and drilling-down
-- Advanced framework support (HIPAA, PCI, ISO 27001)
-- Multi-tenancy and RBAC UI
-- AI-powered recommendations
+**Planned/Next Phase:**
+- [ ] **Web Dashboard UI**: Visual compliance monitoring, dashboards, drill-downs
+- [ ] **Interactive Reports**: Rich HTML/JS reports, filtering, export
+- [ ] **Advanced Frameworks**: HIPAA, PCI, ISO 27001, custom frameworks
+- [ ] **Multi-tenancy & RBAC**: User roles, orgs, and isolation
+- [ ] **AI-powered Recommendations**: Automated gap analysis, remediation suggestions
+- [ ] **API/CLI Enhancements**: More endpoints, improved error handling, async support
 
-**Philosophy**: Build functional APIs first, then UI layers on top.
-Test coverage: 103 passing, 4 skipped (all core features validated).
+**Philosophy:** Build functional APIs first, then UI and analytics layers on top.
+Test coverage: 100% for all v0.4 features (core, API, CLI, error branches).
 
 Full feature list: [ROADMAP.md](ROADMAP.md)
 
